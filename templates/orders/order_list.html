@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}سفارش‌های من | Shine{% endblock %}
+
+{% block content %}
+    <section class="orders-section">
+        <div class="container">
+
+            <div class="section-heading">
+                <div>
+                    <span class="eyebrow">MY ORDERS</span>
+                    <h1>سفارش‌های من</h1>
+                </div>
+            </div>
+
+            {% if orders %}
+
+                <div class="order-list">
+
+                    {% for order in orders %}
+                        <a
+                                href="{% url 'orders:detail' order.id %}"
+                                class="order-list-card"
+                        >
+                            <div>
+                                <span class="order-number">سفارش #{{ order.id }}</span>
+
+                                <div class="order-date">
+                                    {{ order.created_at|date:"j F Y" }}
+                                </div>
+                            </div>
+
+                            <div>
+                            <span class="order-date">
+                                {{ order.items.count }} کالا
+                            </span>
+                            </div>
+
+                            <div>
+                                <strong class="order-list-total">
+                                    {{ order.total_amount|floatformat:0 }} تومان
+                                </strong>
+                            </div>
+
+                            <div>
+                            <span class="order-status status-{{ order.status }}">
+                                {{ order.get_status_display }}
+                            </span>
+                            </div>
+                        </a>
+                    {% endfor %}
+
+                </div>
+
+            {% else %}
+
+                <div class="empty-state">
+                    <div class="empty-state-icon">📦</div>
+                    <h3>هنوز سفارشی ثبت نکرده‌اید</h3>
+                    <p>اولین خرید خود را از فروشگاه Shine تجربه کنید.</p>
+                    <a href="{% url 'shop:products' %}" class="btn btn-gold">
+                        مشاهده فروشگاه
+                    </a>
+                </div>
+
+            {% endif %}
+
+        </div>
+    </section>
+{% endblock %}

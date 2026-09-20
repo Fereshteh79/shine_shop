@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if query %}جستجوی «{{ query }}»{% else %}جستجو{% endif %} | Shine
+{% endblock %}
+
+{% block meta_description %}
+    نتایج جستجو در فروشگاه Shine{% if query %} برای «{{ query }}»{% endif %}.
+{% endblock %}
+
+{% block content %}
+
+    <section class="shop-header">
+        <div class="container">
+
+            <span class="eyebrow">SEARCH</span>
+
+            <h1>
+                {% if query %}
+                    نتایج جستجو برای «{{ query }}»
+                {% else %}
+                    جستجوی محصولات
+                {% endif %}
+            </h1>
+
+            <form method="get" action="{% url 'products:search' %}" class="search-page-form">
+                <input
+                        type="search"
+                        name="q"
+                        value="{{ query }}"
+                        placeholder="نام محصول، برند یا دسته‌بندی..."
+                        aria-label="عبارت جستجو"
+                >
+                <button type="submit" class="btn btn-gold">جستجو</button>
+            </form>
+
+        </div>
+    </section>
+
+
+    <section class="shop-section">
+        <div class="container">
+
+            {% if query %}
+                <div class="shop-toolbar">
+                    <span>{{ products.paginator.count }} نتیجه یافت شد</span>
+                </div>
+            {% endif %}
+
+            {% if products %}
+
+                <div class="product-grid">
+                    {% for product in products %}
+                        {% include "includes/product_card.html" with product=product %}
+                    {% endfor %}
+                </div>
+
+                {% if products.has_other_pages %}
+                    <nav class="pagination" aria-label="صفحه‌بندی">
+
+                        {% if products.has_previous %}
+                            <a href="?q={{ query }}&{{ querystring }}&page={{ products.previous_page_number }}">قبلی</a>
+                        {% endif %}
+
+                        {% for number in products.paginator.page_range %}
+                            {% if number == products.number %}
+                                <span class="active" aria-current="page">{{ number }}</span>
+                            {% else %}
+                                <a href="?q={{ query }}&{{ querystring }}&page={{ number }}">{{ number }}</a>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if products.has_next %}
+                            <a href="?q={{ query }}&{{ querystring }}&page={{ products.next_page_number }}">بعدی</a>
+                        {% endif %}
+
+                    </nav>
+                {% endif %}
+
+            {% elif query %}
+
+                <div class="empty-state shop-empty">
+                    <h3>نتیجه‌ای برای «{{ query }}» پیدا نشد</h3>
+                    <p>املای عبارت را بررسی کنید یا عبارت کوتاه‌تری بنویسید.</p>
+                    <a href="{% url 'products:list' %}" class="btn btn-outline">
+                        مشاهده همه محصولات
+                    </a>
+                </div>
+
+            {% else %}
+
+                <div class="empty-state shop-empty">
+                    <h3>دنبال چه چیزی می‌گردید؟</h3>
+                    <p>نام محصول، برند یا دسته‌بندی مورد نظرتان را جستجو کنید.</p>
+                </div>
+
+            {% endif %}
+
+        </div>
+    </section>
+
+{% endblock %}

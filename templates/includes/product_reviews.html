@@ -1,0 +1,117 @@
+{% comment %}
+    دیدگاه‌های محصول — متغیرها: product, reviews, review_summary, user_review
+{% endcomment %}
+
+<section class="reviews-section" id="reviews">
+    <div class="container">
+
+        <div class="review-section-header">
+            <div>
+                <span class="eyebrow">CUSTOMER REVIEWS</span>
+                <h2>دیدگاه مشتریان</h2>
+            </div>
+
+            {% if review_summary.review_count %}
+                <div class="review-summary">
+                    <span class="review-score">
+                        {{ review_summary.average_rating|floatformat:1 }}
+                    </span>
+
+                    <div>
+                        <div class="review-stars">
+                            {% widthratio review_summary.average_rating 1 1 as full %}{% if full >= 5 %}★★★★★{% elif full >= 4 %}★★★★{% elif full >= 3 %}★★★{% elif full >= 2 %}★★{% else %}★{% endif %}
+                        </div>
+                        <span class="review-count">
+                            از {{ review_summary.review_count }} دیدگاه
+                        </span>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        {% if reviews %}
+
+            <div class="review-list">
+                {% for review in reviews %}
+                    <article class="review-card">
+                        <div class="review-header">
+                            <span class="review-author">{{ review.user.display_name }}</span>
+                            <span class="review-rating">
+                                {% if review.rating >= 5 %}★★★★★{% elif review.rating == 4 %}★★★★{% elif review.rating == 3 %}★★★{% elif review.rating == 2 %}★★{% else %}★{% endif %}
+                            </span>
+                        </div>
+
+                        {% if review.title %}
+                            <h3 class="review-title">{{ review.title }}</h3>
+                        {% endif %}
+
+                        <p class="review-comment">{{ review.comment }}</p>
+
+                        <span class="review-date">
+                            {{ review.created_at|date:"j F Y" }}
+                        </span>
+                    </article>
+                {% endfor %}
+            </div>
+
+        {% else %}
+
+            <div class="empty-state" style="padding: 40px 20px;">
+                <h3>هنوز دیدگاهی ثبت نشده است</h3>
+                <p>اولین نفری باشید که نظرش را درباره این محصول می‌نویسد.</p>
+            </div>
+
+        {% endif %}
+
+        {% if user.is_authenticated %}
+            {% if user_review %}
+                <div class="review-form">
+                    <h3>دیدگاه شما ثبت شده است</h3>
+
+                    <p class="review-comment">
+                        وضعیت: {% if user_review.is_approved %}✓ منتشر شده{% else %}در انتظار تأیید{% endif %}
+                    </p>
+
+                    <div style="display: flex; gap: 9px; flex-wrap: wrap;">
+                        <a href="{% url 'reviews:update' user_review.id %}" class="btn btn-outline btn-sm">
+                            ویرایش دیدگاه
+                        </a>
+
+                        <form method="post" action="{% url 'reviews:delete' user_review.id %}" data-confirm="آیا از حذف دیدگاه خود مطمئن هستید؟">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger btn-sm">
+                                حذف دیدگاه
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            {% else %}
+                <div class="review-form">
+                    <h3>دیدگاه خود را ثبت کنید</h3>
+                    <p class="review-comment" style="margin-bottom: 16px;">
+                        {% if purchased %}
+                            تجربه‌ات از این محصول را با دیگران به اشتراک بگذار.
+                        {% else %}
+                            پس از خرید این محصول می‌توانید دیدگاه ثبت کنید.
+                        {% endif %}
+                    </p>
+
+                    {% if purchased %}
+                        <a href="{% url 'reviews:create' product.slug %}" class="btn btn-gold">
+                            ثبت دیدگاه
+                        </a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        {% else %}
+            <div class="review-form">
+                <p class="review-comment">
+                    برای ثبت دیدگاه
+                    <a href="{% url 'accounts:login' %}?next={{ request.path }}" class="gold">وارد حساب کاربری</a>
+                    شوید.
+                </p>
+            </div>
+        {% endif %}
+
+    </div>
+</section>

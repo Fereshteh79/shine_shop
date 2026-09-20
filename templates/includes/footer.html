@@ -1,0 +1,109 @@
+<footer class="site-footer">
+
+    <div class="container footer-grid">
+
+        <div class="footer-brand">
+            <a href="{% url 'shop:home' %}" class="brand">
+                <span class="brand-mark">S</span>
+                <span class="brand-name">SHINE</span>
+            </a>
+
+            <p>
+                گالری آنلاین Shine؛ انتخابی دقیق از عینک آفتابی، ساعت‌های لوکس و برند،
+                نقره‌جات و بدلیجات، عطر و ادکلن و بهترین‌ها برای هدیه.
+            </p>
+
+            <div class="footer-social">
+                <a
+                        href="https://instagram.com/shinegallery0"
+                        target="_blank"
+                        rel="noopener nofollow"
+                        aria-label="اینستاگرام Shine"
+                >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                         stroke-linecap="round">
+                        <rect x="2" y="2" width="20" height="20" rx="5"/>
+                        <circle cx="12" cy="12" r="4"/>
+                        <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/>
+                    </svg>
+                </a>
+
+                <a
+                        href="https://wa.me/989387586384"
+                        target="_blank"
+                        rel="noopener nofollow"
+                        aria-label="واتساپ Shine"
+                >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 11.5a8.5 8.5 0 0 1-12.4 7.5L3 21l2-5.6A8.5 8.5 0 1 1 21 11.5z"/>
+                    </svg>
+                </a>
+
+                <a
+                        href="tel:+989387586384"
+                        aria-label="تماس تلفنی"
+                >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
+
+        <div class="footer-column">
+            <h3>دسترسی سریع</h3>
+            <a href="{% url 'shop:home' %}">خانه</a>
+            <a href="{% url 'shop:products' %}">فروشگاه</a>
+            <a href="{% url 'shop:search' %}">جستجو</a>
+        </div>
+
+        <div class="footer-column">
+            <h3>خدمات مشتریان</h3>
+
+            {% if user.is_authenticated %}
+                <a href="{% url 'orders:list' %}">سفارش‌های من</a>
+                <a href="{% url 'wishlist:list' %}">علاقه‌مندی‌ها</a>
+                <a href="{% url 'payments:list' %}">پرداخت‌های من</a>
+            {% endif %}
+
+            <a href="https://wa.me/989387586384" target="_blank" rel="noopener nofollow">پشتیبانی (واتساپ)</a>
+        </div>
+
+        <div class="footer-column">
+            <h3>درباره ما</h3>
+
+            <ul class="footer-about">
+                <li>
+                    <span class="footer-about-label">آدرس شعبه حضوری</span>
+                    <span>خوزستان، گتوند، خیابان استقلال، جنب بستنی‌فروشی فتاحی</span>
+                </li>
+                <li>
+                    <span class="footer-about-label">شماره تماس</span>
+                    <a href="tel:+989387586384" class="ltr">09387586384</a>
+                </li>
+                <li>
+                    <span class="footer-about-label">اینستاگرام</span>
+                    <a href="https://instagram.com/shinegallery0" target="_blank" rel="noopener nofollow" class="ltr">shinegallery0</a>
+                </li>
+                <li>
+                    <span class="footer-about-label">واتساپ</span>
+                    <a href="https://wa.me/989387586384" target="_blank" rel="noopener nofollow"
+                       class="ltr">09387586384</a>
+                </li>
+                <li>
+                    <span class="footer-about-label">مدیریت</span>
+                    <span>شهاب طیبی</span>
+                </li>
+            </ul>
+        </div>
+
+    </div>
+
+    <div class="container footer-bottom">
+        <span>© {% now "Y" %} Shine Gallery. تمامی حقوق محفوظ است.</span>
+        <span>Designed with elegance.</span>
+    </div>
+
+</footer>

@@ -1,0 +1,52 @@
+{% comment %}
+    کارت محصول مشترک — متغیر ورودی: product
+{% endcomment %}
+
+<article class="product-card">
+
+    <a
+            href="{% url 'products:detail' product.slug %}"
+            class="product-image"
+            aria-label="{{ product.name }}"
+    >
+        {% with image=product.images.first %}
+            {% if image %}
+                <img
+                        src="{{ image.image.url }}"
+                        alt="{{ image.alt_text|default:product.name }}"
+                        loading="lazy"
+                        width="600"
+                        height="600"
+                >
+            {% else %}
+                <div class="product-placeholder">SHINE</div>
+            {% endif %}
+        {% endwith %}
+
+        {% if product.has_discount %}
+            <span class="product-badge">تخفیف</span>
+        {% endif %}
+    </a>
+
+    <div class="product-info">
+
+        {% if product.brand %}
+            <span class="product-brand">{{ product.brand.name }}</span>
+        {% endif %}
+
+        <h3>
+            <a href="{% url 'products:detail' product.slug %}">{{ product.name }}</a>
+        </h3>
+
+        <div class="product-price">
+            {% if product.has_discount %}
+                <span class="old-price">{{ product.price|floatformat:0 }}</span>
+            {% endif %}
+
+            <strong>{{ product.final_price|floatformat:0 }}</strong>
+            <span class="currency">تومان</span>
+        </div>
+
+    </div>
+
+</article>

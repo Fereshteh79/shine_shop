@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if review %}ویرایش دیدگاه{% else %}ثبت دیدگاه{% endif %} — {{ product.name }} | Shine
+{% endblock %}
+
+{% block content %}
+    <section class="review-form-page">
+        <div class="container">
+
+            <div class="payment-card">
+
+                <div class="payment-card-header">
+                    <span class="eyebrow">{% if review %}EDIT REVIEW{% else %}NEW REVIEW{% endif %}</span>
+                    <h1>{% if review %}ویرایش دیدگاه{% else %}ثبت دیدگاه{% endif %}</h1>
+                    <p>برای محصول «{{ product.name }}»</p>
+                </div>
+
+                {% if form.non_field_errors %}
+                    <div class="form-errors">
+                        {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+                    </div>
+                {% endif %}
+
+                <form method="post" novalidate>
+                    {% csrf_token %}
+
+                    <div class="form-group {% if form.rating.errors %}has-error{% endif %}">
+                        <label>امتیاز شما</label>
+
+                        <div class="rating-input">
+                            {% for radio in form.rating %}
+                                {{ radio.tag }}
+                                <label for="{{ radio.id_for_label }}" title="{{ radio.choice_label }} ستاره">
+                                    ★
+                                </label>
+                            {% endfor %}
+                        </div>
+
+                        {% for error in form.rating.errors %}
+                            <p class="form-error">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+
+                    <div class="form-group {% if form.title.errors %}has-error{% endif %}">
+                        <label for="{{ form.title.id_for_label }}">{{ form.title.label }}</label>
+                        {{ form.title }}
+                        {% for error in form.title.errors %}
+                            <p class="form-error">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+
+                    <div class="form-group {% if form.comment.errors %}has-error{% endif %}">
+                        <label for="{{ form.comment.id_for_label }}">{{ form.comment.label }}</label>
+                        {{ form.comment }}
+                        {% for error in form.comment.errors %}
+                            <p class="form-error">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+
+                    <button type="submit" class="btn btn-gold btn-lg btn-block">
+                        {% if review %}ذخیره تغییرات{% else %}ثبت دیدگاه{% endif %}
+                    </button>
+                </form>
+
+                <a href="{% url 'products:detail' product.slug %}" class="payment-back">
+                    بازگشت به محصول
+                </a>
+
+            </div>
+
+        </div>
+    </section>
+{% endblock %}

@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}همه محصولات | Shine{% endblock %}
+
+{% block meta_description %}
+    مرور کامل محصولات گالری Shine؛ عینک آفتابی، ساعت لوکس، نقره‌جات و عطر با فیلتر قیمت، برند و دسته‌بندی.
+{% endblock %}
+
+{% block content %}
+
+    <section class="shop-header">
+        <div class="container">
+            <span class="eyebrow">ALL PRODUCTS</span>
+            <h1>همه محصولات</h1>
+            <p>مجموعه کامل محصولات گالری Shine را مرور کنید.</p>
+        </div>
+    </section>
+
+
+    <section class="shop-section">
+        <div class="container shop-layout">
+
+            <aside class="shop-sidebar">
+
+                <div class="filter-box">
+                    <div class="filter-title">
+                        <h3>فیلتر محصولات</h3>
+                    </div>
+
+                    <form method="get" class="filter-form">
+
+                        <div class="filter-group">
+                            <label for="min_price">حداقل قیمت (تومان)</label>
+                            <input
+                                    id="min_price"
+                                    type="number"
+                                    name="min_price"
+                                    min="0"
+                                    value="{{ filter.form.min_price.value|default:'' }}"
+                                    placeholder="مثلاً ۵۰۰۰۰۰"
+                            >
+                        </div>
+
+                        <div class="filter-group">
+                            <label for="max_price">حداکثر قیمت (تومان)</label>
+                            <input
+                                    id="max_price"
+                                    type="number"
+                                    name="max_price"
+                                    min="0"
+                                    value="{{ filter.form.max_price.value|default:'' }}"
+                                    placeholder="مثلاً ۵۰۰۰۰۰۰"
+                            >
+                        </div>
+
+                        <div class="filter-group">
+                            <label for="category">دسته‌بندی</label>
+                            <select id="category" name="category">
+                                <option value="">همه دسته‌ها</option>
+                                <option value="{{ filter.form.category.value|default:'' }}" hidden></option>
+                            </select>
+
+                            {# گزینه‌های دسته‌بندی از کنتکست #}
+                            {% if categories %}
+                                <select id="categorySelect" name="category" class="hidden"></select>
+                            {% endif %}
+                        </div>
+
+                        <div class="filter-group">
+                            <label for="sort">مرتب‌سازی</label>
+                            <select id="sort" name="sort">
+                                <option value="newest" {% if selected_sort == "newest" %}selected{% endif %}>جدیدترین
+                                </option>
+                                <option value="oldest" {% if selected_sort == "oldest" %}selected{% endif %}>
+                                    قدیمی‌ترین
+                                </option>
+                                <option value="price_low" {% if selected_sort == "price_low" %}selected{% endif %}>
+                                    ارزان‌ترین
+                                </option>
+                                <option value="price_high" {% if selected_sort == "price_high" %}selected{% endif %}>
+                                    گران‌ترین
+                                </option>
+                                <option value="name" {% if selected_sort == "name" %}selected{% endif %}>نام محصول
+                                </option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn btn-gold filter-submit">
+                            اعمال فیلتر
+                        </button>
+
+                        <a href="{% url 'products:list' %}" class="filter-reset">
+                            حذف فیلترها
+                        </a>
+
+                    </form>
+                </div>
+
+            </aside>
+
+
+            <div class="shop-content">
+
+                <div class="shop-toolbar">
+                    <span>{{ products.paginator.count }} محصول</span>
+                </div>
+
+                {% if products %}
+
+                    <div class="product-grid">
+                        {% for product in products %}
+                            {% include "includes/product_card.html" with product=product %}
+                        {% endfor %}
+                    </div>
+
+                    {% if products.has_other_pages %}
+                        <nav class="pagination" aria-label="صفحه‌بندی">
+
+                            {% if products.has_previous %}
+                                <a href="?{{ querystring }}&page={{ products.previous_page_number }}">قبلی</a>
+                            {% endif %}
+
+                            {% for number in products.paginator.page_range %}
+                                {% if number == products.number %}
+                                    <span class="active" aria-current="page">{{ number }}</span>
+                                {% else %}
+                                    <a href="?{{ querystring }}&page={{ number }}">{{ number }}</a>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if products.has_next %}
+                                <a href="?{{ querystring }}&page={{ products.next_page_number }}">بعدی</a>
+                            {% endif %}
+
+                        </nav>
+                    {% endif %}
+
+                {% else %}
+
+                    <div class="empty-state shop-empty">
+                        <h3>محصولی پیدا نشد</h3>
+                        <p>فیلترها را تغییر دهید یا همه محصولات را ببینید.</p>
+                        <a href="{% url 'products:list' %}" class="btn btn-outline">
+                            مشاهده همه محصولات
+                        </a>
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+    </section>
+
+{% endblock %}

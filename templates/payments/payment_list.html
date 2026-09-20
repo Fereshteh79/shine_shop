@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}پرداخت‌های من | Shine{% endblock %}
+
+{% block content %}
+    <section class="section">
+        <div class="container">
+
+            <div class="section-heading">
+                <div>
+                    <span class="eyebrow">PAYMENTS</span>
+                    <h1>پرداخت‌های من</h1>
+                </div>
+            </div>
+
+            {% if payments %}
+
+                <div class="payment-list">
+
+                    {% for payment in payments %}
+                        <div class="payment-list-item">
+
+                            <div>
+                                <strong>
+                                    سفارش #{{ payment.order_id }}
+                                </strong>
+
+                                <small>
+                                    {{ payment.created_at|date:"Y/m/d - H:i" }}
+                                </small>
+                            </div>
+
+                            <div>
+                                {{ payment.amount|floatformat:0 }}
+                                تومان
+                            </div>
+
+                            <div class="payment-status status-{{ payment.status }}">
+                                {{ payment.get_status_display }}
+                            </div>
+
+                            <a
+                                    href="{% url 'orders:detail' payment.order_id %}"
+                                    class="btn btn-outline btn-sm"
+                            >
+                                مشاهده
+                            </a>
+
+                        </div>
+                    {% endfor %}
+
+                </div>
+
+            {% else %}
+
+                <div class="empty-state">
+                    <h3>هنوز پرداختی ندارید</h3>
+                    <p>
+                        سوابق پرداخت‌های شما در این قسمت نمایش داده می‌شود.
+                    </p>
+                </div>
+
+            {% endif %}
+
+        </div>
+    </section>
+{% endblock %}

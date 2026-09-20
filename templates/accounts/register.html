@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}ثبت‌نام | Shine{% endblock %}
+
+{% block meta_description %}ایجاد حساب کاربری جدید در گالری Shine؛ عضویت رایگان در کمتر از یک دقیقه.{% endblock %}
+
+{% block content %}
+    <section class="auth-section">
+        <div class="container">
+
+            <div class="auth-card auth-card-register">
+
+                <aside class="auth-panel">
+
+                    <a href="{% url 'shop:home' %}" class="brand auth-brand">
+                        <span class="brand-mark">S</span>
+                        <span class="brand-name">SHINE</span>
+                    </a>
+
+                    <h2>عضو خانواده Shine شوید</h2>
+
+                    <p>
+                        در چند ثانیه حساب بسازید و از مزایای خرید آنلاین لوکس
+                        بهره‌مند شوید.
+                    </p>
+
+                    <ul class="auth-points">
+                        <li>عضویت کاملاً رایگان</li>
+                        <li>دسترسی زودهنگام به کالکشن‌های جدید</li>
+                        <li>پشتیبانی اختصاصی </li>
+                    </ul>
+
+                </aside>
+
+                <div class="auth-form-side">
+
+                    <div class="auth-form-header">
+                        <span class="eyebrow">JOIN US</span>
+                        <h1>ایجاد حساب کاربری</h1>
+                    </div>
+
+                    {% if form.non_field_errors %}
+                        <div class="form-errors">
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+
+                        {% for field in form %}
+                            <div class="form-group {% if field.errors %}has-error{% endif %}">
+                                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+
+                                {{ field }}
+
+                                {% if field.help_text %}
+                                    <p class="form-help">{{ field.help_text }}</p>
+                                {% endif %}
+
+                                {% for error in field.errors %}
+                                    <p class="form-error">{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endfor %}
+
+                        <button type="submit" class="btn btn-gold btn-lg btn-block auth-submit">
+                            ایجاد حساب کاربری
+                        </button>
+                    </form>
+
+                    <p class="auth-switch">
+                        قبلاً ثبت‌نام کرده‌اید؟
+                        <a href="{% url 'accounts:login' %}">وارد شوید</a>
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+    </section>
+{% endblock %}

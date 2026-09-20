@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}ورود به حساب | Shine{% endblock %}
+
+{% block meta_description %}ورود به حساب کاربری در گالری Shine برای خرید و پیگیری سفارش‌ها.{% endblock %}
+
+{% block content %}
+    <section class="auth-section">
+        <div class="container">
+
+            <div class="auth-card">
+
+                <aside class="auth-panel">
+
+                    <a href="{% url 'shop:home' %}" class="brand auth-brand">
+                        <span class="brand-mark">S</span>
+                        <span class="brand-name">SHINE</span>
+                    </a>
+
+                    <h2>به خانواده Shine خوش آمدید</h2>
+
+                    <p>
+                        با ورود به حساب کاربری، خریدی لوکس و بی‌دغدغه را تجربه کنید؛
+                        پیگیری سفارش‌ها، علاقه‌مندی‌ها و پیشنهادهای اختصاصی.
+                    </p>
+
+                    <ul class="auth-points">
+                        <li>پیگیری لحظه‌ای سفارش‌ها</li>
+                        <li>ذخیره محصولات مورد علاقه</li>
+                        <li>تسریع فرآیند خرید و پرداخت</li>
+                    </ul>
+
+                </aside>
+
+                <div class="auth-form-side">
+
+                    <div class="auth-form-header">
+                        <span class="eyebrow">WELCOME BACK</span>
+                        <h1>ورود به حساب کاربری</h1>
+                    </div>
+
+                    {% if form.non_field_errors %}
+                        <div class="form-errors">
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+
+                        {% for field in form %}
+                            <div class="form-group {% if field.errors %}has-error{% endif %}">
+                                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+
+                                {{ field }}
+
+                                {% if field.help_text %}
+                                    <p class="form-help">{{ field.help_text }}</p>
+                                {% endif %}
+
+                                {% for error in field.errors %}
+                                    <p class="form-error">{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endfor %}
+
+                        <button type="submit" class="btn btn-gold btn-lg btn-block auth-submit">
+                            ورود به حساب
+                        </button>
+                    </form>
+                
+                    <p class="auth-otp-link">
+                        <a href="{% url 'accounts:otp_request' %}">ورود سریع با کد پیامکی 📱</a>
+                    </p>
+
+                    <p class="auth-switch">
+                        حساب کاربری ندارید؟
+                        <a href="{% url 'accounts:register' %}">ثبت‌نام کنید</a>
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+    </section>
+{% endblock %}

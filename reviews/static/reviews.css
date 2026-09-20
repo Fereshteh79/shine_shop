@@ -1,0 +1,145 @@
+/* =========================
+   REVIEWS
+========================= */
+
+.reviews-section {
+    margin-top: 70px;
+    padding-top: 55px;
+    border-top: 1px solid var(--border);
+}
+
+.review-section-header {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 28px;
+}
+
+.review-section-header h2 {
+    margin: 7px 0 0;
+    font-size: 24px;
+}
+
+.review-summary {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.review-score {
+    color: var(--gold-light);
+    font-size: 34px;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.review-count {
+    color: var(--text-muted);
+    font-size: 11px;
+}
+
+.review-stars {
+    color: var(--gold);
+    letter-spacing: 2px;
+    font-size: 13px;
+}
+
+.review-list {
+    display: grid;
+    gap: 12px;
+}
+
+.review-card {
+    padding: 20px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+}
+
+.review-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+}
+
+.review-author {
+    color: var(--text-soft);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.review-rating {
+    color: var(--gold);
+    letter-spacing: 2px;
+    font-size: 11px;
+}
+
+.review-title {
+    margin: 10px 0 5px;
+    font-size: 14px;
+}
+
+.review-comment {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 12px;
+    line-height: 2;
+}
+
+.review-date {
+    display: block;
+    margin-top: 10px;
+    color: var(--text-faint);
+    font-size: 9px;
+}
+
+.review-form {
+    margin-top: 25px;
+    padding: 25px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+}
+
+.review-form h3 {
+    margin: 0 0 22px;
+    font-size: 17px;
+}
+
+.rating-input {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+    gap: 5px;
+}
+
+.rating-input input {
+    position: absolute;
+    opacity: 0;
+}
+
+.rating-input label {
+    cursor: pointer;
+    color: var(--text-faint);
+    font-size: 23px;
+    transition: var(--transition);
+}
+
+.rating-input label:hover,
+.rating-input label:hover ~ label,
+.rating-input input:checked ~ label {
+    color: var(--gold);
+}
+
+@media (max-width: 600px) {
+    .review-section-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .review-summary {
+        width: 100%;
+    }
+}

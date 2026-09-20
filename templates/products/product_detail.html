@@ -1,0 +1,314 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ product.seo_title }} | Shine{% endblock %}
+
+{% block meta_description %}{{ product.seo_description }}{% endblock %}
+
+{% block og_type %}product{% endblock %}
+
+{% block og_image %}
+    {% with image=product.primary_image %}
+        {% if image %}
+            <meta property="og:image" content="{{ request.build_absolute_uri }}{{ image.image.url }}">
+        {% endif %}
+    {% endwith %}
+{% endblock %}
+
+{% block extra_head %}
+    {# Schema.org — Product #}
+    <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "Product",
+            "name": "{{ product.name|escapejs }}",
+        "image": [
+        {% for image in product.images.all %}"{{ request.build_absolute_uri }}{{ image.image.url }}"
+            {% if not forloop.last %},{% endif %}{% endfor %}
+        ],
+        "description": "{{ product.seo_description|escapejs }}",
+        "sku": "{{ product.sku }}",
+        "brand": {
+            "@type": "Brand",
+            "name": "{{ product.brand.name|default:'Shine'|escapejs }}"
+        },
+        "offers": {
+            "@type": "Offer",
+            "priceCurrency": "IRT",
+            "price": "{{ product.final_price|floatformat:0 }}",
+            "availability": "{% if product.in_stock %}https://schema.org/InStock{% else %}
+        https://schema.org/OutOfStock{% endif %}",
+            "url": "{{ request.build_absolute_uri }}"
+        }
+    }
+    </script>
+{% endblock %}
+
+{% block content %}
+    <section class="product-detail-section">
+        <div class="container">
+
+            <nav class="breadcrumbs" aria-label="مسیر صفحه">
+                <a href="{% url 'shop:home' %}">خانه</a>
+                <span>/</span>
+                <a href="{% url 'shop:products' %}">فروشگاه</a>
+                {% if product.category %}
+                    <span>/</span>
+                    <a href="{% url 'shop:category' product.category.slug %}">{{ product.category.name }}</a>
+                {% endif %}
+                <span>/</span>
+                <span class="breadcrumbs-current">{{ product.name }}</span>
+            </nav>
+
+            <div class="product-detail">
+
+                <div class="product-gallery">
+
+                    <div class="product-main-image">
+                        {% with image=product.primary_image %}
+                            {% if image %}
+                                <img
+                                        id="mainProductImage"
+                                        src="{{ image.image.url }}"
+                                        alt="{{ image.alt_text|default:product.name }}"
+                                        width="800"
+                                        height="800"
+                                >
+                            {% else %}
+                                <div class="product-placeholder-large">SHINE</div>
+                            {% endif %}
+                        {% endwith %}
+
+                        {% if product.has_discount %}
+                            <span class="product-badge product-detail-badge">تخفیف</span>
+                        {% endif %}
+                    </div>
+
+                    {% if product.images.all %}
+                        <div class="product-thumbnails">
+                            {% for image in product.images.all %}
+                                <button
+                                        type="button"
+                                        class="product-thumbnail {% if forloop.first %}is-active{% endif %}"
+                                        data-image="{{ image.image.url }}"
+                                        aria-label="تصویر {{ forloop.counter }}"
+                                >
+                                    <img
+                                            src="{{ image.image.url }}"
+                                            alt="{{ image.alt_text|default:product.name }}"
+                                            loading="lazy"
+                                            width="200"
+                                            height="200"
+                                    >
+                                </button>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                </div>
+
+                <div class="product-detail-info">
+
+                    {% if product.brand %}
+                        <span class="product-detail-brand">{{ product.brand.name }}</span>
+                    {% endif %}
+
+                    <h1>{{ product.name }}</h1>
+
+                    {% if product.short_description %}
+                        <p class="product-detail-short">{{ product.short_description }}</p>
+                    {% endif %}
+
+                    <div class="product-detail-price">
+                        {% if product.has_discount %}
+                            <span class="detail-old-price">
+                            {{ product.price|floatformat:0 }} تومان
+                        </span>
+                        {% endif %}
+
+                        <strong>
+                            {{ product.final_price|floatformat:0 }}
+                            <small>تومان</small>
+                        </strong>
+
+                        {% if product.has_discount %}
+                            <span class="detail-discount">
+                            {{ product.discount_percentage|floatformat:0 }}٪ تخفیف
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    <div class="product-stock">
+                        <span class="stock-dot {% if not product.in_stock %}stock-out{% endif %}"></span>
+
+                        {% if product.in_stock %}
+                            <span>موجود در انبار — {{ product.stock }} عدد</span>
+                        {% else %}
+                            <span>ناموجود</span>
+                        {% endif %}
+                    </div>
+
+                    {% if product.description %}
+                        <div class="product-description">
+                            <h2>درباره محصول</h2>
+                            <div>{{ product.description|linebreaks }}</div>
+                        </div>
+                    {% endif %}
+
+                    {% if product.variants.all %}
+                        <div class="product-variants">
+                            <h3>انتخاب تنوع</h3>
+
+                            <div class="variant-list">
+                                {% for variant in product.variants.all %}
+                                    {% if variant.is_active %}
+                                        <label class="variant-option {% if not variant.in_stock %}is-disabled{% endif %}">
+                                            <input
+                                                    type="radio"
+                                                    name="variant"
+                                                    value="{{ variant.id }}"
+                                                    data-stock="{{ variant.stock }}"
+                                                    {% if not variant.in_stock %}disabled{% endif %}
+                                                    {% if forloop.first and variant.in_stock %}checked{% endif %}
+                                            >
+
+                                            <span>
+                                            {{ variant.name }}
+                                                {% if not variant.in_stock %}
+                                                    <small>ناموجود</small>
+                                                {% endif %}
+                                        </span>
+                                        </label>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    {% if user.is_authenticated %}
+
+                        <form method="post" action="{% url 'products:detail' product.slug %}" class="product-actions">
+                            {% csrf_token %}
+
+                            <input type="hidden" name="variant" id="selectedVariant" value="">
+
+                            <div class="add-cart-form">
+
+                                <div class="quantity-control">
+                                    <button type="button" class="quantity-btn" data-action="decrease">−</button>
+
+                                    <input
+                                            type="number"
+                                            name="quantity"
+                                            id="quantityInput"
+                                            value="1"
+                                            min="1"
+                                            max="{% if product.stock %}{{ product.stock }}{% else %}99{% endif %}"
+                                            aria-label="تعداد"
+                                    >
+
+                                    <button type="button" class="quantity-btn" data-action="increase">+</button>
+                                </div>
+
+                                {% if product.in_stock %}
+                                    <button type="submit" class="btn btn-gold btn-add-cart">
+                                        افزودن به سبد خرید
+                                    </button>
+                                {% else %}
+                                    <button type="button" class="btn btn-outline btn-add-cart" disabled>
+                                        محصول ناموجود است
+                                    </button>
+                                {% endif %}
+
+                            </div>
+
+                            <form method="post" action="{% url 'wishlist:toggle' product.id %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{{ request.path }}">
+
+                                <button
+                                        type="submit"
+                                        class="wishlist-detail-btn"
+                                        aria-label="افزودن به علاقه‌مندی‌ها"
+                                >
+                                    ♡
+                                </button>
+                            </form>
+
+                        </form>
+
+                    {% else %}
+
+                        <div class="product-actions">
+                            <a href="{% url 'accounts:login' %}?next={{ request.path }}"
+                               class="btn btn-gold btn-add-cart">
+                                ورود برای خرید
+                            </a>
+                        </div>
+
+                    {% endif %}
+
+                    <div class="product-meta">
+                        <div>
+                            <span>کد محصول</span>
+                            <strong class="ltr">{{ product.sku }}</strong>
+                        </div>
+
+                        {% if product.category %}
+                            <div>
+                                <span>دسته‌بندی</span>
+                                <a href="{% url 'shop:category' product.category.slug %}">
+                                    {{ product.category.name }}
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                </div>
+            </div>
+
+            {% if product.attributes.all %}
+                <section class="product-specs">
+                    <div class="section-heading">
+                        <div>
+                            <span class="eyebrow">PRODUCT DETAILS</span>
+                            <h2>مشخصات محصول</h2>
+                        </div>
+                    </div>
+
+                    <div class="specs-grid">
+                        {% for attribute in product.attributes.all %}
+                            <div class="spec-item">
+                                <span>{{ attribute.name }}</span>
+                                <strong>{{ attribute.value }}</strong>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </section>
+            {% endif %}
+            {% include "includes/product_reviews.html" %}
+
+            {% if related_products %}
+                <section class="related-products">
+                    <div class="section-heading">
+                        <div>
+                            <span class="eyebrow">YOU MAY ALSO LIKE</span>
+                            <h2>محصولات مشابه</h2>
+                        </div>
+                    </div>
+
+                    <div class="product-grid">
+                        {% for item in related_products %}
+                            {% include "includes/product_card.html" with product=item %}
+                        {% endfor %}
+                    </div>
+                </section>
+            {% endif %}
+
+        </div>
+    </section>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'js/products/product-detail.js' %}" defer></script>
+{% endblock %}

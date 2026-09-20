@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block title %}ثبت سفارش | Shine{% endblock %}
+
+{% block content %}
+    <section class="checkout-section">
+        <div class="container">
+
+            <div class="section-heading checkout-header">
+                <div>
+                    <span class="eyebrow">CHECKOUT</span>
+                    <h1>ثبت سفارش</h1>
+                    <p>اطلاعات گیرنده را تکمیل کنید و سفارش را نهایی کنید.</p>
+                </div>
+            </div>
+
+            <form method="post" class="checkout-layout">
+                {% csrf_token %}
+
+                <div class="checkout-main">
+
+                    <div class="checkout-card-header">
+                        <span class="eyebrow">SHIPPING INFORMATION</span>
+                        <h2>اطلاعات گیرنده</h2>
+                    </div>
+
+                    {% if form.non_field_errors %}
+                        <div class="form-errors">
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <div class="checkout-form-grid">
+
+                        <div class="form-group {% if form.recipient_name.errors %}has-error{% endif %}">
+                            <label for="{{ form.recipient_name.id_for_label }}">{{ form.recipient_name.label }}</label>
+                            {{ form.recipient_name }}
+                            {% for error in form.recipient_name.errors %}
+                                <p class="form-error">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+
+                        <div class="form-group {% if form.phone_number.errors %}has-error{% endif %}">
+                            <label for="{{ form.phone_number.id_for_label }}">{{ form.phone_number.label }}</label>
+                            {{ form.phone_number }}
+                            {% for error in form.phone_number.errors %}
+                                <p class="form-error">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+
+                        <div class="form-group {% if form.province.errors %}has-error{% endif %}">
+                            <label for="{{ form.province.id_for_label }}">{{ form.province.label }}</label>
+                            {{ form.province }}
+                            {% for error in form.province.errors %}
+                                <p class="form-error">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+
+                        <div class="form-group {% if form.city.errors %}has-error{% endif %}">
+                            <label for="{{ form.city.id_for_label }}">{{ form.city.label }}</label>
+                            {{ form.city }}
+                            {% for error in form.city.errors %}
+                                <p class="form-error">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+
+                        <div class="form-group checkout-form-full {% if form.address.errors %}has-error{% endif %}">
+                            <label for="{{ form.address.id_for_label }}">{{ form.address.label }}</label>
+                            {{ form.address }}
+                            {% for error in form.address.errors %}
+                                <p class="form-error">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+
+                        <div class="form-group {% if form.postal_code.errors %}has-error{% endif %}">
+                            <label for="{{ form.postal_code.id_for_label }}">{{ form.postal_code.label }}</label>
+                            {{ form.postal_code }}
+                            {% for error in form.postal_code.errors %}
+                                <p class="form-error">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+
+                        <div class="form-group {% if form.notes.errors %}has-error{% endif %}">
+                            <label for="{{ form.notes.id_for_label }}">{{ form.notes.label }}</label>
+                            {{ form.notes }}
+                            {% for error in form.notes.errors %}
+                                <p class="form-error">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <aside class="checkout-summary">
+
+                    <div class="checkout-summary-card">
+
+                        <span class="eyebrow">ORDER SUMMARY</span>
+                        <h2 class="checkout-summary-title">خلاصه سفارش</h2>
+
+                        <div class="checkout-items">
+
+                            {% for item in cart.items.all %}
+                                <div class="checkout-item">
+                                    <div class="checkout-item-image">
+                                        {% with image=item.product.images.first %}
+                                            {% if image %}
+                                                <img src="{{ image.image.url }}" alt="{{ item.product.name }}"
+                                                     loading="lazy">
+                                            {% else %}
+                                                <div class="product-placeholder">S</div>
+                                            {% endif %}
+                                        {% endwith %}
+                                    </div>
+
+                                    <div class="checkout-item-info">
+                                        <strong>{{ item.product.name }}</strong>
+
+                                        {% if item.variant %}
+                                            <span>{{ item.variant.name }}</span>
+                                        {% endif %}
+
+                                        <span>{{ item.quantity }} × {{ item.unit_price|floatformat:0 }} تومان</span>
+                                    </div>
+
+                                    <div class="checkout-item-price">
+                                        {{ item.line_total|floatformat:0 }} تومان
+                                    </div>
+                                </div>
+                            {% endfor %}
+
+                        </div>
+
+                        <div class="summary-divider"></div>
+
+                        <div class="summary-row">
+                            <span>جمع کالاها</span>
+                            <strong>{{ cart.subtotal|floatformat:0 }} تومان</strong>
+                        </div>
+
+                        <div class="summary-row">
+                            <span>هزینه ارسال</span>
+                            <strong>رایگان</strong>
+                        </div>
+
+                        <div class="summary-divider"></div>
+
+                        <div class="summary-total">
+                            <span>مبلغ نهایی</span>
+                            <strong>{{ cart.subtotal|floatformat:0 }} تومان</strong>
+                        </div>
+
+                        <button type="submit" class="btn btn-gold btn-lg checkout-submit">
+                            ثبت سفارش و پرداخت
+                        </button>
+
+                        <a href="{% url 'cart:detail' %}" class="continue-shopping">
+                            بازگشت به سبد خرید
+                        </a>
+
+                    </div>
+
+                </aside>
+
+            </form>
+
+        </div>
+    </section>
+{% endblock %}

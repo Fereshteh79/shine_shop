@@ -1,0 +1,278 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Shine | گالری لوکس عینک، ساعت، نقره و عطر
+{% endblock %}
+
+{% block meta_description %}
+    خرید آنلاین عینک آفتابی، ساعت، نقره‌جات، عطر و محصولات منتخب از گالری Shine.
+{% endblock %}
+
+{% block content %}
+
+    <section class="hero">
+        <div class="container hero-inner">
+
+            <div class="hero-content">
+
+            <span class="hero-eyebrow">
+                SHINE COLLECTION
+            </span>
+
+                <h1>
+                    انتخابی که
+                    <span>می‌درخشد.</span>
+                </h1>
+
+                <p class="hero-description">
+                    مجموعه‌ای منتخب از عینک‌های آفتابی، ساعت‌های لوکس،
+                    نقره‌جات و عطر؛ برای کسانی که تفاوت را در جزئیات می‌بینند.
+                </p>
+
+                <div class="hero-actions">
+
+                    <a
+                            href="{% url 'shop:products' %}"
+                            class="btn btn-gold"
+                    >
+                        مشاهده فروشگاه
+                    </a>
+
+                    <a
+                            href="#featured"
+                            class="btn btn-outline"
+                    >
+                        محصولات منتخب
+                    </a>
+
+                </div>
+
+            </div>
+
+
+            <div class="hero-visual" aria-hidden="true">
+
+                <div class="hero-orbit"></div>
+                <div class="hero-glow"></div>
+
+                <div class="hero-card">
+
+                <span class="hero-card-eyebrow">
+                    SHINE
+                </span>
+
+                    <strong>
+                        NEW
+                    </strong>
+
+                    <small>
+                        COLLECTION
+                    </small>
+
+                </div>
+
+            </div>
+
+        </div>
+    </section>
+
+
+    <section class="features-bar">
+
+        <div class="container features-grid">
+
+            <div class="feature-item">
+                <strong>ضمانت اصالت</strong>
+                <span>انتخاب باکیفیت و مطمئن</span>
+            </div>
+
+            <div class="feature-item">
+                <strong>ارسال سریع</strong>
+                <span>به سراسر کشور</span>
+            </div>
+
+            <div class="feature-item">
+                <strong>پرداخت امن</strong>
+                <span>درگاه بانکی معتبر</span>
+            </div>
+
+            <div class="feature-item">
+                <strong>پشتیبانی واقعی</strong>
+                <span>آنلاین و حضوری</span>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <section
+            class="section"
+            id="featured"
+    >
+
+        <div class="container">
+
+            <div class="featured-heading">
+
+                <div class="featured-heading-main">
+
+                    <div>
+                    <span class="eyebrow">
+                        CURATED FOR YOU
+                    </span>
+
+                        <h2>
+                            محصولات
+                            <span>منتخب</span>
+                        </h2>
+                    </div>
+
+                </div>
+
+                <a
+                        href="{% url 'shop:products' %}"
+                        class="text-link"
+                >
+                    مشاهده همه
+                    <span>←</span>
+                </a>
+
+            </div>
+
+
+            {% if featured_products %}
+
+                <div class="product-grid">
+
+                    {% for product in featured_products %}
+
+                        {% include "includes/product_card.html" with product=product %}
+
+                    {% endfor %}
+
+                </div>
+
+            {% else %}
+
+                <div class="empty-state">
+
+                    <h3>
+                        هنوز محصولی برای نمایش وجود ندارد.
+                    </h3>
+
+                    <p>
+                        محصولات منتخب را از پنل مدیریت اضافه کنید.
+                    </p>
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </section>
+
+
+    <section class="section section-dark home-categories">
+
+        <div class="container">
+
+            <div class="section-heading">
+
+                <div>
+                <span class="eyebrow">
+                    EXPLORE
+                </span>
+
+                    <h2>
+                        دسته‌بندی‌ها
+                    </h2>
+                </div>
+
+            </div>
+
+
+            {% if categories %}
+
+                <div class="category-grid">
+
+                    {% for category in categories %}
+
+                        <a
+                                href="{% url 'shop:category' category.slug %}"
+                                class="category-card"
+                        >
+
+                            {% if category.image %}
+
+                                <img
+                                        src="{{ category.image.url }}"
+                                        alt="{{ category.name }}"
+                                        loading="lazy"
+                                >
+
+                            {% endif %}
+
+                            <div class="category-overlay"></div>
+
+                            <div class="category-content">
+
+                            <span>
+                                DISCOVER
+                            </span>
+
+                                <h3>
+                                    {{ category.name }}
+                                </h3>
+
+                            </div>
+
+                        </a>
+
+                    {% endfor %}
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </section>
+
+
+    <section class="luxury-banner">
+
+        <div class="container luxury-banner-inner">
+
+            <div>
+
+            <span class="eyebrow">
+                THE SHINE EXPERIENCE
+            </span>
+
+                <h2>
+                    سادگی،
+                    <span>زیبایی،</span>
+                    ماندگاری.
+                </h2>
+
+                <p>
+                    تجربه خریدی متفاوت با انتخابی دقیق؛
+                    حضوری در گتوند یا آنلاین در سراسر ایران.
+                </p>
+
+            </div>
+
+            <a
+                    href="{% url 'shop:products' %}"
+                    class="btn btn-gold"
+            >
+                شروع خرید
+            </a>
+
+        </div>
+
+    </section>
+
+{% endblock %}

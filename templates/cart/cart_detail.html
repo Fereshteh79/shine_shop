@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block title %}سبد خرید | Shine{% endblock %}
+
+{% block content %}
+    <section class="cart-section">
+        <div class="container">
+
+            <div class="section-heading cart-heading">
+                <div>
+                    <span class="eyebrow">YOUR CART</span>
+                    <h1>سبد خرید</h1>
+                </div>
+
+                {% if cart and not cart.is_empty %}
+                    <span class="cart-count">{{ cart.total_items }} کالا</span>
+                {% endif %}
+            </div>
+
+            {% if cart and not cart.is_empty %}
+
+                <div class="cart-layout">
+
+                    <div class="cart-items">
+
+                        {% for item in cart.items.all %}
+                            <article class="cart-item">
+
+                                <a
+                                        href="{% url 'products:detail' item.product.slug %}"
+                                        class="cart-item-image"
+                                >
+                                    {% with image=item.product.images.first %}
+                                        {% if image %}
+                                            <img
+                                                    src="{{ image.image.url }}"
+                                                    alt="{{ image.alt_text|default:item.product.name }}"
+                                                    loading="lazy"
+                                                    width="105"
+                                                    height="120"
+                                            >
+                                        {% else %}
+                                            <div class="product-placeholder">SHINE</div>
+                                        {% endif %}
+                                    {% endwith %}
+                                </a>
+
+                                <div class="cart-item-info">
+
+                                    {% if item.product.brand %}
+                                        <span class="product-brand">{{ item.product.brand.name }}</span>
+                                    {% endif %}
+
+                                    <h2>
+                                        <a href="{% url 'products:detail' item.product.slug %}">
+                                            {{ item.product.name }}
+                                        </a>
+                                    </h2>
+
+                                    {% if item.variant %}
+                                        <span class="cart-item-variant">{{ item.variant.name }}</span>
+                                    {% endif %}
+
+                                    <div class="cart-item-price">
+                                        {{ item.unit_price|floatformat:0 }} تومان
+                                    </div>
+
+                                </div>
+
+                                <div class="cart-item-actions">
+
+                                    <form
+                                            method="post"
+                                            action="{% url 'cart:update' item.id %}"
+                                            class="cart-quantity-form"
+                                            data-cart-update
+                                    >
+                                        {% csrf_token %}
+
+                                        <button
+                                                type="button"
+                                                class="quantity-btn"
+                                                data-action="decrease"
+                                                aria-label="کاهش تعداد"
+                                        >−
+                                        </button>
+
+                                        <input
+                                                type="number"
+                                                name="quantity"
+                                                value="{{ item.quantity }}"
+                                                min="1"
+                                                max="99"
+                                                aria-label="تعداد"
+                                        >
+
+                                        <button
+                                                type="button"
+                                                class="quantity-btn"
+                                                data-action="increase"
+                                                aria-label="افزایش تعداد"
+                                        >+
+                                        </button>
+
+                                        <button type="submit" class="quantity-save">
+                                            بروزرسانی
+                                        </button>
+                                    </form>
+
+                                    <div class="cart-item-total">
+                                        {{ item.line_total|floatformat:0 }} تومان
+                                    </div>
+
+                                    <form
+                                            method="post"
+                                            action="{% url 'cart:remove' item.id %}"
+                                            data-confirm="آیا از حذف این محصول مطمئن هستید؟"
+                                    >
+                                        {% csrf_token %}
+                                        <button type="submit" class="cart-remove">حذف</button>
+                                    </form>
+
+                                </div>
+
+                            </article>
+                        {% endfor %}
+
+                    </div>
+
+                    <aside class="cart-summary">
+
+                        <div class="cart-summary-card">
+
+                            <span class="eyebrow">ORDER SUMMARY</span>
+                            <h2>خلاصه سفارش</h2>
+
+                            <div class="summary-row">
+                                <span>تعداد کالا</span>
+                                <strong>{{ cart.total_items }}</strong>
+                            </div>
+
+                            <div class="summary-row">
+                                <span>جمع کالاها</span>
+                                <strong>{{ cart.subtotal|floatformat:0 }} تومان</strong>
+                            </div>
+
+                            <div class="summary-divider"></div>
+
+                            <div class="summary-total">
+                                <span>مبلغ نهایی</span>
+                                <strong>{{ cart.subtotal|floatformat:0 }} تومان</strong>
+                            </div>
+
+                            <a href="{% url 'orders:create' %}" class="btn btn-gold cart-checkout-btn">
+                                ادامه و ثبت سفارش
+                            </a>
+
+                            <a href="{% url 'shop:products' %}" class="continue-shopping">
+                                ادامه خرید
+                            </a>
+
+                        </div>
+
+                        <form
+                                method="post"
+                                action="{% url 'cart:clear' %}"
+                                class="cart-clear-form"
+                                data-confirm="آیا از خالی کردن کل سبد خرید مطمئن هستید؟"
+                        >
+                            {% csrf_token %}
+                            <button type="submit">خالی کردن سبد خرید</button>
+                        </form>
+
+                    </aside>
+
+                </div>
+
+            {% else %}
+
+                <div class="empty-state cart-empty">
+                    <div class="empty-icon">🛒</div>
+                    <h2>سبد خرید شما خالی است</h2>
+                    <p>هنوز محصولی به سبد خرید اضافه نکرده‌اید.</p>
+                    <a href="{% url 'shop:products' %}" class="btn btn-gold">
+                        مشاهده فروشگاه
+                    </a>
+                </div>
+
+            {% endif %}
+
+        </div>
+    </section>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'js/cart/cart.js' %}" defer></script>
+{% endblock %}

@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if success %}
+        پرداخت موفق | Shine
+    {% else %}
+        پرداخت ناموفق | Shine
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    <section class="section">
+        <div class="container">
+
+            <div class="payment-result">
+
+                {% if success %}
+
+                    <div class="payment-result-icon success">
+                        ✓
+                    </div>
+
+                    <span class="eyebrow">
+                    PAYMENT SUCCESSFUL
+                </span>
+
+                    <h1>پرداخت با موفقیت انجام شد</h1>
+
+                    <p>
+                        {{ message }}
+                    </p>
+
+                    {% if payment %}
+                        <div class="payment-result-info">
+
+                            <div>
+                                <span>شماره سفارش</span>
+                                <strong>
+                                    #{{ payment.order_id }}
+                                </strong>
+                            </div>
+
+                            <div>
+                                <span>کد پیگیری</span>
+                                <strong>
+                                    {{ payment.reference_id|default:"-" }}
+                                </strong>
+                            </div>
+
+                            <div>
+                                <span>مبلغ</span>
+                                <strong>
+                                    {{ payment.amount|floatformat:0 }}
+                                    تومان
+                                </strong>
+                            </div>
+
+                        </div>
+                    {% endif %}
+
+                    <a
+                            href="{% url 'orders:detail' payment.order_id %}"
+                            class="btn btn-gold"
+                    >
+                        مشاهده سفارش
+                    </a>
+
+                {% else %}
+
+                    <div class="payment-result-icon failed">
+                        ×
+                    </div>
+
+                    <span class="eyebrow">
+                    PAYMENT FAILED
+                </span>
+
+                    <h1>پرداخت انجام نشد</h1>
+
+                    <p>
+                        {{ message }}
+                    </p>
+
+                    {% if payment %}
+                        <a
+                                href="{% url 'orders:detail' payment.order_id %}"
+                                class="btn btn-outline"
+                        >
+                            بازگشت به سفارش
+                        </a>
+                    {% else %}
+                        <a
+                                href="{% url 'shop:home' %}"
+                                class="btn btn-outline"
+                        >
+                            بازگشت به فروشگاه
+                        </a>
+                    {% endif %}
+
+                {% endif %}
+
+            </div>
+
+        </div>
+    </section>
+{% endblock %}

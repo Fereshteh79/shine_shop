@@ -1,0 +1,280 @@
+/* =========================
+   AUTH (LOGIN / REGISTER)
+========================= */
+
+.auth-section {
+    padding: 55px 0 100px;
+}
+
+.auth-card {
+    display: grid;
+    grid-template-columns: 0.85fr 1.15fr;
+    max-width: 980px;
+    margin-inline: auto;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    background: var(--surface);
+    box-shadow: var(--shadow);
+    animation: auth-rise 600ms ease both;
+}
+
+@keyframes auth-rise {
+    from {
+        transform: translateY(22px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+
+/* --- پنل برند (سمت راست) --- */
+
+.auth-panel {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 55px 45px;
+    background: radial-gradient(
+            circle at 80% 15%,
+            rgba(212, 175, 55, 0.16),
+            transparent 42%
+    ),
+    linear-gradient(160deg, #0b0b0b, #050505);
+}
+
+.auth-panel::before {
+    content: "";
+    position: absolute;
+    inset: 18px;
+    border: 1px solid rgba(212, 175, 55, 0.14);
+    border-radius: calc(var(--radius-xl) - 10px);
+    pointer-events: none;
+}
+
+.auth-panel::after {
+    content: "";
+    position: absolute;
+    bottom: -110px;
+    left: -110px;
+    width: 260px;
+    height: 260px;
+    border-radius: 50%;
+    background: rgba(212, 175, 55, 0.09);
+    filter: blur(55px);
+}
+
+.auth-brand {
+    margin-bottom: 35px;
+}
+
+.auth-panel h2 {
+    position: relative;
+    z-index: 1;
+    margin: 0 0 16px;
+    font-size: 25px;
+    line-height: 1.5;
+}
+
+.auth-panel p {
+    position: relative;
+    z-index: 1;
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 13px;
+    line-height: 2.1;
+}
+
+.auth-points {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 30px;
+}
+
+.auth-points li {
+    position: relative;
+    padding-inline-start: 26px;
+    color: var(--text-soft);
+    font-size: 13px;
+}
+
+.auth-points li::before {
+    content: "";
+    position: absolute;
+    top: 10px;
+    inset-inline-start: 0;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: rgba(212, 175, 55, 0.12);
+    box-shadow: inset 0 0 0 4px rgba(212, 175, 55, 0.28);
+}
+
+
+/* --- سمت فرم --- */
+
+.auth-form-side {
+    padding: 55px 50px;
+    background: var(--black-soft);
+}
+
+.auth-form-header {
+    margin-bottom: 30px;
+}
+
+.auth-form-header h1 {
+    margin: 8px 0 0;
+    font-size: clamp(23px, 3vw, 30px);
+    letter-spacing: -0.5px;
+}
+
+.auth-form-side .form-group {
+    margin-bottom: 16px;
+}
+
+.auth-form-side .form-group.has-error input {
+    border-color: rgba(226, 109, 109, 0.55);
+}
+
+.auth-form-side input,
+.auth-form-side select,
+.auth-form-side textarea {
+    min-height: 50px;
+    padding: 12px 15px;
+    border-radius: var(--radius-sm);
+    background: var(--surface-2);
+    font-size: 14px;
+    transition: border-color var(--transition),
+    box-shadow var(--transition);
+}
+
+.auth-form-side input:focus {
+    border-color: rgba(212, 175, 55, 0.65);
+    box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.07);
+}
+
+.auth-submit {
+    margin-top: 10px;
+    font-size: 14px;
+}
+
+.auth-switch {
+    margin: 24px 0 0;
+    padding-top: 22px;
+    border-top: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 13px;
+    text-align: center;
+}
+
+.auth-switch a {
+    color: var(--gold);
+    font-weight: 700;
+    transition: var(--transition);
+}
+
+.auth-switch a:hover {
+    color: var(--gold-light);
+}
+
+
+/* چیدمان دوستونی فیلدهای کوتاه */
+.auth-form-side form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 14px;
+}
+
+.auth-form-side .form-group:not(.form-half) {
+    grid-column: 1 / -1;
+}
+
+.auth-form-side .form-group {
+    min-width: 0;
+}
+
+@media (max-width: 480px) {
+    .auth-form-side form {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 860px) {
+    .auth-card,
+    .auth-card-register {
+        grid-template-columns: 1fr;
+    }
+
+    .auth-panel {
+        padding: 40px 32px;
+    }
+
+    .auth-panel::before {
+        inset: 14px;
+    }
+
+    .auth-form-side {
+        padding: 40px 32px 45px;
+    }
+}
+
+@media (max-width: 480px) {
+    .auth-section {
+        padding-top: 25px;
+    }
+
+    .auth-card {
+        border-radius: var(--radius-lg);
+    }
+
+    .auth-panel {
+        padding: 34px 24px;
+    }
+
+    .auth-panel h2 {
+        font-size: 21px;
+    }
+
+    .auth-form-side {
+        padding: 32px 22px 38px;
+    }
+}
+
+.auth-otp-link {
+    margin: 14px 0 0;
+    text-align: center;
+}
+
+.auth-otp-link a {
+    color: var(--gold);
+    font-size: 12px;
+    transition: var(--transition);
+}
+
+.auth-otp-link a:hover {
+    color: var(--gold-light);
+}
+
+/* ورودی کد بزرگ و مرکزی */
+.otp-code-input {
+    font-size: 22px !important;
+    font-weight: 800;
+    letter-spacing: 10px;
+    text-align: center;
+}
+
+.auth-card-otp {
+    max-width: 860px;
+}

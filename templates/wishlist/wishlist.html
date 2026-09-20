@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}علاقه‌مندی‌های من | Shine{% endblock %}
+
+{% block content %}
+    <section class="wishlist-section">
+        <div class="container">
+
+            <div class="wishlist-header">
+                <div>
+                    <span class="eyebrow">MY WISHLIST</span>
+                    <h1>علاقه‌مندی‌های من</h1>
+
+                    {% if wishlist and wishlist.items.all %}
+                        <p>{{ wishlist.items.count }} محصول ذخیره شده</p>
+                    {% endif %}
+                </div>
+
+                {% if wishlist and wishlist.items.all %}
+                    <form
+                            method="post"
+                            action="{% url 'wishlist:clear' %}"
+                            data-confirm="آیا از خالی کردن کل لیست علاقه‌مندی‌ها مطمئن هستید؟"
+                    >
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger btn-sm">خالی کردن لیست</button>
+                    </form>
+                {% endif %}
+            </div>
+
+            {% if wishlist and wishlist.items.all %}
+
+                <div class="wishlist-grid">
+                    {% for item in wishlist.items.all %}
+                        <div class="wishlist-card">
+                            {% include "includes/product_card.html" with product=item.product %}
+
+                            <form
+                                    method="post"
+                                    action="{% url 'wishlist:remove' item.product.id %}"
+                                    class="wishlist-remove-form"
+                            >
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{% url 'wishlist:list' %}">
+
+                                <button
+                                        type="submit"
+                                        class="wishlist-remove"
+                                        aria-label="حذف از علاقه‌مندی‌ها"
+                                        title="حذف"
+                                >
+                                    ×
+                                </button>
+                            </form>
+                        </div>
+                    {% endfor %}
+                </div>
+
+            {% else %}
+
+                <div class="empty-state">
+                    <div class="empty-state-icon">♡</div>
+                    <h3>لیست علاقه‌مندی‌های شما خالی است</h3>
+                    <p>محصولات مورد علاقه‌ات را با آیکون ♡ در صفحه محصول ذخیره کن.</p>
+                    <a href="{% url 'shop:products' %}" class="btn btn-gold">
+                        مشاهده فروشگاه
+                    </a>
+                </div>
+
+            {% endif %}
+
+        </div>
+    </section>
+{% endblock %}

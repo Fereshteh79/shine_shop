@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+
+{% block title %}سفارش #{{ order.id }} | Shine{% endblock %}
+
+{% block content %}
+    <section class="order-detail-section">
+        <div class="container">
+
+            <div class="section-heading">
+                <div>
+                    <span class="eyebrow">ORDER</span>
+                    <h1>سفارش #{{ order.id }}</h1>
+                </div>
+
+                <a href="{% url 'orders:list' %}" class="btn btn-outline">
+                    سفارش‌های من
+                </a>
+            </div>
+
+            <div class="order-detail-grid">
+
+                <div class="order-detail-main">
+
+                    <div class="order-card">
+                        <div class="order-card-header">
+                            <h2>اقلام سفارش</h2>
+
+                            <span class="order-status status-{{ order.status }}">
+                            {{ order.get_status_display }}
+                        </span>
+                        </div>
+
+                        <div class="order-items">
+
+                            {% for item in order.items.all %}
+                                <div class="order-item">
+                                    <div class="order-item-image">
+                                        {% with image=item.product.images.first %}
+                                            {% if image %}
+                                                <img src="{{ image.image.url }}" alt="{{ item.product_name }}"
+                                                     loading="lazy">
+                                            {% else %}
+                                                <div class="product-placeholder">S</div>
+                                            {% endif %}
+                                        {% endwith %}
+                                    </div>
+
+                                    <div class="order-item-info">
+                                        <h3>{{ item.product_name }}</h3>
+
+                                        {% if item.variant_name %}
+                                            <span>{{ item.variant_name }}</span>
+                                        {% endif %}
+
+                                        <small>{{ item.quantity }} × {{ item.unit_price|floatformat:0 }} تومان</small>
+                                    </div>
+
+                                    <strong>{{ item.total_price|floatformat:0 }} تومان</strong>
+                                </div>
+                            {% endfor %}
+
+                        </div>
+
+                        <div class="order-summary">
+                            <div>
+                                <span>جمع کالاها</span>
+                                <strong>{{ order.subtotal|floatformat:0 }} تومان</strong>
+                            </div>
+
+                            <div>
+                                <span>ارسال</span>
+                                <strong>{{ order.shipping_cost|floatformat:0 }} تومان</strong>
+                            </div>
+
+                            <div>
+                                <span>تخفیف</span>
+                                <strong>{{ order.discount_amount|floatformat:0 }} تومان</strong>
+                            </div>
+
+                            <div class="order-total">
+                                <span>مبلغ نهایی</span>
+                                <strong>{{ order.total_amount|floatformat:0 }} تومان</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="order-card">
+                        <div class="order-card-header">
+                            <h2>اطلاعات ارسال</h2>
+                        </div>
+
+                        <div class="shipping-info">
+                            <div>
+                                <span>گیرنده</span>
+                                <strong>{{ order.recipient_name }}</strong>
+                            </div>
+
+                            <div>
+                                <span>شماره تماس</span>
+                                <strong class="ltr">{{ order.phone_number }}</strong>
+                            </div>
+
+                            <div>
+                                <span>استان</span>
+                                <strong>{{ order.province }}</strong>
+                            </div>
+
+                            <div>
+                                <span>شهر</span>
+                                <strong>{{ order.city }}</strong>
+                            </div>
+
+                            <div>
+                                <span>کد پستی</span>
+                                <strong class="ltr">{{ order.postal_code }}</strong>
+                            </div>
+
+                            <div class="shipping-address">
+                                <span>آدرس</span>
+                                <strong>{{ order.address }}</strong>
+                            </div>
+
+                            {% if order.notes %}
+                                <div class="shipping-address">
+                                    <span>توضیحات</span>
+                                    <strong>{{ order.notes }}</strong>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                </div>
+
+                <aside class="order-detail-sidebar">
+
+                    <div class="order-total-card">
+
+                        <span class="eyebrow">PAYMENT</span>
+                        <h2>وضعیت پرداخت</h2>
+
+                        {% if order.status == "pending" %}
+
+                            <div class="payment-timer" data-remaining="{{ order.remaining_payment_seconds }}">
+                                <span>مهلت پرداخت</span>
+                                <strong id="paymentCountdown">--:--</strong>
+                            </div>
+
+                            <a href="{% url 'payments:start' order.id %}" class="btn btn-gold order-payment-btn">
+                                پرداخت سفارش
+                            </a>
+
+                            <form
+                                    method="post"
+                                    action="{% url 'orders:cancel' order.id %}"
+                                    class="order-cancel-form"
+                                    data-confirm="آیا از لغو این سفارش مطمئن هستید؟ موجودی محصولات بازگردانده می‌شود."
+                            >
+                                {% csrf_token %}
+                                <button type="submit">لغو سفارش</button>
+                            </form>
+
+                        {% elif order.is_paid %}
+
+                            <div class="order-paid-message">
+                                ✓ پرداخت این سفارش با موفقیت انجام شده است.
+                            </div>
+
+                        {% else %}
+
+                            <p class="order-status-note">
+                                {{ order.get_status_display }}
+                            </p>
+
+                        {% endif %}
+
+                        <a href="{% url 'shop:products' %}" class="order-back-link">
+                            ادامه خرید
+                        </a>
+
+                    </div>
+
+                </aside>
+
+            </div>
+
+        </div>
+    </section>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        (() => {
+            const timer = document.querySelector("[data-remaining]");
+            const output = document.getElementById("paymentCountdown");
+
+            if (!timer || !output) return;
+
+            let remaining = parseInt(timer.dataset.remaining, 10) || 0;
+
+            const render = () => {
+                const minutes = String(Math.floor(remaining / 60)).padStart(2, "0");
+                const seconds = String(remaining % 60).padStart(2, "0");
+                output.textContent = `${minutes}:${seconds}`;
+            };
+
+            render();
+
+            const interval = setInterval(() => {
+                remaining -= 1;
+
+                if (remaining <= 0) {
+                    clearInterval(interval);
+                    output.textContent = "منقضی شده";
+                    window.location.reload();
+                    return;
+                }
+
+                render();
+            }, 1000);
+        })();
+    </script>
+{% endblock %}
