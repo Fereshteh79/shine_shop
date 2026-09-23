@@ -14,7 +14,7 @@
                 </div>
             </div>
 
-            <form method="post" class="checkout-layout">
+            <form method="post" class="checkout-layout" novalidate>
                 {% csrf_token %}
 
                 <div class="checkout-main">
@@ -27,7 +27,7 @@
                     {% if form.non_field_errors %}
                         <div class="form-errors">
                             {% for error in form.non_field_errors %}
-                                {{ error }}
+                                <p>{{ error }}</p>
                             {% endfor %}
                         </div>
                     {% endif %}
@@ -102,13 +102,13 @@
                         <h2 class="checkout-summary-title">خلاصه سفارش</h2>
 
                         <div class="checkout-items">
-
                             {% for item in cart.items.all %}
                                 <div class="checkout-item">
                                     <div class="checkout-item-image">
                                         {% with image=item.product.images.first %}
                                             {% if image %}
-                                                <img src="{{ image.image.url }}" alt="{{ item.product.name }}"
+                                                <img src="{{ image.image.url }}"
+                                                     alt="{{ item.product.name }}"
                                                      loading="lazy">
                                             {% else %}
                                                 <div class="product-placeholder">S</div>
@@ -131,7 +131,6 @@
                                     </div>
                                 </div>
                             {% endfor %}
-
                         </div>
 
                         <div class="summary-divider"></div>
@@ -169,4 +168,22 @@
 
         </div>
     </section>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        (() => {
+            const form = document.querySelector(".checkout-layout");
+            const submit = form?.querySelector(".checkout-submit");
+
+            if (!form || !submit) return;
+
+            form.addEventListener("submit", () => {
+                if (submit.disabled) return;
+
+                submit.disabled = true;
+                submit.textContent = "در حال ثبت سفارش...";
+            });
+        })();
+    </script>
 {% endblock %}

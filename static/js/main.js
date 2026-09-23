@@ -16,29 +16,43 @@
         });
     };
 
-    const initMobileMenu = () => {
-        const button = document.querySelector("[data-menu-toggle]");
-        const nav = document.getElementById("main-nav");
+    const initDrawer = () => {
+        const body = document.body;
+        const drawer = document.getElementById("side-drawer");
+        const toggle = document.querySelector("[data-drawer-toggle]");
+        const overlay = document.querySelector("[data-drawer-overlay]");
+        const closeButton = document.querySelector("[data-drawer-close]");
 
-        if (!button || !nav) return;
+        if (!drawer || !toggle) return;
 
-        const toggle = () => {
-            const isOpen = nav.classList.toggle("open");
-            button.classList.toggle("open", isOpen);
-            button.setAttribute("aria-expanded", String(isOpen));
-            document.body.classList.toggle("no-scroll", isOpen);
+        const setState = (open) => {
+            body.classList.toggle("drawer-open", open);
+            toggle.classList.toggle("open", open);
+            toggle.setAttribute("aria-expanded", String(open));
+            drawer.setAttribute("aria-hidden", String(!open));
         };
 
-        button.addEventListener("click", toggle);
-
-        // بستن منو با کلید Esc یا کلیک روی لینک
-        document.addEventListener("keydown", (e) => {
-            if (e.key === "Escape" && nav.classList.contains("open")) toggle();
+        toggle.addEventListener("click", () => {
+            setState(!body.classList.contains("drawer-open"));
         });
 
-        nav.querySelectorAll("a").forEach((link) => {
-            link.addEventListener("click", () => {
-                if (nav.classList.contains("open")) toggle();
+        overlay?.addEventListener("click", () => setState(false));
+        closeButton?.addEventListener("click", () => setState(false));
+
+        document.addEventListener("keydown", (event) => {
+            if (event.key === "Escape") setState(false);
+        });
+
+        drawer.querySelectorAll("a").forEach((link) => {
+            link.addEventListener("click", () => setState(false));
+        });
+    };
+
+    const initAccordions = () => {
+        document.querySelectorAll("[data-accordion]").forEach((button) => {
+            button.addEventListener("click", (event) => {
+                event.stopPropagation();
+                button.closest(".drawer-accordion")?.classList.toggle("open");
             });
         });
     };
@@ -48,16 +62,34 @@
         if (!header) return;
 
         const update = () => {
-            header.classList.toggle("is-scrolled", window.scrollY > 10);
+            header.classList.toggle("is-scrolled", window.scrollY > 12);
         };
 
         window.addEventListener("scroll", update, {passive: true});
         update();
     };
+    const initCardQuantity = () => {
+        document.querySelectorAll(".product-card-form").forEach((form) => {
+            const input = form.querySelector('input[name="quantity"]');
+            if (!input) return;
+
+            form.querySelectorAll(".quantity-btn").forEach((btn) => {
+                btn.addEventListener("click", () => {
+                    let value = parseInt(input.value, 10) || 1;
+
+                    if (btn.dataset.cardAction === "increase") value += 1;
+                    if (btn.dataset.cardAction === "decrease") value = Math.max(1, value - 1);
+
+                    input.value = Math.min(value, 99);
+                });
+            });
+        });
+    };
 
     document.addEventListener("DOMContentLoaded", () => {
         initAlerts();
-        initMobileMenu();
+        initDrawer();
+        initAccordions();
         initHeaderScroll();
     });
 })();

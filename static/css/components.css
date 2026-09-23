@@ -609,3 +609,44 @@
         padding: 50px 18px;
     }
 }
+
+/* سبد خرید سریع از کارت محصول */
+.product-card-form {
+    margin-top: 14px;
+}
+
+.card-quantity {
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface-2);
+}
+
+.card-quantity input {
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--text);
+    text-align: center;
+    font-size: 12px;
+}
+
+.card-quantity .quantity-btn {
+    width: 30px;
+    height: 38px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--gold);
+    font-size: 15px;
+}
+
+.card-add-btn {
+    flex: 1;
+    white-space: normal;
+}

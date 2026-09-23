@@ -9,7 +9,10 @@ class ProductSearchForm(forms.Form):
         max_length=100,
         label="جستجو",
         widget=forms.TextInput(
-            attrs={"placeholder": "نام محصول..."},
+            attrs={
+                "placeholder": "نام محصول...",
+                "autocomplete": "off",
+            },
         ),
     )
 
@@ -43,18 +46,29 @@ class AddToCartForm(forms.Form):
         min_value=1,
         max_value=99,
         initial=1,
+        label="تعداد",
         widget=forms.NumberInput(
-            attrs={"min": 1, "value": 1},
+            attrs={
+                "min": 1,
+                "max": 99,
+                "inputmode": "numeric",
+            },
         ),
     )
+
     variant = forms.IntegerField(
         required=False,
         min_value=1,
+        label="تنوع",
         widget=forms.HiddenInput(),
     )
 
     def clean_quantity(self):
         quantity = self.cleaned_data["quantity"]
-        if quantity <= 0:
-            raise forms.ValidationError("تعداد باید بیشتر از صفر باشد.")
+
+        if quantity < 1:
+            raise forms.ValidationError(
+                "تعداد باید بیشتر از صفر باشد."
+            )
+
         return quantity

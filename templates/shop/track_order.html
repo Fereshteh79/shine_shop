@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}پیگیری سفارش | Shine{% endblock %}
+
+{% block content %}
+    <section class="track-section">
+        <div class="container">
+
+            <div class="track-card">
+
+                <div class="payment-card-header">
+                    <span class="eyebrow">ORDER TRACKING</span>
+                    <h1>پیگیری سفارش</h1>
+                    <p>کد رهگیری ۱۲ رقمی خود را وارد کنید.</p>
+                </div>
+
+                <form method="post" class="track-form">
+                    {% csrf_token %}
+                    <input
+                            type="text"
+                            name="tracking_code"
+                            class="track-input"
+                            placeholder="مثلاً 123456789012"
+                            inputmode="numeric"
+                            dir="ltr"
+                            value="{{ searched_code|default:'' }}"
+                            required
+                    >
+                    <button type="submit" class="btn btn-gold">پیگیری</button>
+                </form>
+
+                {% if order %}
+
+                    <div class="track-result">
+
+                        <div class="track-code">
+                            <span>کد رهگیری سفارش</span>
+                            <strong class="ltr">{{ order.tracking_code }}</strong>
+                        </div>
+
+                        {% if order.status == "cancelled" %}
+                            <div class="payment-result-icon failed">×</div>
+                            <p class="track-cancelled">این سفارش لغو شده است.</p>
+
+                        {% else %}
+
+                            <div class="track-timeline">
+
+                                {% for step in order.status_timeline %}
+
+                                    <div class="timeline-step {% if step.done %}is-done{% endif %} {% if forloop.first and order.status == 'pending' %}is-current{% endif %}">
+
+                                        <div class="timeline-dot">
+                                            {% if step.done %}✓{% else %}{{ forloop.counter }}{% endif %}
+                                        </div>
+
+                                        <div class="timeline-label">{{ step.label }}</div>
+
+                                    </div>
+
+                                {% endfor %}
+
+                            </div>
+
+                        {% endif %}
+
+                    </div>
+
+                {% elif searched_code %}
+
+                    <div class="form-errors track-error">
+                        سفارشی با این کد رهگیری پیدا نشد. کد را دوباره بررسی کنید.
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+    </section>
+{% endblock %}

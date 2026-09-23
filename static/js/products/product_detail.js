@@ -5,22 +5,39 @@
         const mainImage = document.getElementById("mainProductImage");
         const thumbnails = document.querySelectorAll(".product-thumbnail");
 
-        if (!mainImage || !thumbnails.length) return;
+        if (!mainImage || !thumbnails.length) {
+            return;
+        }
 
         thumbnails.forEach((thumb) => {
             thumb.addEventListener("click", () => {
                 const url = thumb.dataset.image;
-                if (!url) return;
 
-                mainImage.src = url;
+                if (!url || mainImage.src === url) {
+                    return;
+                }
+
                 mainImage.style.opacity = "0";
 
-                requestAnimationFrame(() => {
-                    mainImage.style.transition = "opacity 250ms ease";
-                    mainImage.style.opacity = "1";
+                const updateImage = () => {
+                    mainImage.src = url;
+
+                    requestAnimationFrame(() => {
+                        mainImage.style.transition = "opacity 250ms ease";
+                        mainImage.style.opacity = "1";
+                    });
+                };
+
+                if (mainImage.complete) {
+                    updateImage();
+                } else {
+                    mainImage.addEventListener("load", updateImage, {once: true});
+                }
+
+                thumbnails.forEach((item) => {
+                    item.classList.remove("is-active");
                 });
 
-                thumbnails.forEach((t) => t.classList.remove("is-active"));
                 thumb.classList.add("is-active");
             });
         });
@@ -28,53 +45,91 @@
 
     const initQuantity = () => {
         const input = document.getElementById("quantityInput");
-        if (!input) return;
+        const buttons = document.querySelectorAll(".quantity-btn");
+
+        if (!input) {
+            return;
+        }
+
+        const getLimits = () => ({
+            min: parseInt(input.min, 10) || 1,
+            max: parseInt(input.max, 10) || 99,
+        });
 
         const clamp = () => {
-            const max = parseInt(input.max, 10) || 99;
-            const min = parseInt(input.min, 10) || 1;
-            let value = parseInt(input.value, 10) || min;
+            const {min, max} = getLimits();
+            let value = parseInt(input.value, 10);
+
+            if (Number.isNaN(value)) {
+                value = min;
+            }
+
             value = Math.min(Math.max(value, min), max);
             input.value = value;
         };
 
-        document.querySelectorAll(".quantity-btn").forEach((btn) => {
-            btn.addEventListener("click", () => {
-                const action = btn.dataset.action;
-                let value = parseInt(input.value, 10) || 1;
+        buttons.forEach((button) => {
+            button.addEventListener("click", () => {
+                const {min, max} = getLimits();
+                const action = button.dataset.action;
+                let value = parseInt(input.value, 10);
 
-                if (action === "increase") value += 1;
-                if (action === "decrease") value = Math.max(1, value - 1);
+                if (Number.isNaN(value)) {
+                    value = min;
+                }
 
-                input.value = value;
-                clamp();
+                if (action === "increase") {
+                    value += 1;
+                }
+
+                if (action === "decrease") {
+                    value -= 1;
+                }
+
+                input.value = Math.min(Math.max(value, min), max);
             });
         });
 
         input.addEventListener("change", clamp);
+        input.addEventListener("input", clamp);
+
+        clamp();
     };
 
     const initVariants = () => {
-        const hidden = document.getElementById("selectedVariant");
+        const hiddenInput = document.getElementById("selectedVariant");
         const radios = document.querySelectorAll('input[name="variant"]');
 
-        if (!hidden || !radios.length) return;
+        if (!hiddenInput || !radios.length) {
+            return;
+        }
 
-        const sync = () => {
-            const checked = document.querySelector('input[name="variant"]:checked');
-            hidden.value = checked ? checked.value : "";
+        const syncVariant = () => {
+            const checkedRadio = document.querySelector(
+                'input[name="variant"]:checked'
+            );
+
+            hiddenInput.value = checkedRadio ? checkedRadio.value : "";
         };
 
         radios.forEach((radio) => {
-            radio.addEventListener("change", sync);
+            radio.addEventListener("change", syncVariant);
         });
 
-        sync();
+        syncVariant();
     };
 
-    document.addEventListener("DOMContentLoaded", () => {
+    const initProductPage = () => {
         initGallery();
         initQuantity();
         initVariants();
-    });
+    };
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", initProductPage, {
+            once: true,
+        });
+    } else {
+        initProductPage();
+    }
 })();

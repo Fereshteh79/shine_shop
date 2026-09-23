@@ -1,78 +1,354 @@
+{% comment %}
+    هدر سایت + منوی کشویی (Drawer)
+    وابسته به: main.js (initDrawer, initAccordions, initHeaderScroll)
+{% endcomment %}
+
 <header class="site-header" data-header>
 
-    <div class="container header-inner">
+    {# ردیف اول: منو، لوگو، جستجو، اکشن‌ها #}
+    <div class="container header-top">
+
+        <button
+                class="drawer-toggle"
+                type="button"
+                data-drawer-toggle
+                aria-label="باز کردن منو"
+                aria-expanded="false"
+                aria-controls="side-drawer"
+        >
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
 
         <a href="{% url 'shop:home' %}" class="brand" aria-label="Shine Gallery">
             <span class="brand-mark">S</span>
             <span class="brand-name">SHINE</span>
         </a>
 
-        <nav class="main-nav" id="main-nav" aria-label="ناوبری اصلی">
-            <a href="{% url 'shop:home' %}">خانه</a>
-            <a href="{% url 'shop:products' %}">فروشگاه</a>
-            <a href="{% url 'shop:search' %}">جستجو</a>
-
-            {% if user.is_authenticated %}
-                <a href="{% url 'wishlist:list' %}">علاقه‌مندی‌ها</a>
-                <a href="{% url 'orders:list' %}">سفارش‌ها</a>
-            {% endif %}
-        </nav>
+        <form method="get" action="{% url 'shop:products' %}" class="header-search" role="search">
+            <input
+                    type="search"
+                    name="q"
+                    value="{{ request.GET.q|default:'' }}"
+                    placeholder="جستجو در محصولات Shine..."
+                    aria-label="جستجوی محصولات"
+            >
+            <button type="submit" aria-label="جستجو">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                     stroke-linecap="round">
+                    <circle cx="11" cy="11" r="7"/>
+                    <path d="M21 21l-4.3-4.3"/>
+                </svg>
+            </button>
+        </form>
 
         <div class="header-actions">
 
             {% if user.is_authenticated %}
 
-                <a
-                        href="{% url 'wishlist:list' %}"
-                        class="header-icon header-count"
-                        aria-label="علاقه‌مندی‌ها"
-                >
-                    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                <a href="{% url 'wishlist:list' %}" class="header-icon header-count" aria-label="علاقه‌مندی‌ها">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
                          stroke-linecap="round" stroke-linejoin="round">
                         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
                     </svg>
-                    {% if wishlist_count %}
-                        <span>{{ wishlist_count }}</span>
-                    {% endif %}
+                    {% if wishlist_count %}<span>{{ wishlist_count }}</span>{% endif %}
                 </a>
 
-                <a
-                        href="{% url 'cart:detail' %}"
-                        class="header-icon header-count"
-                        aria-label="سبد خرید"
-                >
-                    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                <a href="{% url 'cart:detail' %}" class="header-icon header-count" aria-label="سبد خرید">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
                          stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="9" cy="21" r="1"/>
                         <circle cx="20" cy="21" r="1"/>
                         <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
                     </svg>
-                    {% if cart_count %}
-                        <span>{{ cart_count }}</span>
-                    {% endif %}
+                    {% if cart_count %}<span>{{ cart_count }}</span>{% endif %}
                 </a>
-
-                <form method="post" action="{% url 'accounts:logout' %}" class="logout-form">
-                    {% csrf_token %}
-                    <button type="submit" class="header-account logout-btn">خروج</button>
-                </form>
 
             {% else %}
 
                 <a href="{% url 'accounts:login' %}" class="header-account">ورود</a>
-                <a href="{% url 'accounts:register' %}" class="btn btn-gold btn-sm">ثبت‌نام</a>
+                <span class="header-sep">|</span>
+                <a href="{% url 'accounts:register' %}" class="header-account header-register">ثبت‌نام</a>
 
             {% endif %}
 
         </div>
 
-        <button class="mobile-menu-btn" type="button" data-menu-toggle aria-label="باز کردن منو" aria-expanded="false"
-                aria-controls="main-nav">
-            <span></span>
-            <span></span>
-            <span></span>
+    </div>
+
+    {# ردیف دوم: نوار دسته‌بندی‌ها — مثل دیجی‌کالا #}
+    <nav class="category-strip" aria-label="دسته‌بندی محصولات">
+        <div class="container category-strip-inner">
+
+            <a href="{% url 'shop:category' 'perfume' %}">عطر و ادکلن</a>
+            <a href="{% url 'shop:category' 'sunglasses' %}">عینک آفتابی</a>
+
+            <div class="strip-dropdown">
+                <a href="{% url 'shop:category' 'watch-casio' %}" class="strip-parent">ساعت‌های لوکس
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                         stroke-linecap="round">
+                        <path d="M6 9l6 6 6-6"/>
+                    </svg>
+                </a>
+                <div class="strip-menu">
+                    <a href="{% url 'shop:category' 'watch-casio' %}">کاسیو</a>
+                    <a href="{% url 'shop:category' 'watch-citizen' %}">سیتیزن</a>
+                    <a href="{% url 'shop:category' 'watch-seiko' %}">سیکو</a>
+                    <a href="{% url 'shop:category' 'watch-tissot' %}">تیسوت</a>
+                    <a href="{% url 'shop:category' 'watch-fossil' %}">فسیل</a>
+                    <a href="{% url 'shop:category' 'watch-daniel-wellington' %}">دانیل ولینگتون</a>
+                </div>
+            </div>
+
+            <a href="{% url 'shop:category' 'silver-jewelry' %}">نقره‌جات</a>
+            <a href="{% url 'shop:category' 'costume-jewelry' %}">بدلیجات</a>
+            <a href="{% url 'shop:category' 'mugs' %}">ماگ و هدیه</a>
+
+            <span class="strip-spacer"></span>
+
+            <a href=" {% url 'orders:track' %}" class="strip-track">📦 پیگیری سفارش</a>
+
+        </div>
+    </nav>
+
+</header>
+
+
+{# ==================== منوی کشویی (Drawer) ==================== #}
+
+<div class="drawer-overlay" data-drawer-overlay></div>
+
+<aside class="side-drawer" id="side-drawer" aria-hidden="true">
+
+    <div class="drawer-header">
+
+        <a href="{% url 'shop:home' %}" class="brand">
+            <span class="brand-mark">S</span>
+            <span class="brand-name">SHINE</span>
+        </a>
+
+        <button
+                type="button"
+                class="drawer-close"
+                data-drawer-close
+                aria-label="بستن منو"
+        >×
         </button>
 
     </div>
 
-</header>
+    {% if user.is_authenticated %}
+
+        <div class="drawer-profile">
+            <span class="drawer-avatar">{{ user.display_name|first }}</span>
+            <div>
+                <strong>{{ user.display_name }}</strong>
+                <small>خوش آمدی 👋</small>
+            </div>
+        </div>
+
+    {% endif %}
+
+    <nav class="drawer-nav">
+
+        {% if user.is_authenticated %}
+
+            <a href="{% url 'wishlist:list' %}" class="drawer-link">
+                <span class="drawer-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+                                               stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                               stroke-linejoin="round"><path
+                        d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></span>
+                علاقه‌مندی‌های من
+            </a>
+
+            <a href="{% url 'orders:list' %}" class="drawer-link">
+                <span class="drawer-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+                                               stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                               stroke-linejoin="round"><path d="M21 8l-9-5-9 5v8l9 5 9-5V8z"/><path
+                        d="M3 8l9 5 9-5"/><path d="M12 13v8"/></svg></span>
+                سفارش‌های من
+            </a>
+
+            <a href="{% url 'payments:list' %}" class="drawer-link">
+                <span class="drawer-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+                                               stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                               stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path
+                        d="M2 10h20"/></svg></span>
+                پرداخت‌های من
+            </a>
+
+            <a href="{% url 'cart:detail' %}" class="drawer-link">
+                <span class="drawer-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+                                               stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                               stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20"
+                                                                                                             cy="21"
+                                                                                                             r="1"/><path
+                        d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></span>
+                سبد خرید
+            </a>
+
+        {% else %}
+
+            <a href="{% url 'accounts:login' %}" class="drawer-link">
+                <span class="drawer-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+                                               stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                               stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path
+                        d="M4 21v-1a7 7 0 0 1 14 0v1"/></svg></span>
+                ورود به حساب کاربری
+            </a>
+
+            <a href="{% url 'accounts:register' %}" class="drawer-link">
+                <span class="drawer-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+                                               stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                               stroke-linejoin="round"><path
+                        d="M12 3l1.9 5.8L20 10l-6.1 1.2L12 17l-1.9-5.8L4 10l6.1-1.2L12 3z"/></svg></span>
+                ثبت‌نام
+            </a>
+
+        {% endif %}
+
+        <a href="{% url 'shop:products' %}" class="drawer-link">
+            <span class="drawer-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                           stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path
+                    d="M6 7h12l1 14H5L6 7z"/><path d="M9 10V6a3 3 0 0 1 6 0v4"/></svg></span>
+            همه محصولات
+        </a>
+
+        <a href="{% url 'products:search' %}" class="drawer-link">
+            <span class="drawer-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                           stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle
+                    cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span>
+            جستجو
+        </a>
+
+        {# ---------- دسته‌بندی‌ها (آکاردئون) ---------- #}
+
+        <div class="drawer-accordion">
+
+            <button type="button" class="drawer-link drawer-accordion-btn" data-accordion>
+                <span class="drawer-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+                                               stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path
+                        d="M6 3h12l4 6-10 12L2 9l4-6z"/><path d="M2 9h20"/><path
+                        d="M12 3l-3 6 3 12 3-12-3-6z"/></svg></span>
+                دسته‌بندی‌ها
+                <span class="accordion-arrow">▾</span>
+            </button>
+
+            <div class="accordion-body">
+
+                <a href="{% url 'shop:category' 'perfume' %}" class="drawer-sublink">
+                    <span class="sub-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                                stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect
+                            x="7" y="8" width="10" height="13" rx="2"/><path d="M10 8V5h4v3"/><path d="M12 2v3"/><path
+                            d="M18 4l1.5-1.5M19 7h2"/></svg></span>
+                    عطر و ادکلن
+                </a>
+
+                <a href="{% url 'shop:category' 'sunglasses' %}" class="drawer-sublink">
+                    <span class="sub-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                                stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle
+                            cx="6.5" cy="15" r="3.5"/><circle cx="17.5" cy="15" r="3.5"/><path
+                            d="M10 15h4M3 15l2-7h4M21 15l-2-7h-4"/></svg></span>
+                    عینک آفتابی
+                </a>
+
+                {# ساعت‌ها با زیرمجموعه برندها (آکاردئون تو در تو) #}
+
+                <div class="drawer-accordion drawer-accordion-nested">
+
+                    <button type="button" class="drawer-sublink drawer-accordion-btn" data-accordion>
+                        <span class="sub-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                                    stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect
+                                x="7" y="6" width="10" height="12" rx="3"/><path
+                                d="M9 6l.6-4h4.8L15 6M9 18l.6 4h4.8l.6-4"/><path d="M12 10v2.5l1.5 1.5"/></svg></span>
+                        ساعت‌های لوکس و برند
+                        <span class="accordion-arrow">▾</span>
+                    </button>
+
+                    <div class="accordion-body">
+                        <a href="{% url 'shop:category' 'watch-casio' %}" class="drawer-sublink">کاسیو (Casio)</a>
+                        <a href="{% url 'shop:category' 'watch-citizen' %}" class="drawer-sublink">سیتیزن (Citizen)</a>
+                        <a href="{% url 'shop:category' 'watch-seiko' %}" class="drawer-sublink">سیکو (Seiko)</a>
+                        <a href="{% url 'shop:category' 'watch-tissot' %}" class="drawer-sublink">تیسوت (Tissot)</a>
+                        <a href="{% url 'shop:category' 'watch-fossil' %}" class="drawer-sublink">فسیل (Fossil)</a>
+                        <a href="{% url 'shop:category' 'watch-daniel-wellington' %}" class="drawer-sublink">دانیل
+                            ولینگتون (DW)</a>
+                    </div>
+
+                </div>
+
+                <a href="{% url 'shop:category' 'silver-jewelry' %}" class="drawer-sublink">
+                    <span class="sub-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                                stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle
+                            cx="12" cy="14" r="6"/><path d="M9 8l3-5 3 5"/></svg></span>
+                    نقره‌جات
+                </a>
+
+                <a href="{% url 'shop:category' 'costume-jewelry' %}" class="drawer-sublink">
+                    <span class="sub-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                                stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path
+                            d="M6 3h12l4 6-10 12L2 9l4-6z"/><path d="M2 9h20M12 3l-3 6 3 12 3-12-3-6z"/></svg></span>
+                    بدلیجات
+                </a>
+
+                <a href="{% url 'shop:category' 'mugs' %}" class="drawer-sublink">
+                    <span class="sub-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                                stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path
+                            d="M4 8h13v8a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8z"/><path
+                            d="M17 9h2a2.5 2.5 0 0 1 0 5h-2"/></svg></span>
+                    ماگ و هدیه
+                </a>
+
+            </div>
+
+        </div>
+
+        {% if user.is_authenticated %}
+
+            <a href="{% url 'shop:home' %}" class="drawer-link">
+                <span class="drawer-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+                                               stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                               stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path
+                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33 1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82 1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+                تنظیمات حساب
+            </a>
+
+        {% endif %}
+
+    </nav>
+
+    <div class="drawer-footer">
+
+        {% if user.is_authenticated %}
+
+            <form method="post" action="{% url 'accounts:logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="drawer-logout">
+                    <span class="drawer-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                                   stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                                   stroke-linejoin="round"><path
+                            d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg></span>
+                    خروج از حساب کاربری
+                </button>
+            </form>
+
+        {% else %}
+
+            <a href="{% url 'accounts:register' %}" class="btn btn-gold btn-block">
+                عضویت در Shine
+            </a>
+
+        {% endif %}
+
+        <div class="drawer-contact">
+            <a href="https://instagram.com/shinegallery0" target="_blank" rel="noopener nofollow">اینستاگرام</a>
+            <span>·</span>
+            <a href="https://wa.me/989387586384" target="_blank" rel="noopener nofollow">واتساپ</a>
+            <span>·</span>
+            <a href="https://t.me/Shineshopy" target="_blank" rel="noopener nofollow">تلگرام</a>
+        </div>
+
+    </div>
+
+</aside>

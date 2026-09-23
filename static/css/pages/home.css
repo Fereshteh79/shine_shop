@@ -1,0 +1,339 @@
+/* =========================
+   HERO SLIDER
+========================= */
+
+.hero-slider {
+    padding-top: 20px;
+}
+
+.slider-wrap {
+    position: relative;
+    overflow: hidden;
+    height: 440px;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow);
+    background: #1a1a1a;
+}
+
+.slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 800ms ease, visibility 800ms ease;
+}
+
+.slide.is-active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.slide-image {
+    position: absolute;
+    inset: 0;
+}
+
+.slide-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 65% center;
+}
+
+/* گرادیان تیره از راست تا متن خوانا باشد */
+.slide::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(to left, rgba(10, 8, 2, 0.78) 0%, rgba(10, 8, 2, 0.35) 45%, transparent 70%);
+}
+
+.slide-content {
+    position: relative;
+    z-index: 2;
+    max-width: 520px;
+    margin-inline-start: 46px;
+    color: #ffffff;
+}
+
+.slide-eyebrow {
+    display: inline-block;
+    padding: 6px 14px;
+    border: 1px solid rgba(212, 175, 55, 0.55);
+    border-radius: 999px;
+    background: rgba(212, 175, 55, 0.12);
+    color: var(--gold-light);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 3px;
+}
+
+.slide-content h1 {
+    margin: 18px 0 0;
+    color: #ffffff;
+    font-size: clamp(30px, 4.2vw, 52px);
+    font-weight: 900;
+    line-height: 1.25;
+}
+
+.slide-content p {
+    margin: 12px 0 24px;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 15px;
+}
+
+.slider-dots {
+    position: absolute;
+    z-index: 3;
+    bottom: 18px;
+    left: 26px;
+    display: flex;
+    gap: 7px;
+}
+
+.slider-dots button {
+    width: 26px;
+    height: 5px;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.4);
+    transition: var(--transition);
+}
+
+.slider-dots button.is-active {
+    width: 40px;
+    background: var(--gold-light);
+}
+
+
+/* =========================
+   CIRCLE CATEGORIES
+========================= */
+
+.circle-categories {
+    padding: 42px 0 10px;
+}
+
+.circle-row {
+    display: flex;
+    gap: 14px;
+    overflow-x: auto;
+    padding: 6px 2px 12px;
+    scrollbar-width: none;
+}
+
+.circle-row::-webkit-scrollbar {
+    display: none;
+}
+
+.circle-cat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    min-width: 96px;
+    flex: 1;
+}
+
+.circle-img {
+    display: grid;
+    width: 92px;
+    height: 92px;
+    place-items: center;
+    overflow: hidden;
+    border: 2px solid var(--border);
+    border-radius: 50%;
+    background: #ffffff;
+    color: var(--gold);
+    font-size: 30px;
+    font-weight: 800;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition-slow);
+}
+
+.circle-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.circle-cat:hover .circle-img {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.12), var(--shadow-sm);
+    transform: translateY(-3px);
+}
+
+.circle-label {
+    color: var(--text-soft);
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.circle-cat:hover .circle-label {
+    color: var(--gold);
+}
+
+
+/* =========================
+   TRUST BAR
+========================= */
+
+.trust-bar {
+    padding: 26px 0;
+    border-block: 1px solid var(--border);
+    background: #ffffff;
+}
+
+.trust-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+}
+
+.trust-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.trust-icon {
+    display: grid;
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+    place-items: center;
+    border-radius: var(--radius-md);
+    background: rgba(212, 175, 55, 0.1);
+    color: var(--gold);
+}
+
+.trust-item strong {
+    display: block;
+    font-size: 13.5px;
+}
+
+.trust-item span {
+    color: var(--text-muted);
+    font-size: 11px;
+}
+
+
+/* =========================
+   MID BANNERS
+========================= */
+
+.mid-banners {
+    padding: 45px 0 10px;
+}
+
+.mid-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.mid-banner {
+    position: relative;
+    display: block;
+    height: 240px;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    background: var(--surface-2);
+}
+
+.mid-banner img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 700ms ease;
+}
+
+.mid-banner:hover img {
+    transform: scale(1.06);
+}
+
+.mid-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 4px;
+    padding: 24px;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.72), transparent 60%);
+}
+
+.mid-overlay span {
+    color: var(--gold-light);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 2px;
+}
+
+.mid-overlay strong {
+    color: #ffffff;
+    font-size: 18px;
+    line-height: 1.5;
+}
+
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 920px) {
+    .slider-wrap {
+        height: 360px;
+    }
+
+    .slide-content {
+        margin-inline-start: 28px;
+    }
+
+    .trust-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .mid-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 600px) {
+    .slider-wrap {
+        height: 300px;
+    }
+
+    .slide::before {
+        background: linear-gradient(to top, rgba(10, 8, 2, 0.85) 0%, rgba(10, 8, 2, 0.25) 60%);
+    }
+
+    .slide-content {
+        margin-inline: 22px;
+        margin-top: 110px;
+        align-self: flex-end;
+    }
+
+    .slide-content h1 {
+        font-size: 26px;
+    }
+
+    .circle-img {
+        width: 74px;
+        height: 74px;
+    }
+
+    .trust-grid {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    .slider-dots {
+        left: 18px;
+    }
+}

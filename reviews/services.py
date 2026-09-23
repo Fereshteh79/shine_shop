@@ -80,8 +80,6 @@ class ReviewService:
         review.rating = rating
         review.title = title
         review.comment = comment
-
-        # هر ویرایش دوباره نیازمند تأیید مدیر است.
         review.is_approved = False
 
         review.save(

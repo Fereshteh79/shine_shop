@@ -7,6 +7,7 @@ class CheckoutForm(forms.Form):
     recipient_name = forms.CharField(
         max_length=150,
         label="نام گیرنده",
+        strip=True,
         widget=forms.TextInput(
             attrs={
                 "autocomplete": "name",
@@ -18,6 +19,7 @@ class CheckoutForm(forms.Form):
     phone_number = forms.CharField(
         max_length=20,
         label="شماره تماس",
+        strip=True,
         widget=forms.TextInput(
             attrs={
                 "autocomplete": "tel",
@@ -30,8 +32,10 @@ class CheckoutForm(forms.Form):
     province = forms.CharField(
         max_length=100,
         label="استان",
+        strip=True,
         widget=forms.TextInput(
             attrs={
+                "autocomplete": "address-level1",
                 "placeholder": "استان",
             }
         ),
@@ -40,8 +44,10 @@ class CheckoutForm(forms.Form):
     city = forms.CharField(
         max_length=100,
         label="شهر",
+        strip=True,
         widget=forms.TextInput(
             attrs={
+                "autocomplete": "address-level2",
                 "placeholder": "شهر",
             }
         ),
@@ -49,8 +55,10 @@ class CheckoutForm(forms.Form):
 
     address = forms.CharField(
         label="آدرس",
+        strip=True,
         widget=forms.Textarea(
             attrs={
+                "autocomplete": "street-address",
                 "rows": 4,
                 "placeholder": "آدرس کامل محل تحویل",
             }
@@ -58,10 +66,12 @@ class CheckoutForm(forms.Form):
     )
 
     postal_code = forms.CharField(
-        max_length=20,
+        max_length=10,
         label="کد پستی",
+        strip=True,
         widget=forms.TextInput(
             attrs={
+                "autocomplete": "postal-code",
                 "inputmode": "numeric",
                 "placeholder": "کد پستی ۱۰ رقمی",
             }
@@ -71,6 +81,7 @@ class CheckoutForm(forms.Form):
     notes = forms.CharField(
         required=False,
         label="توضیحات",
+        strip=True,
         widget=forms.Textarea(
             attrs={
                 "rows": 3,
@@ -80,7 +91,7 @@ class CheckoutForm(forms.Form):
     )
 
     def clean_recipient_name(self):
-        value = self.cleaned_data["recipient_name"].strip()
+        value = self.cleaned_data["recipient_name"]
 
         if len(value) < 3:
             raise forms.ValidationError(
@@ -90,13 +101,14 @@ class CheckoutForm(forms.Form):
         return value
 
     def clean_phone_number(self):
-        value = self.cleaned_data["phone_number"].strip()
-        value = value.replace(" ", "").replace("-", "")
+        value = self.cleaned_data["phone_number"]
+
+        value = re.sub(r"[\s-]+", "", value)
 
         if value.startswith("+98"):
             value = "0" + value[3:]
 
-        if not re.fullmatch(r"09\d{9}", value):
+        if not re.fullmatch(r"09\d{9}", value, re.ASCII):
             raise forms.ValidationError(
                 "شماره موبایل معتبر نیست."
             )
@@ -104,10 +116,11 @@ class CheckoutForm(forms.Form):
         return value
 
     def clean_postal_code(self):
-        value = self.cleaned_data["postal_code"].strip()
-        value = value.replace(" ", "").replace("-", "")
+        value = self.cleaned_data["postal_code"]
 
-        if not re.fullmatch(r"\d{10}", value):
+        value = re.sub(r"[\s-]+", "", value)
+
+        if not re.fullmatch(r"\d{10}", value, re.ASCII):
             raise forms.ValidationError(
                 "کد پستی باید ۱۰ رقم باشد."
             )

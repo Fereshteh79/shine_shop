@@ -2,7 +2,11 @@ from decimal import Decimal
 
 from django.core.validators import MinValueValidator
 from django.db import models
+from django.db.models import Q
+from django.urls import reverse
 from django.utils.text import slugify
+
+ZERO = Decimal("0.00")
 
 
 class TimeStampedModel(models.Model):
@@ -19,15 +23,32 @@ class TimeStampedModel(models.Model):
         abstract = True
 
 
-def generate_unique_slug(model, *, text, slug_field="slug", pk=None):
-    """تولید اسلاگ یکتا با پشتیبانی از حروف فارسی."""
+def generate_unique_slug(
+        model,
+        *,
+        text: str,
+        slug_field: str = "slug",
+        pk: int | None = None,
+) -> str:
+    """
+    تولید slug یکتا با پشتیبانی از زبان فارسی.
+
+    اگر slug پایه قبلاً وجود داشته باشد:
+        product
+        product-2
+        product-3
+        ...
+    """
+
     base = slugify(text, allow_unicode=True) or "item"
-    slug = base
-    counter = 2
 
     queryset = model.objects.all()
-    if pk:
+
+    if pk is not None:
         queryset = queryset.exclude(pk=pk)
+
+    slug = base
+    counter = 2
 
     while queryset.filter(**{slug_field: slug}).exists():
         slug = f"{base}-{counter}"
@@ -60,6 +81,7 @@ class Category(models.Model):
     )
     is_active = models.BooleanField(
         default=True,
+        db_index=True,
         verbose_name="فعال",
     )
 
@@ -68,22 +90,30 @@ class Category(models.Model):
         verbose_name_plural = "دسته‌بندی‌ها"
         ordering = ("name",)
         indexes = [
-            models.Index(fields=("is_active", "slug")),
+            models.Index(
+                fields=("is_active", "slug"),
+                name="category_active_slug_idx",
+            ),
         ]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = generate_unique_slug(
-                Category, text=self.name, pk=self.pk,
+                Category,
+                text=self.name,
+                pk=self.pk,
             )
+
         super().save(*args, **kwargs)
 
     def get_absolute_url(self):
-        from django.urls import reverse
-        return reverse("shop:category", args=[self.slug])
+        return reverse(
+            "shop:category",
+            kwargs={"slug": self.slug},
+        )
 
 
 class Brand(models.Model):
@@ -106,6 +136,7 @@ class Brand(models.Model):
     )
     is_active = models.BooleanField(
         default=True,
+        db_index=True,
         verbose_name="فعال",
     )
 
@@ -114,18 +145,30 @@ class Brand(models.Model):
         verbose_name_plural = "برندها"
         ordering = ("name",)
         indexes = [
-            models.Index(fields=("is_active", "slug")),
+            models.Index(
+                fields=("is_active", "slug"),
+                name="brand_active_slug_idx",
+            ),
         ]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = generate_unique_slug(
-                Brand, text=self.name, pk=self.pk,
+                Brand,
+                text=self.name,
+                pk=self.pk,
             )
+
         super().save(*args, **kwargs)
+
+    def get_absolute_url(self):
+        return reverse(
+            "shop:brand",
+            kwargs={"slug": self.slug},
+        )
 
 
 class Product(TimeStampedModel):
@@ -173,7 +216,9 @@ class Product(TimeStampedModel):
     price = models.DecimalField(
         max_digits=14,
         decimal_places=2,
-        validators=[MinValueValidator(Decimal("0"))],
+        validators=[
+            MinValueValidator(ZERO),
+        ],
         verbose_name="قیمت",
     )
     discount_price = models.DecimalField(
@@ -181,7 +226,9 @@ class Product(TimeStampedModel):
         decimal_places=2,
         null=True,
         blank=True,
-        validators=[MinValueValidator(Decimal("0"))],
+        validators=[
+            MinValueValidator(ZERO),
+        ],
         verbose_name="قیمت تخفیف",
     )
 
@@ -192,10 +239,12 @@ class Product(TimeStampedModel):
 
     is_available = models.BooleanField(
         default=True,
+        db_index=True,
         verbose_name="قابل فروش",
     )
     is_featured = models.BooleanField(
         default=False,
+        db_index=True,
         verbose_name="محصول ویژه",
     )
 
@@ -215,13 +264,25 @@ class Product(TimeStampedModel):
         verbose_name_plural = "محصولات"
         ordering = ("-created_at",)
         indexes = [
-            models.Index(fields=("is_available", "category")),
-            models.Index(fields=("is_available", "brand")),
-            models.Index(fields=("is_featured", "is_available")),
-            models.Index(fields=("-created_at",)),
+            models.Index(
+                fields=("is_available", "category"),
+                name="product_available_category_idx",
+            ),
+            models.Index(
+                fields=("is_available", "brand"),
+                name="product_available_brand_idx",
+            ),
+            models.Index(
+                fields=("is_featured", "is_available"),
+                name="product_featured_available_idx",
+            ),
+            models.Index(
+                fields=("-created_at",),
+                name="product_created_idx",
+            ),
         ]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
     @property
@@ -231,44 +292,81 @@ class Product(TimeStampedModel):
                 and self.discount_price < self.price
         ):
             return self.discount_price
+
         return self.price
 
     @property
     def has_discount(self) -> bool:
-        return self.discount_price is not None and self.discount_price < self.price
-
-    @property
-    def discount_percentage(self) -> int:
-        if not self.has_discount or not self.price:
-            return 0
-        return round(
-            (self.price - self.final_price) * Decimal("100") / self.price
+        return (
+                self.discount_price is not None
+                and self.discount_price < self.price
         )
 
     @property
+    def discount_percentage(self) -> int:
+        if not self.has_discount or self.price <= ZERO:
+            return 0
+
+        percentage = (
+                (self.price - self.final_price)
+                * Decimal("100")
+                / self.price
+        )
+
+        return round(percentage)
+
+    @property
     def in_stock(self) -> bool:
-        return self.is_available and self.stock > 0
+        return (
+                self.is_available
+                and self.stock > 0
+        )
 
     @property
     def primary_image(self):
-        """تصویر اصلی؛ در نبود آن اولین تصویر."""
-        for image in self.images.all():
-            if image.is_primary:
-                return image
-        return self.images.first()
+        """
+        تصویر اصلی محصول.
+
+        در حالت عادی constraint دیتابیس تضمین می‌کند
+        فقط یک تصویر primary باشد.
+        """
+        images = getattr(self, "_prefetched_objects_cache", {}).get("images")
+
+        if images is not None:
+            return next(
+                (
+                    image
+                    for image in images
+                    if image.is_primary
+                ),
+                images[0] if images else None,
+            )
+
+        return (
+                self.images
+                .filter(is_primary=True)
+                .first()
+                or self.images.first()
+        )
 
     @property
     def seo_title(self) -> str:
-        return self.meta_title or self.name
+        return self.meta_title.strip() or self.name
 
     @property
     def seo_description(self) -> str:
-        return self.meta_description or self.short_description
+        return (
+                self.meta_description.strip()
+                or self.short_description.strip()
+                or self.description[:160].strip()
+        )
 
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = generate_unique_slug(
-                Product, text=self.name, pk=self.pk,
+                Product,
+                text=self.name,
+                pk=self.pk,
             )
 
         if (
@@ -280,8 +378,10 @@ class Product(TimeStampedModel):
         super().save(*args, **kwargs)
 
     def get_absolute_url(self):
-        from django.urls import reverse
-        return reverse("products:detail", args=[self.slug])
+        return reverse(
+            "products:detail",
+            kwargs={"slug": self.slug},
+        )
 
 
 class ProductImage(models.Model):
@@ -313,11 +413,23 @@ class ProductImage(models.Model):
         verbose_name = "تصویر محصول"
         verbose_name_plural = "تصاویر محصولات"
         ordering = ("sort_order", "id")
+
         indexes = [
-            models.Index(fields=("product", "is_primary")),
+            models.Index(
+                fields=("product", "sort_order"),
+                name="product_image_order_idx",
+            ),
         ]
 
-    def __str__(self):
+        constraints = [
+            models.UniqueConstraint(
+                fields=("product",),
+                condition=Q(is_primary=True),
+                name="unique_primary_image_per_product",
+            ),
+        ]
+
+    def __str__(self) -> str:
         return f"{self.product.name} - تصویر {self.pk}"
 
     def save(self, *args, **kwargs):
@@ -328,7 +440,11 @@ class ProductImage(models.Model):
             ProductImage.objects.filter(
                 product=self.product,
                 is_primary=True,
-            ).exclude(pk=self.pk).update(is_primary=False)
+            ).exclude(
+                pk=self.pk,
+            ).update(
+                is_primary=False,
+            )
 
         super().save(*args, **kwargs)
 
@@ -354,7 +470,9 @@ class ProductVariant(models.Model):
         decimal_places=2,
         null=True,
         blank=True,
-        validators=[MinValueValidator(Decimal("0"))],
+        validators=[
+            MinValueValidator(ZERO),
+        ],
         verbose_name="قیمت",
     )
     stock = models.PositiveIntegerField(
@@ -363,6 +481,7 @@ class ProductVariant(models.Model):
     )
     is_active = models.BooleanField(
         default=True,
+        db_index=True,
         verbose_name="فعال",
     )
 
@@ -370,6 +489,7 @@ class ProductVariant(models.Model):
         verbose_name = "تنوع محصول"
         verbose_name_plural = "تنوع‌های محصول"
         ordering = ("id",)
+
         constraints = [
             models.UniqueConstraint(
                 fields=("product", "name"),
@@ -377,20 +497,23 @@ class ProductVariant(models.Model):
             ),
         ]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.product.name} - {self.name}"
 
     @property
     def final_price(self) -> Decimal:
-        return (
-            self.price
-            if self.price is not None
-            else self.product.final_price
-        )
+        if self.price is not None:
+            return self.price
+
+        return self.product.final_price
 
     @property
     def in_stock(self) -> bool:
-        return self.is_active and self.product.is_available and self.stock > 0
+        return (
+                self.is_active
+                and self.product.is_available
+                and self.stock > 0
+        )
 
 
 class ProductAttribute(models.Model):
@@ -413,6 +536,7 @@ class ProductAttribute(models.Model):
         verbose_name = "ویژگی محصول"
         verbose_name_plural = "ویژگی‌های محصولات"
         ordering = ("id",)
+
         constraints = [
             models.UniqueConstraint(
                 fields=("product", "name"),
@@ -420,5 +544,5 @@ class ProductAttribute(models.Model):
             ),
         ]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.name}: {self.value}"

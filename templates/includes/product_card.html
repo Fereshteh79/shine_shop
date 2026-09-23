@@ -47,6 +47,29 @@
             <span class="currency">تومان</span>
         </div>
 
+        {% if user.is_authenticated %}
+            <form method="post" action="{% url 'cart:add' product.id %}" class="product-card-form">
+                {% csrf_token %}
+
+                <div class="product-card-actions">
+                    <div class="card-quantity">
+                        <button type="button" class="quantity-btn" data-card-action="decrease">−</button>
+                        <input type="number" name="quantity" value="1" min="1" max="99" aria-label="تعداد">
+                        <button type="button" class="quantity-btn" data-card-action="increase">+</button>
+                    </div>
+
+                    <button type="submit" class="btn btn-gold btn-sm card-add-btn">
+                        افزودن به سبد
+                    </button>
+                </div>
+            </form>
+        {% else %}
+            <a href="{% url 'accounts:login' %}?next={{ request.get_full_path }}"
+               class="btn btn-outline btn-sm product-card-actions card-add-btn">
+                ورود برای خرید
+            </a>
+        {% endif %}
+
     </div>
 
 </article>

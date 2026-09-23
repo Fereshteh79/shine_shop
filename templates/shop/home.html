@@ -1,278 +1,225 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block title %}
-    Shine | گالری لوکس عینک، ساعت، نقره و عطر
-{% endblock %}
+{% block title %}Shine Gallery | ساعت، زیورآلات و عطر لوکس{% endblock %}
 
 {% block meta_description %}
-    خرید آنلاین عینک آفتابی، ساعت، نقره‌جات، عطر و محصولات منتخب از گالری Shine.
+    فروشگاه آنلاین Shine؛ خرید ساعت مچی اصل (کاسیو، سیتیزن، سیکو، تیسوت)، زیورآلات نقره، عطر و ادکلن با ضمانت اصالت کالا
+    و ارسال سریع.
 {% endblock %}
 
 {% block content %}
 
-    <section class="hero">
-        <div class="container hero-inner">
+    {# ================= اسلایدر اصلی ================= #}
 
-            <div class="hero-content">
-
-            <span class="hero-eyebrow">
-                SHINE COLLECTION
-            </span>
-
-                <h1>
-                    انتخابی که
-                    <span>می‌درخشد.</span>
-                </h1>
-
-                <p class="hero-description">
-                    مجموعه‌ای منتخب از عینک‌های آفتابی، ساعت‌های لوکس،
-                    نقره‌جات و عطر؛ برای کسانی که تفاوت را در جزئیات می‌بینند.
-                </p>
-
-                <div class="hero-actions">
-
-                    <a
-                            href="{% url 'shop:products' %}"
-                            class="btn btn-gold"
-                    >
-                        مشاهده فروشگاه
-                    </a>
-
-                    <a
-                            href="#featured"
-                            class="btn btn-outline"
-                    >
-                        محصولات منتخب
-                    </a>
-
-                </div>
-
-            </div>
-
-
-            <div class="hero-visual" aria-hidden="true">
-
-                <div class="hero-orbit"></div>
-                <div class="hero-glow"></div>
-
-                <div class="hero-card">
-
-                <span class="hero-card-eyebrow">
-                    SHINE
-                </span>
-
-                    <strong>
-                        NEW
-                    </strong>
-
-                    <small>
-                        COLLECTION
-                    </small>
-
-                </div>
-
-            </div>
-
-        </div>
-    </section>
-
-
-    <section class="features-bar">
-
-        <div class="container features-grid">
-
-            <div class="feature-item">
-                <strong>ضمانت اصالت</strong>
-                <span>انتخاب باکیفیت و مطمئن</span>
-            </div>
-
-            <div class="feature-item">
-                <strong>ارسال سریع</strong>
-                <span>به سراسر کشور</span>
-            </div>
-
-            <div class="feature-item">
-                <strong>پرداخت امن</strong>
-                <span>درگاه بانکی معتبر</span>
-            </div>
-
-            <div class="feature-item">
-                <strong>پشتیبانی واقعی</strong>
-                <span>آنلاین و حضوری</span>
-            </div>
-
-        </div>
-
-    </section>
-
-
-    <section
-            class="section"
-            id="featured"
-    >
-
+    <section class="hero-slider" data-slider>
         <div class="container">
 
-            <div class="featured-heading">
+            <div class="slider-wrap">
 
-                <div class="featured-heading-main">
-
-                    <div>
-                    <span class="eyebrow">
-                        CURATED FOR YOU
-                    </span>
-
-                        <h2>
-                            محصولات
-                            <span>منتخب</span>
-                        </h2>
+                <div class="slide is-active">
+                    <div class="slide-image">
+                        <img src="{% static 'img/slider/slide-1.jpg' %}" alt="ساعت‌های لوکس Shine">
                     </div>
-
+                    <div class="slide-content">
+                        <span class="slide-eyebrow">SHINE GALLERY</span>
+                        <h1>زمان، سبک زندگی شماست</h1>
+                        <p>کلکسیونی از برترین برندهای ساعت و زیورآلات</p>
+                        <a href="{% url 'shop:products' %}" class="btn btn-gold btn-lg">خرید آنلاین</a>
+                    </div>
                 </div>
 
-                <a
-                        href="{% url 'shop:products' %}"
-                        class="text-link"
-                >
-                    مشاهده همه
-                    <span>←</span>
-                </a>
+                <div class="slide">
+                    <div class="slide-image">
+                        <img src="{% static 'img/slider/slide-2.jpg' %}" alt="زیورآلات و نقره‌جات">
+                    </div>
+                    <div class="slide-content">
+                        <span class="slide-eyebrow">NEW COLLECTION</span>
+                        <h1>زیبایی در جزئیات</h1>
+                        <p>زیورآلات نقره و بدلیجات خاص برای لحظه‌های خاص</p>
+                        <a href="{% url 'shop:category' 'silver-jewelry' %}" class="btn btn-gold btn-lg">مشاهده
+                            محصولات</a>
+                    </div>
+                </div>
+
+                <div class="slide">
+                    <div class="slide-image">
+                        <img src="{% static 'img/slider/slide-3.jpg' %}" alt="عطر و ادکلن">
+                    </div>
+                    <div class="slide-content">
+                        <span class="slide-eyebrow">PERFUME & MORE</span>
+                        <h1>عطرهایی برای لحظه‌های خاص</h1>
+                        <p>ادکلن‌های اصل با عطر ماندگار</p>
+                        <a href="{% url 'shop:category' 'perfume' %}" class="btn btn-gold btn-lg">مشاهده عطرها</a>
+                    </div>
+                </div>
+
+                <div class="slider-dots">
+                    <button type="button" class="is-active" data-slide-to="0" aria-label="اسلاید ۱"></button>
+                    <button type="button" data-slide-to="1" aria-label="اسلاید ۲"></button>
+                    <button type="button" data-slide-to="2" aria-label="اسلاید ۳"></button>
+                </div>
 
             </div>
 
-
-            {% if featured_products %}
-
-                <div class="product-grid">
-
-                    {% for product in featured_products %}
-
-                        {% include "includes/product_card.html" with product=product %}
-
-                    {% endfor %}
-
-                </div>
-
-            {% else %}
-
-                <div class="empty-state">
-
-                    <h3>
-                        هنوز محصولی برای نمایش وجود ندارد.
-                    </h3>
-
-                    <p>
-                        محصولات منتخب را از پنل مدیریت اضافه کنید.
-                    </p>
-
-                </div>
-
-            {% endif %}
-
         </div>
-
     </section>
 
 
-    <section class="section section-dark home-categories">
+    {# ================= آیکون‌های دایره‌ای دسته‌بندی ================= #}
 
-        <div class="container">
+    {% if categories %}
+        <section class="circle-categories">
+            <div class="container">
 
-            <div class="section-heading">
-
-                <div>
-                <span class="eyebrow">
-                    EXPLORE
-                </span>
-
-                    <h2>
-                        دسته‌بندی‌ها
-                    </h2>
-                </div>
-
-            </div>
-
-
-            {% if categories %}
-
-                <div class="category-grid">
+                <div class="circle-row">
 
                     {% for category in categories %}
-
-                        <a
-                                href="{% url 'shop:category' category.slug %}"
-                                class="category-card"
-                        >
-
+                        <a href="{% url 'shop:category' category.slug %}" class="circle-cat">
+                        <span class="circle-img">
                             {% if category.image %}
-
-                                <img
-                                        src="{{ category.image.url }}"
-                                        alt="{{ category.name }}"
-                                        loading="lazy"
-                                >
-
+                                <img src="{{ category.image.url }}" alt="{{ category.name }}" loading="lazy">
+                            {% else %}
+                                {{ category.name|first }}
                             {% endif %}
-
-                            <div class="category-overlay"></div>
-
-                            <div class="category-content">
-
-                            <span>
-                                DISCOVER
-                            </span>
-
-                                <h3>
-                                    {{ category.name }}
-                                </h3>
-
-                            </div>
-
+                        </span>
+                            <span class="circle-label">{{ category.name }}</span>
                         </a>
-
                     {% endfor %}
 
                 </div>
 
-            {% endif %}
+            </div>
+        </section>
+    {% endif %}
+
+
+    {# ================= نوار اعتماد ================= #}
+
+    <section class="trust-bar">
+        <div class="container trust-grid">
+
+            <div class="trust-item">
+                <span class="trust-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+                                              stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                              stroke-linejoin="round"><path
+                        d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg></span>
+                <div>
+                    <strong>تضمین اصالت کالا</strong>
+                    <span>تمام محصولات اصل و باکیفیت</span>
+                </div>
+            </div>
+
+            <div class="trust-item">
+                <span class="trust-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+                                              stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                              stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9"/><path
+                        d="M3 4v5h5"/><path d="M12 7v5l3 3"/></svg></span>
+                <div>
+                    <strong>۷ روز ضمانت بازگشت</strong>
+                    <span>بدون قید و شرط</span>
+                </div>
+            </div>
+
+            <div class="trust-item">
+                <span class="trust-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+                                              stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                              stroke-linejoin="round"><rect x="1" y="6" width="14" height="11" rx="1"/><path
+                        d="M15 9h4l3 3v5h-7"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="19" r="2"/></svg></span>
+                <div>
+                    <strong>ارسال سریع</strong>
+                    <span>به سراسر کشور</span>
+                </div>
+            </div>
+
+            <div class="trust-item">
+                <span class="trust-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+                                              stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                              stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path
+                        d="M2 10h20"/></svg></span>
+                <div>
+                    <strong>پرداخت امن</strong>
+                    <span>درگاه بانکی معتبر</span>
+                </div>
+            </div>
 
         </div>
-
     </section>
 
 
-    <section class="luxury-banner">
+    {# ================= سه بنر میانی ================= #}
 
-        <div class="container luxury-banner-inner">
+    <section class="mid-banners">
+        <div class="container mid-grid">
 
-            <div>
+            <a href="{% url 'shop:category' 'watch-casio' %}" class="mid-banner">
+                <img src="{% static 'img/banner-watches.jpg' %}" alt="جدیدترین مدل‌های ساعت مچی" loading="lazy">
+                <div class="mid-overlay">
+                    <span>کالکشن ۱۴۰۵</span>
+                    <strong>جدیدترین مدل‌های ساعت مچی</strong>
+                </div>
+            </a>
 
-            <span class="eyebrow">
-                THE SHINE EXPERIENCE
-            </span>
+            <a href="{% url 'shop:category' 'silver-jewelry' %}" class="mid-banner">
+                <img src="{% static 'img/banner-jewelry.jpg' %}" alt="زیورآلات خاص" loading="lazy">
+                <div class="mid-overlay">
+                    <span>نقره و بدلیجات</span>
+                    <strong>زیبایی در جزئیات</strong>
+                </div>
+            </a>
 
-                <h2>
-                    سادگی،
-                    <span>زیبایی،</span>
-                    ماندگاری.
-                </h2>
-
-                <p>
-                    تجربه خریدی متفاوت با انتخابی دقیق؛
-                    حضوری در گتوند یا آنلاین در سراسر ایران.
-                </p>
-
-            </div>
-
-            <a
-                    href="{% url 'shop:products' %}"
-                    class="btn btn-gold"
-            >
-                شروع خرید
+            <a href="{% url 'shop:category' 'perfume' %}" class="mid-banner">
+                <img src="{% static 'img/banner-perfume.jpg' %}" alt="عطر و ادکلن" loading="lazy">
+                <div class="mid-overlay">
+                    <span>اصیل و ماندگار</span>
+                    <strong>عطرهایی برای لحظه‌های خاص</strong>
+                </div>
             </a>
 
         </div>
-
     </section>
 
+
+    {# ================= پرفروش‌ترین محصولات ================= #}
+
+    <section class="section-sm" id="best-sellers">
+        <div class="container">
+
+            <div class="section-heading">
+                <div>
+                    <span class="eyebrow">TOP SALES</span>
+                    <h2>پرفروش‌ترین محصولات</h2>
+                </div>
+
+                <a href="{% url 'shop:products' %}" class="text-link">
+                    مشاهده همه <span>←</span>
+                </a>
+            </div>
+
+            {% if best_sellers %}
+                <div class="product-grid">
+                    {% for product in best_sellers %}
+                        {% include "includes/product_card.html" with product=product %}
+                    {% endfor %}
+                </div>
+            {% elif featured_products %}
+                <div class="product-grid">
+                    {% for product in featured_products %}
+                        {% include "includes/product_card.html" with product=product %}
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <h3>هنوز محصولی برای نمایش وجود ندارد</h3>
+                    <p>محصولات را از پنل مدیریت اضافه کنید.</p>
+                </div>
+            {% endif %}
+
+        </div>
+    </section>
+
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'js/slider.js' %}" defer></script>
 {% endblock %}

@@ -1,43 +1,44 @@
 :root {
-    --black: #050505;
-    --black-soft: #0a0a0a;
-    --black-deep: #020202;
+    /* تم روشن — سبک دیجی‌کالا با هویت طلایی Shine */
+    --black: #f7f7f8; /* پس‌زمینه صفحه */
+    --black-soft: #ffffff; /* پس‌زمینه نرم */
+    --black-deep: #eef0f2;
 
-    --surface: #111111;
-    --surface-2: #161616;
-    --surface-3: #1c1c1c;
+    --surface: #ffffff; /* کارت‌ها */
+    --surface-2: #f4f5f6; /* اینپوت‌ها */
+    --surface-3: #eceef0;
 
-    --gold: #d4af37;
-    --gold-light: #f1d36a;
-    --gold-soft: #b99228;
-    --gold-dark: #8d6f18;
+    --gold: #b98a1c; /* طلایی تیره‌تر برای کنتراست روی سفید */
+    --gold-light: #d4af37;
+    --gold-soft: #a37b14;
+    --gold-dark: #8a670f;
 
     --white: #ffffff;
-    --text: #f4f1e8;
-    --text-soft: #d7d2c7;
-    --text-muted: #96918a;
-    --text-faint: #68645e;
+    --text: #1c1c1c;
+    --text-soft: #3d3d3d;
+    --text-muted: #6f6f6f;
+    --text-faint: #9b9b9b;
 
-    --success: #63c98b;
-    --danger: #e26d6d;
-    --warning: #e5b85c;
-    --info: #6da8e2;
+    --success: #1e9e5a;
+    --danger: #e23b3b;
+    --warning: #d69214;
+    --info: #2f7fd1;
 
-    --border: rgba(255, 255, 255, 0.08);
-    --border-strong: rgba(212, 175, 55, 0.28);
+    --border: rgba(0, 0, 0, 0.09);
+    --border-strong: rgba(185, 138, 28, 0.4);
 
     --radius-xs: 6px;
     --radius-sm: 10px;
-    --radius-md: 16px;
-    --radius-lg: 22px;
-    --radius-xl: 32px;
+    --radius-md: 14px;
+    --radius-lg: 18px;
+    --radius-xl: 24px;
 
-    --container: 1240px;
+    --container: 1300px;
     --header-height: 78px;
 
-    --shadow-sm: 0 8px 24px rgba(0, 0, 0, 0.22);
-    --shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
-    --shadow-gold: 0 16px 50px rgba(212, 175, 55, 0.10);
+    --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.06);
+    --shadow: 0 10px 40px rgba(0, 0, 0, 0.10);
+    --shadow-gold: 0 8px 30px rgba(185, 138, 28, 0.12);
 
     --transition: 180ms ease;
     --transition-slow: 350ms ease;

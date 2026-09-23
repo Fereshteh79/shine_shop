@@ -6,17 +6,44 @@
     padding: 55px 0 100px;
 }
 
+/* فشرده‌سازی کارت auth */
 .auth-card {
-    display: grid;
-    grid-template-columns: 0.85fr 1.15fr;
-    max-width: 980px;
-    margin-inline: auto;
-    overflow: hidden;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-xl);
-    background: var(--surface);
-    box-shadow: var(--shadow);
-    animation: auth-rise 600ms ease both;
+    max-width: 860px;   /* بود 980px */
+}
+
+.auth-form-side {
+    padding: 40px 42px; /* بود 55px 50px */
+}
+
+.auth-form-side input,
+.auth-form-side select,
+.auth-form-side textarea {
+    min-height: 44px;   /* بود 50px */
+    padding: 9px 13px;
+    font-size: 13px;
+}
+
+.auth-form-side .form-group {
+    margin-bottom: 13px; /* بود 16px */
+}
+
+.auth-form-side .form-group label {
+    font-size: 11px;
+}
+
+.auth-submit {
+    min-height: 46px;
+    margin-top: 8px;
+}
+
+.auth-panel {
+    padding: 45px 38px; /* بود 55px 45px */
+}
+
+@media (max-width: 860px) {
+    .auth-form-side {
+        padding: 32px 26px 36px;
+    }
 }
 
 @keyframes auth-rise {

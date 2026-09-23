@@ -47,6 +47,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.sitemaps",
+    "django.contrib.sites",
 
     # Third-party
     "django_filters",
@@ -263,6 +265,12 @@ REST_FRAMEWORK = {
         "rest_framework.pagination.PageNumberPagination"
     ),
     "PAGE_SIZE": 12,
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "60/min",
+    },
 }
 
 # =============================================================================
@@ -401,3 +409,5 @@ OTP_TTL_SECONDS = env.int("OTP_TTL_SECONDS", default=120)
 OTP_MAX_ATTEMPTS = env.int("OTP_MAX_ATTEMPTS", default=5)
 
 OTP_COOLDOWN_SECONDS = env.int("OTP_COOLDOWN_SECONDS", default=90)
+
+SITE_ID = 1

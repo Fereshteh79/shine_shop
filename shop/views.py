@@ -11,6 +11,7 @@ from .selectors import (
     get_active_categories,
     get_category,
     get_home_products,
+    get_best_sellers,
 )
 from .services import ShopService
 
@@ -50,6 +51,7 @@ class HomeView(View):
             self.template_name,
             {
                 "featured_products": get_home_products(),
+                "best_sellers": get_best_sellers(limit=8),
                 "categories": get_active_categories(),
             },
         )

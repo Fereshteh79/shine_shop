@@ -11,6 +11,10 @@
                     <span class="eyebrow">ORDER</span>
                     <h1>سفارش #{{ order.id }}</h1>
                 </div>
+                <div class="track-code order-tracking">
+                    <span>کد رهگیری سفارش</span>
+                    <strong class="ltr">{{ order.tracking_code }}</strong>
+                </div>
 
                 <a href="{% url 'orders:list' %}" class="btn btn-outline">
                     سفارش‌های من
@@ -28,6 +32,16 @@
                             <span class="order-status status-{{ order.status }}">
                             {{ order.get_status_display }}
                         </span>
+                        </div>
+                        <div class="track-timeline order-timeline">
+                            {% for step in order.status_timeline %}
+                                <div class="timeline-step {% if step.done %}is-done{% endif %}">
+                                    <div class="timeline-dot">
+                                        {% if step.done %}✓{% else %}{{ forloop.counter }}{% endif %}
+                                    </div>
+                                    <div class="timeline-label">{{ step.label }}</div>
+                                </div>
+                            {% endfor %}
                         </div>
 
                         <div class="order-items">

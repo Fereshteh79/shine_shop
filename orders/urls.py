@@ -5,6 +5,7 @@ from .views import (
     CheckoutView,
     OrderDetailView,
     OrderListView,
+    TrackOrderView,
 )
 
 app_name = "orders"
@@ -26,4 +27,5 @@ urlpatterns = [
         CancelOrderView.as_view(),
         name="cancel",
     ),
+    path("track/", TrackOrderView.as_view(), name="track"),
 ]

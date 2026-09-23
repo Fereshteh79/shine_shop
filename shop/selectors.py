@@ -1,6 +1,7 @@
-from django.db.models import Q, QuerySet
+from django.db.models import Q, QuerySet, Count
 
 from products.models import Brand, Category, Product
+from orders.models import OrderItem
 
 SORT_OPTIONS = {
     "newest": "-created_at",
@@ -76,3 +77,20 @@ def get_active_brands() -> QuerySet[Brand]:
 
 def get_category(slug: str) -> Category | None:
     return Category.objects.filter(slug=slug, is_active=True).first()
+
+
+def get_best_sellers(*, limit: int = 8) -> QuerySet[Product]:
+    """پرفروش‌ترین محصولات — بر اساس تعداد فروش در سفارش‌های موفق."""
+    return (
+        Product.objects
+        .filter(
+            is_available=True,
+            order_items__order__status__in={
+                "paid", "processing", "shipped", "delivered",
+            },
+        )
+        .annotate(sales_count=Count("order_items"))
+        .select_related("category", "brand")
+        .prefetch_related("images")
+        .order_by("-sales_count", "-created_at")[:limit]
+    )
