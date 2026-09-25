@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}
     {% if category %}
@@ -12,10 +13,16 @@
 
 {% block meta_description %}
     {% if category %}
-        خرید {{ category.name }} از گالری Shine؛ محصولات اصل با قیمت مناسب و ارسال سریع.
+        خرید {{ category.name }} از گالری Shine؛ محصولات اصل با ضمانت اصالت کالا و ارسال سریع.
+    {% elif query %}
+        نتایج جستجوی «{{ query }}» در گالری Shine.
     {% else %}
         فروشگاه آنلاین Shine؛ مرور و فیلتر محصولات بر اساس دسته‌بندی، برند و قیمت.
     {% endif %}
+{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'shop/shop.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -36,7 +43,7 @@
             </h1>
 
             <p>
-                مجموعه‌ای از محصولات منتخب با تجربه‌ای مدرن و متفاوت.
+                مجموعه‌ای از محصولات منتخب با ضمانت اصالت کالا و ارسال سریع به سراسر ایران.
             </p>
 
         </div>
@@ -153,23 +160,19 @@
                         <nav class="pagination" aria-label="صفحه‌بندی">
 
                             {% if products.has_previous %}
-                                <a href="?{{ querystring }}&page={{ products.previous_page_number }}">
-                                    قبلی
-                                </a>
+                                <a href="?{{ querystring }}&amp;page={{ products.previous_page_number }}">قبلی</a>
                             {% endif %}
 
                             {% for number in products.paginator.page_range %}
                                 {% if number == products.number %}
                                     <span class="active" aria-current="page">{{ number }}</span>
                                 {% else %}
-                                    <a href="?{{ querystring }}&page={{ number }}">{{ number }}</a>
+                                    <a href="?{{ querystring }}&amp;page={{ number }}">{{ number }}</a>
                                 {% endif %}
                             {% endfor %}
 
                             {% if products.has_next %}
-                                <a href="?{{ querystring }}&page={{ products.next_page_number }}">
-                                    بعدی
-                                </a>
+                                <a href="?{{ querystring }}&amp;page={{ products.next_page_number }}">بعدی</a>
                             {% endif %}
 
                         </nav>

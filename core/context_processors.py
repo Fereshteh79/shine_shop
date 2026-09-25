@@ -1,3 +1,4 @@
+# context_processors.py
 """
 Context processorهای عمومی پروژه Shine Shop.
 

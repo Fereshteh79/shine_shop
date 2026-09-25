@@ -1,49 +1,42 @@
-/* =========================
-   AUTH (LOGIN / REGISTER)
-========================= */
+/* =========================================================
+   SHINE GALLERY — ACCOUNTS (AUTH)
+   Login / Register / OTP — Light Luxury Theme
+   این فایل باید از templates/accounts با:
+   {% static 'accounts/accounts.css' %} لود شود.
+   ========================================================= */
+
+
+/* =========================================================
+   1. SECTION & CARD LAYOUT
+========================================================= */
 
 .auth-section {
     padding: 55px 0 100px;
 }
 
-/* فشرده‌سازی کارت auth */
-.auth-card {
-    max-width: 860px;   /* بود 980px */
-}
+.auth-card,
+.auth-card-register,
+.auth-card-otp {
+    display: grid;
 
-.auth-form-side {
-    padding: 40px 42px; /* بود 55px 50px */
-}
+    grid-template-columns:
+        1fr
+        1.35fr;
 
-.auth-form-side input,
-.auth-form-side select,
-.auth-form-side textarea {
-    min-height: 44px;   /* بود 50px */
-    padding: 9px 13px;
-    font-size: 13px;
-}
+    max-width: 860px;
 
-.auth-form-side .form-group {
-    margin-bottom: 13px; /* بود 16px */
-}
+    margin-inline: auto;
 
-.auth-form-side .form-group label {
-    font-size: 11px;
-}
+    overflow: hidden;
 
-.auth-submit {
-    min-height: 46px;
-    margin-top: 8px;
-}
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
 
-.auth-panel {
-    padding: 45px 38px; /* بود 55px 45px */
-}
+    background: var(--surface);
 
-@media (max-width: 860px) {
-    .auth-form-side {
-        padding: 32px 26px 36px;
-    }
+    box-shadow: var(--shadow);
+
+    animation: auth-rise 500ms ease both;
 }
 
 @keyframes auth-rise {
@@ -51,6 +44,7 @@
         transform: translateY(22px);
         opacity: 0;
     }
+
     to {
         transform: translateY(0);
         opacity: 1;
@@ -58,61 +52,91 @@
 }
 
 
-/* --- پنل برند (سمت راست) --- */
+/* =========================================================
+   2. BRAND PANEL (سمت راست — روشن و طلایی مطابق تم کارفرما)
+========================================================= */
 
 .auth-panel {
     position: relative;
-    overflow: hidden;
+
     display: flex;
+
     flex-direction: column;
+
     justify-content: center;
-    padding: 55px 45px;
+
+    overflow: hidden;
+
+    padding: 45px 38px;
+
     background: radial-gradient(
             circle at 80% 15%,
-            rgba(212, 175, 55, 0.16),
+            rgba(212, 175, 55, 0.18),
             transparent 42%
     ),
-    linear-gradient(160deg, #0b0b0b, #050505);
+    linear-gradient(
+            160deg,
+            #fffdf5,
+            #f7f1dd
+    );
+
+    color: var(--text);
 }
 
 .auth-panel::before {
     content: "";
+
     position: absolute;
-    inset: 18px;
-    border: 1px solid rgba(212, 175, 55, 0.14);
+    inset: 16px;
+
+    border: 1px solid rgba(185, 138, 28, 0.22);
     border-radius: calc(var(--radius-xl) - 10px);
+
     pointer-events: none;
 }
 
 .auth-panel::after {
     content: "";
+
     position: absolute;
     bottom: -110px;
     left: -110px;
+
     width: 260px;
     height: 260px;
+
     border-radius: 50%;
-    background: rgba(212, 175, 55, 0.09);
+
+    background: rgba(212, 175, 55, 0.14);
+
     filter: blur(55px);
 }
 
 .auth-brand {
-    margin-bottom: 35px;
+    margin-bottom: 30px;
 }
 
 .auth-panel h2 {
     position: relative;
     z-index: 1;
-    margin: 0 0 16px;
-    font-size: 25px;
+
+    margin: 0 0 14px;
+
+    color: var(--text);
+
+    font-size: 24px;
+    font-weight: 800;
     line-height: 1.5;
 }
 
 .auth-panel p {
     position: relative;
     z-index: 1;
+
     margin: 0;
-    color: var(--text-muted);
+
+    color: var(--text-soft);
+
     font-size: 13px;
     line-height: 2.1;
 }
@@ -120,188 +144,248 @@
 .auth-points {
     position: relative;
     z-index: 1;
+
     display: flex;
+
     flex-direction: column;
+
     gap: 12px;
-    margin-top: 30px;
+
+    margin: 28px 0 0;
+    padding: 0;
+
+    list-style: none;
 }
 
 .auth-points li {
     position: relative;
+
     padding-inline-start: 26px;
+
     color: var(--text-soft);
+
     font-size: 13px;
+    line-height: 1.8;
 }
 
 .auth-points li::before {
     content: "";
+
     position: absolute;
-    top: 10px;
+    top: 9px;
     inset-inline-start: 0;
+
     width: 14px;
     height: 14px;
+
     border-radius: 50%;
-    background: rgba(212, 175, 55, 0.12);
-    box-shadow: inset 0 0 0 4px rgba(212, 175, 55, 0.28);
+
+    background: rgba(212, 175, 55, 0.14);
+
+    box-shadow: inset 0 0 0 4px rgba(185, 138, 28, 0.32);
 }
 
 
-/* --- سمت فرم --- */
+/* =========================================================
+   3. FORM SIDE
+========================================================= */
 
 .auth-form-side {
-    padding: 55px 50px;
-    background: var(--black-soft);
+    padding: 40px 42px;
+
+    background: #ffffff;
 }
 
 .auth-form-header {
-    margin-bottom: 30px;
+    margin-bottom: 26px;
 }
 
 .auth-form-header h1 {
     margin: 8px 0 0;
+
+    color: var(--text);
+
     font-size: clamp(23px, 3vw, 30px);
+    font-weight: 800;
     letter-spacing: -0.5px;
 }
 
-.auth-form-side .form-group {
-    margin-bottom: 16px;
-}
-
-.auth-form-side .form-group.has-error input {
-    border-color: rgba(226, 109, 109, 0.55);
-}
-
-.auth-form-side input,
-.auth-form-side select,
-.auth-form-side textarea {
-    min-height: 50px;
-    padding: 12px 15px;
-    border-radius: var(--radius-sm);
-    background: var(--surface-2);
-    font-size: 14px;
-    transition: border-color var(--transition),
-    box-shadow var(--transition);
-}
-
-.auth-form-side input:focus {
-    border-color: rgba(212, 175, 55, 0.65);
-    box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.07);
-}
-
-.auth-submit {
-    margin-top: 10px;
-    font-size: 14px;
-}
-
-.auth-switch {
-    margin: 24px 0 0;
-    padding-top: 22px;
-    border-top: 1px solid var(--border);
-    color: var(--text-muted);
-    font-size: 13px;
-    text-align: center;
-}
-
-.auth-switch a {
-    color: var(--gold);
-    font-weight: 700;
-    transition: var(--transition);
-}
-
-.auth-switch a:hover {
-    color: var(--gold-light);
-}
-
-
-/* چیدمان دوستونی فیلدهای کوتاه */
 .auth-form-side form {
     display: grid;
+
     grid-template-columns: 1fr 1fr;
+
     gap: 0 14px;
+}
+
+.auth-form-side .form-group {
+    min-width: 0;
+
+    margin-bottom: 14px;
 }
 
 .auth-form-side .form-group:not(.form-half) {
     grid-column: 1 / -1;
 }
 
-.auth-form-side .form-group {
-    min-width: 0;
+.auth-form-side .form-group label {
+    font-size: 11px;
+}
+
+.auth-form-side .form-group.has-error input,
+.auth-form-side .form-group.has-error select {
+    border-color: rgba(226, 59, 59, 0.55);
+}
+
+.auth-form-side input,
+.auth-form-side select,
+.auth-form-side textarea {
+    min-height: 44px;
+
+    padding: 9px 13px;
+
+    font-size: 13px;
+}
+
+.auth-form-side input:focus {
+    border-color: var(--gold);
+
+    box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.10);
+}
+
+.auth-submit {
+    min-height: 46px;
+
+    margin-top: 8px;
+
+    font-size: 14px;
+}
+
+.auth-switch {
+    margin: 22px 0 0;
+    padding-top: 20px;
+
+    border-top: 1px solid var(--border);
+
+    color: var(--text-muted);
+
+    font-size: 13px;
+
+    text-align: center;
+}
+
+.auth-switch a {
+    color: var(--gold-dark);
+
+    font-weight: 700;
+
+    transition: color var(--transition);
+}
+
+.auth-switch a:hover {
+    color: var(--gold);
+}
+
+.auth-otp-link {
+    margin: 14px 0 0;
+
+    text-align: center;
+}
+
+.auth-otp-link a {
+    color: var(--gold-dark);
+
+    font-size: 12px;
+
+    transition: color var(--transition);
+}
+
+.auth-otp-link a:hover {
+    color: var(--gold);
+}
+
+
+/* =========================================================
+   4. OTP
+========================================================= */
+
+.otp-code-input {
+    font-size: 22px !important;
+    font-weight: 800;
+
+    letter-spacing: 10px;
+
+    text-align: center;
+}
+
+
+/* =========================================================
+   5. RESPONSIVE
+========================================================= */
+
+@media (max-width: 860px) {
+
+    .auth-card,
+    .auth-card-register,
+    .auth-card-otp {
+        grid-template-columns: 1fr;
+    }
+
+    .auth-panel {
+        padding: 36px 28px;
+    }
+
+    .auth-panel::before {
+        inset: 12px;
+    }
+
+    .auth-form-side {
+        padding: 32px 26px 36px;
+    }
 }
 
 @media (max-width: 480px) {
+
+    .auth-section {
+        padding-top: 25px;
+    }
+
+    .auth-card,
+    .auth-card-register,
+    .auth-card-otp {
+        border-radius: var(--radius-lg);
+    }
+
+    .auth-panel {
+        padding: 30px 22px;
+    }
+
+    .auth-panel h2 {
+        font-size: 20px;
+    }
+
+    .auth-form-side {
+        padding: 30px 20px 34px;
+    }
+
     .auth-form-side form {
         grid-template-columns: 1fr;
     }
 }
 
-/* =========================
-   RESPONSIVE
-========================= */
 
-@media (max-width: 860px) {
-    .auth-card,
-    .auth-card-register {
-        grid-template-columns: 1fr;
-    }
+/* =========================================================
+   6. REDUCED MOTION
+========================================================= */
 
-    .auth-panel {
-        padding: 40px 32px;
-    }
-
-    .auth-panel::before {
-        inset: 14px;
-    }
-
-    .auth-form-side {
-        padding: 40px 32px 45px;
-    }
-}
-
-@media (max-width: 480px) {
-    .auth-section {
-        padding-top: 25px;
-    }
+@media (prefers-reduced-motion: reduce) {
 
     .auth-card {
-        border-radius: var(--radius-lg);
+        animation: none;
     }
 
-    .auth-panel {
-        padding: 34px 24px;
+    .auth-switch a,
+    .auth-otp-link a {
+        transition: none;
     }
-
-    .auth-panel h2 {
-        font-size: 21px;
-    }
-
-    .auth-form-side {
-        padding: 32px 22px 38px;
-    }
-}
-
-.auth-otp-link {
-    margin: 14px 0 0;
-    text-align: center;
-}
-
-.auth-otp-link a {
-    color: var(--gold);
-    font-size: 12px;
-    transition: var(--transition);
-}
-
-.auth-otp-link a:hover {
-    color: var(--gold-light);
-}
-
-/* ورودی کد بزرگ و مرکزی */
-.otp-code-input {
-    font-size: 22px !important;
-    font-weight: 800;
-    letter-spacing: 10px;
-    text-align: center;
-}
-
-.auth-card-otp {
-    max-width: 860px;
 }

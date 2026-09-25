@@ -1,3 +1,4 @@
+# shop/services.py
 from django.db.models import QuerySet
 
 from products.models import Product

@@ -1,3 +1,4 @@
+# core/admin.py
 from django.contrib import admin
 
 admin.site.site_header = "Shine Admin"

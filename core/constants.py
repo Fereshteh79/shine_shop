@@ -1,3 +1,4 @@
+# core/constants.py
 """
 ثابت‌های مشترک پروژه Shine Shop.
 

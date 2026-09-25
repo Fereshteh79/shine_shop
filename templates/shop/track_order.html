@@ -1,8 +1,12 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}پیگیری سفارش | Shine{% endblock %}
 
+{% block meta_description %}پیگیری وضعیت سفارش با کد رهگیری در گالری Shine.{% endblock %}
+
 {% block content %}
+
     <section class="track-section">
         <div class="container">
 
@@ -39,7 +43,6 @@
                         </div>
 
                         {% if order.status == "cancelled" %}
-                            <div class="payment-result-icon failed">×</div>
                             <p class="track-cancelled">این سفارش لغو شده است.</p>
 
                         {% else %}
@@ -48,7 +51,7 @@
 
                                 {% for step in order.status_timeline %}
 
-                                    <div class="timeline-step {% if step.done %}is-done{% endif %} {% if forloop.first and order.status == 'pending' %}is-current{% endif %}">
+                                    <div class="timeline-step {% if step.done %}is-done{% endif %}">
 
                                         <div class="timeline-dot">
                                             {% if step.done %}✓{% else %}{{ forloop.counter }}{% endif %}
@@ -78,4 +81,5 @@
 
         </div>
     </section>
+
 {% endblock %}

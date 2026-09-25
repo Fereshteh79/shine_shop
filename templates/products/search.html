@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}
     {% if query %}جستجوی «{{ query }}»{% else %}جستجو{% endif %} | Shine
@@ -6,6 +7,10 @@
 
 {% block meta_description %}
     نتایج جستجو در فروشگاه Shine{% if query %} برای «{{ query }}»{% endif %}.
+{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'products.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -59,19 +64,19 @@
                     <nav class="pagination" aria-label="صفحه‌بندی">
 
                         {% if products.has_previous %}
-                            <a href="?q={{ query }}&{{ querystring }}&page={{ products.previous_page_number }}">قبلی</a>
+                            <a href="?{{ querystring }}&amp;page={{ products.previous_page_number }}">قبلی</a>
                         {% endif %}
 
                         {% for number in products.paginator.page_range %}
                             {% if number == products.number %}
                                 <span class="active" aria-current="page">{{ number }}</span>
                             {% else %}
-                                <a href="?q={{ query }}&{{ querystring }}&page={{ number }}">{{ number }}</a>
+                                <a href="?{{ querystring }}&amp;page={{ number }}">{{ number }}</a>
                             {% endif %}
                         {% endfor %}
 
                         {% if products.has_next %}
-                            <a href="?q={{ query }}&{{ querystring }}&page={{ products.next_page_number }}">بعدی</a>
+                            <a href="?{{ querystring }}&amp;page={{ products.next_page_number }}">بعدی</a>
                         {% endif %}
 
                     </nav>

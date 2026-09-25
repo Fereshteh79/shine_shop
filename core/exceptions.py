@@ -1,3 +1,4 @@
+# core/exception.py
 """
 مدیریت خطاهای پروژه Shine Gallery.
 

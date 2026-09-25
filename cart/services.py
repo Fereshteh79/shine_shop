@@ -11,10 +11,6 @@ class StockChecker:
     """بررسی موجودی محصول یا تنوع — برای حذف تکرار بین متدها."""
 
     @staticmethod
-    def get_stock(item: Product | ProductVariant, *, variant: bool) -> int:
-        return item.stock
-
-    @staticmethod
     def validate_available(item, *, variant: bool) -> None:
         if variant:
             if not item.is_active or not item.in_stock:
@@ -35,6 +31,35 @@ class StockChecker:
 
 class CartService:
 
+    # ------------------------------------------------------------------
+    # Cart lifecycle
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def get_or_create_cart(*, user) -> Cart:
+        """دریافت یا ساخت سبد خرید کاربر."""
+        cart, _ = Cart.objects.get_or_create(user=user)
+        return cart
+
+    # ------------------------------------------------------------------
+    # Items
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _current_quantity(cart: Cart, product: Product, variant) -> int:
+        """تعداد فعلی همین محصول/تنوع در سبد (برای ادغام آیتم تکراری)."""
+
+        if not cart.pk:
+            return 0
+
+        existing = CartItem.objects.filter(
+            cart=cart,
+            product=product,
+            variant=variant,
+        ).first()
+
+        return existing.quantity if existing else 0
+
     @staticmethod
     @transaction.atomic
     def add_item(
@@ -53,7 +78,6 @@ class CartService:
         cart = CartService.get_or_create_cart(user=user)
         cart = Cart.objects.select_for_update().get(pk=cart.pk)
 
-        # ⬇️ 404 نه — استثنای دامنه‌ای که ویو به پیام دوستانه تبدیل می‌کند
         try:
             product = (
                 Product.objects
@@ -146,4 +170,30 @@ class CartService:
 
         item.quantity = quantity
         item.save(update_fields=["quantity", "updated_at"])
+
+        item.cart.save(update_fields=["updated_at"])
         return item
+
+    @staticmethod
+    @transaction.atomic
+    def remove_item(*, user, item_id: int) -> None:
+        """حذف یک آیتم از سبد کاربر — فقط آیتم متعلق به خود کاربر."""
+
+        deleted, _ = CartItem.objects.filter(
+            pk=item_id,
+            cart__user=user,
+        ).delete()
+
+        if not deleted:
+            raise ValidationError("آیتم مورد نظر در سبد خرید یافت نشد.")
+
+    @staticmethod
+    @transaction.atomic
+    def clear_cart(*, user) -> None:
+        """خالی کردن کامل سبد خرید کاربر."""
+
+        cart = Cart.objects.filter(user=user).first()
+
+        if cart:
+            cart.items.all().delete()
+            cart.save(update_fields=["updated_at"])

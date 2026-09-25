@@ -1,3 +1,4 @@
+# shop/selectors.py
 from django.db.models import Q, QuerySet, Count
 
 from products.models import Brand, Category, Product

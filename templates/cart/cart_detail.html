@@ -1,6 +1,13 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}سبد خرید | Shine{% endblock %}
+
+{% block meta_description %}سبد خرید شما در گالری Shine.{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'cart.css' %}">
+{% endblock %}
 
 {% block content %}
     <section class="cart-section">
@@ -30,7 +37,7 @@
                                         href="{% url 'products:detail' item.product.slug %}"
                                         class="cart-item-image"
                                 >
-                                    {% with image=item.product.images.first %}
+                                    {% with image=item.product.primary_image %}
                                         {% if image %}
                                             <img
                                                     src="{{ image.image.url }}"
@@ -40,7 +47,7 @@
                                                     height="120"
                                             >
                                         {% else %}
-                                            <div class="product-placeholder">SHINE</div>
+                                            <span class="product-placeholder">SHINE</span>
                                         {% endif %}
                                     {% endwith %}
                                 </a>

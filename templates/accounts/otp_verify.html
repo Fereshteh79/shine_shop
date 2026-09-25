@@ -1,6 +1,11 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}تأیید کد | Shine{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'accounts.css' %}">
+{% endblock %}
 
 {% block content %}
     <section class="auth-section">
@@ -9,14 +14,15 @@
             <div class="auth-card auth-card-otp">
 
                 <aside class="auth-panel">
-                    <a href="{% url 'shop:home' %}" class="brand auth-brand">
-                        <span class="brand-mark">S</span>
-                        <span class="brand-name">SHINE</span>
+                    <a href="{% url 'shop:home' %}" class="shine-brand auth-brand">
+                        <span class="shine-brand-mark">S</span>
+                        <span class="shine-brand-text"><strong>SHINE</strong><small>GALLERY</small></span>
                     </a>
 
                     <h2>کد را وارد کنید</h2>
-                    <p>کد ۶ رقمی به شماره <span class="ltr gold">{{ phone }}</span> پیامک شد. این کد ۲ دقیقه اعتبار
-                        دارد.</p>
+                    <p>کد ۶ رقمی به شماره <span class="ltr"
+                                                style="color: var(--gold-dark); font-weight: 700;">{{ phone }}</span>
+                        پیامک شد.</p>
                 </aside>
 
                 <div class="auth-form-side">
@@ -31,7 +37,9 @@
                         {% for field in form %}
                             <div class="form-group {% if field.errors %}has-error{% endif %}">
                                 <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+
                                 {{ field }}
+
                                 {% for error in field.errors %}
                                     <p class="form-error">{{ error }}</p>
                                 {% endfor %}

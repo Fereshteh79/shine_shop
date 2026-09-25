@@ -1,8 +1,13 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}ورود به حساب | Shine{% endblock %}
 
 {% block meta_description %}ورود به حساب کاربری در گالری Shine برای خرید و پیگیری سفارش‌ها.{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'accounts.css' %}">
+{% endblock %}
 
 {% block content %}
     <section class="auth-section">
@@ -12,9 +17,9 @@
 
                 <aside class="auth-panel">
 
-                    <a href="{% url 'shop:home' %}" class="brand auth-brand">
-                        <span class="brand-mark">S</span>
-                        <span class="brand-name">SHINE</span>
+                    <a href="{% url 'shop:home' %}" class="shine-brand auth-brand">
+                        <span class="shine-brand-mark">S</span>
+                        <span class="shine-brand-text"><strong>SHINE</strong><small>GALLERY</small></span>
                     </a>
 
                     <h2>به خانواده Shine خوش آمدید</h2>
@@ -70,7 +75,7 @@
                             ورود به حساب
                         </button>
                     </form>
-                
+
                     <p class="auth-otp-link">
                         <a href="{% url 'accounts:otp_request' %}">ورود سریع با کد پیامکی 📱</a>
                     </p>
