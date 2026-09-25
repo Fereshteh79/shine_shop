@@ -1,6 +1,13 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}علاقه‌مندی‌های من | Shine{% endblock %}
+
+{% block meta_description %}لیست علاقه‌مندی‌های شما در گالری Shine.{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'wishlist.css' %}">
+{% endblock %}
 
 {% block content %}
     <section class="wishlist-section">

@@ -1,5 +1,8 @@
 {% extends "base.html" %}
-
+{% load static %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'payments.css' %}">
+{% endblock %}
 {% block title %}پرداخت سفارش #{{ order.id }} | Shine{% endblock %}
 
 {% block content %}

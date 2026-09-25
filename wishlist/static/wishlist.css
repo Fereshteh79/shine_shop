@@ -1,6 +1,6 @@
-/* =========================
-   WISHLIST
-========================= */
+/* =========================================================
+   WISHLIST — Light Luxury Theme
+   ========================================================= */
 
 .wishlist-section {
     padding: 70px 0 100px;
@@ -10,24 +10,34 @@
     display: flex;
     align-items: end;
     justify-content: space-between;
+
     gap: 20px;
+
     margin-bottom: 35px;
 }
 
 .wishlist-header h1 {
     margin: 8px 0 0;
+
+    color: var(--text);
+
     font-size: clamp(30px, 4vw, 42px);
 }
 
 .wishlist-header p {
     margin: 7px 0 0;
+
     color: var(--text-muted);
+
     font-size: 12px;
 }
 
 .wishlist-grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+
+    grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+
     gap: 20px;
 }
 
@@ -35,55 +45,79 @@
     position: relative;
 }
 
+/* فرم حذف به‌صورت جریان عادی؛ دکمه نسبت به کارت position می‌گیرد */
+.wishlist-remove-form {
+    display: contents;
+}
+
 .wishlist-remove {
     position: absolute;
     z-index: 4;
+
     top: 10px;
     left: 10px;
+
     display: grid;
+    place-items: center;
+
     width: 33px;
     height: 33px;
-    place-items: center;
+
     padding: 0;
+
     border: 1px solid var(--border);
     border-radius: 50%;
-    background: rgba(5, 5, 5, 0.86);
+
+    background: rgba(255, 255, 255, 0.92);
     color: var(--text-soft);
+
     font-size: 15px;
-    transition: var(--transition);
+    line-height: 1;
+
+    box-shadow: var(--shadow-sm);
+
+    transition: border-color var(--transition),
+    background var(--transition),
+    color var(--transition);
 }
 
 .wishlist-remove:hover {
     border-color: var(--danger);
-    background: rgba(226, 109, 109, 0.08);
+
+    background: var(--danger-soft);
     color: var(--danger);
 }
 
-.wishlist-added {
-    position: absolute;
-    z-index: 3;
-    top: 12px;
-    right: 12px;
-    padding: 5px 8px;
-    border-radius: 999px;
-    background: rgba(5, 5, 5, 0.75);
-    color: var(--gold);
-    font-size: 9px;
+.wishlist-remove:focus-visible {
+    outline: 2px solid var(--danger);
+    outline-offset: 2px;
 }
 
+
+/* ---------- RESPONSIVE ---------- */
+
 @media (max-width: 1050px) {
+
     .wishlist-grid {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns:
+            repeat(3, minmax(0, 1fr));
     }
 }
 
 @media (max-width: 750px) {
+
     .wishlist-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
     }
 }
 
 @media (max-width: 500px) {
+
+    .wishlist-section {
+        padding: 45px 0 70px;
+    }
+
     .wishlist-header {
         align-items: flex-start;
         flex-direction: column;
@@ -92,25 +126,4 @@
     .wishlist-grid {
         gap: 12px;
     }
-}
-
-.wishlist-remove-form {
-    position: static;
-}
-
-.wishlist-card .wishlist-remove-form {
-    position: initial;
-}
-
-.wishlist-card > .wishlist-remove-form {
-    position: static;
-}
-
-/* دکمه حذف باید نسبت به کارت position داشته باشد */
-.wishlist-card {
-    position: relative;
-}
-
-.wishlist-remove-form {
-    display: contents;
 }

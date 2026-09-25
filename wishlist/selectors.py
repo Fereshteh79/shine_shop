@@ -1,4 +1,6 @@
-from .models import Wishlist
+from django.db.models import Prefetch
+
+from .models import Wishlist, WishlistItem
 
 
 def get_or_create_user_wishlist(user):
@@ -11,8 +13,12 @@ def get_user_wishlist(user):
         Wishlist.objects
         .filter(user=user)
         .prefetch_related(
-            "items__product__category",
-            "items__product__brand",
+            Prefetch(
+                "items",
+                queryset=WishlistItem.objects.select_related(
+                    "product", "product__category", "product__brand",
+                ),
+            ),
         )
         .first()
     )
