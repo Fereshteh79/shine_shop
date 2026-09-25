@@ -1,58 +1,32 @@
+# accounts/sms.py
 """
-دروازه ارسال پیامک — قابل تعویض بین سرویس‌دهنده‌ها از طریق تنظیمات.
+لایهٔ انتزاعی ارسال پیامک.
 
-SMS_PROVIDER=console   → چاپ در لاگ (محیط توسعه)
-SMS_PROVIDER=kavenegar → ارسال واقعی با کاوه‌نگار (نیازمند KAVENEGAR_API_KEY)
+در حال حاضر یک پیاده‌سازی ساختگی (dummy) دارد.
+برای Production باید با سرویس واقعی (مثلاً کاوه‌نگار، مِلی پیامک و …) جایگزین شود.
 """
 
 import logging
 
-import requests
-from django.conf import settings
-
 logger = logging.getLogger(__name__)
-
-KAVENEGAR_API_URL = "https://api.kavenegar.com/v1/{key}/sms/send.json"
 
 
 class SMSDeliveryError(Exception):
-    """خطای ارسال پیامک."""
-
-
-def _send_via_console(*, phone_number: str, message: str) -> None:
-    logger.info("SMS به %s: %s", phone_number, message)
-
-
-def _send_via_kavenegar(*, phone_number: str, message: str) -> None:
-    api_key = settings.KAVENEGAR_API_KEY
-
-    if not api_key:
-        raise SMSDeliveryError("کلید API کاوه‌نگار تنظیم نشده است.")
-
-    try:
-        response = requests.get(
-            KAVENEGAR_API_URL.format(key=api_key),
-            params={"receptor": phone_number, "message": message},
-            timeout=settings.PAYMENT_GATEWAY_TIMEOUT,
-        )
-        response.raise_for_status()
-    except requests.RequestException as exc:
-        logger.error("خطای ارسال پیامک کاوه‌نگار: %s", exc)
-        raise SMSDeliveryError("ارسال پیامک ناموفق بود؛ بعداً تلاش کنید.") from exc
-
-
-PROVIDERS = {
-    "console": _send_via_console,
-    "kavenegar": _send_via_kavenegar,
-}
+    """خطا در ارسال پیامک."""
 
 
 def send_sms(*, phone_number: str, message: str) -> None:
-    provider = PROVIDERS.get(settings.SMS_PROVIDER)
+    """
+    ارسال پیامک به شمارهٔ داده‌شده.
 
-    if provider is None:
-        raise SMSDeliveryError(
-            f"سرویس‌دهنده پیامک نامعتبر است: {settings.SMS_PROVIDER}"
-        )
+    Raises:
+        SMSDeliveryError: در صورت شکست ارسال.
+    """
 
-    provider(phone_number=phone_number, message=message)
+    # TODO: پیاده‌سازی واقعی با API سرویس پیامک
+    logger.info("SMS → %s: %s", phone_number, message)
+
+    # شبیه‌سازی خطای تصادفی برای تست (در Production حذف شود)
+    # import random
+    # if random.random() < 0.1:
+    #     raise SMSDeliveryError("ارسال پیامک با خطا مواجه شد.")

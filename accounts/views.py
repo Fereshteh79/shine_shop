@@ -1,29 +1,32 @@
+# accounts/views.py
+
 from django.contrib import messages
 from django.contrib.auth import get_user_model, login
 from django.contrib.auth.views import LoginView, LogoutView
 from django.shortcuts import redirect, render
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views import View
-from django.utils.crypto import get_random_string
 
-from .forms import (
-    LoginForm,
-    OtpRequestForm,
-    OtpVerifyForm,
-    RegisterForm,
-)
+from .forms import LoginForm, OtpRequestForm, OtpVerifyForm, RegisterForm
 from .otp import OTPError, issue_otp, verify_otp
 from .services import AccountService
 
 User = get_user_model()
 
-OTP_SESSION_KEY = "otp_phone_number"
+# کلید سشن برای نگه‌داشتن شمارهٔ موبایل بین مرحلهٔ ۱ و ۲ ورود با کد پیامکی
+OTP_SESSION_KEY = "GAPGPTMASKTOKEN9xp6dz76gznX1X"
+
+# مدت اعتبار سشن در مرحلهٔ OTP: ۱۰ دقیقه
+OTP_SESSION_TTL = 600
 
 
 class RegisterView(View):
+    """ثبت‌نام کاربر جدید + ورود خودکار پس از ساخت حساب."""
+
     template_name = "accounts/register.html"
 
     def _get_safe_next(self, request) -> str:
+        """مقصد امن برای redirect — جلوگیری از open redirect."""
         next_url = request.POST.get("next") or request.GET.get("next") or ""
 
         if next_url and url_has_allowed_host_and_scheme(
@@ -67,6 +70,8 @@ class RegisterView(View):
 
 
 class UserLoginView(LoginView):
+    """ورود با نام کاربری / ایمیل / موبایل + رمز عبور."""
+
     template_name = "accounts/login.html"
     authentication_form = LoginForm
     redirect_authenticated_user = True
@@ -76,22 +81,22 @@ class UserLoginView(LoginView):
             self.request,
             f"{form.get_user().display_name} عزیز، خوش برگشتی!",
         )
-
         return super().form_valid(form)
 
 
 class UserLogoutView(LogoutView):
+    """خروج از حساب کاربری."""
+
     next_page = "shop:home"
 
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
             messages.info(request, "با موفقیت از حساب خود خارج شدید.")
-
         return super().dispatch(request, *args, **kwargs)
 
 
 class OtpRequestView(View):
-    """مرحله ۱ — دریافت شماره موبایل و ارسال کد."""
+    """مرحلهٔ ۱ ورود با کد پیامکی — گرفتن شماره و ارسال کد."""
 
     template_name = "accounts/otp_request.html"
 
@@ -99,11 +104,7 @@ class OtpRequestView(View):
         if request.user.is_authenticated:
             return redirect("shop:home")
 
-        return render(
-            request,
-            self.template_name,
-            {"form": OtpRequestForm()},
-        )
+        return render(request, self.template_name, {"form": OtpRequestForm()})
 
     def post(self, request):
         if request.user.is_authenticated:
@@ -122,88 +123,89 @@ class OtpRequestView(View):
             form.add_error("phone_number", str(exc))
             return render(request, self.template_name, {"form": form})
 
+        # ذخیرهٔ شماره در سشن با عمر محدود
         request.session[OTP_SESSION_KEY] = phone
-        request.session.set_expiry(600)  # ۱۰ دقیقه فرصت برای وارد کردن کد
+        request.session.set_expiry(OTP_SESSION_TTL)
 
-        messages.info(request, f"کد ورود به شماره {phone} پیامک شد.")
-
+        messages.success(
+            request, "کد تأیید به شمارهٔ شما پیامک شد."
+        )
         return redirect("accounts:otp_verify")
 
 
 class OtpVerifyView(View):
-    """مرحله ۲ — بررسی کد و ورود خودکار."""
+    """مرحلهٔ ۲ ورود با کد پیامکی — بررسی کد و ورود یا ثبت‌نام."""
 
     template_name = "accounts/otp_verify.html"
 
-    def get(self, request, phone=None):
+    def _build_username(self, phone: str) -> str:
+        """ساخت username یکتا از روی شماره موبایل."""
+
+        base = f"user_{phone[-6:]}"
+        username = base
+        counter = 1
+
+        while User.objects.filter(username=username).exists():
+            username = f"{base}{counter}"
+            counter += 1
+
+        return username
+
+    def dispatch(self, request, *args, **kwargs):
+        # اگر شماره‌ای در سشن نباشد، کاربر مستقیم این صفحه را باز کرده
+        if OTP_SESSION_KEY not in request.session:
+            messages.warning(
+                request, "ابتدا شمارهٔ خود را وارد کنید."
+            )
+            return redirect("accounts:otp_request")
+
+        return super().dispatch(request, *args, **kwargs)
+
+    def get(self, request):
         if request.user.is_authenticated:
             return redirect("shop:home")
-
-        user = User.objects.create_user(
-            username=f"user_{phone[3:]}",
-            phone_number=phone,
-            password=get_random_string(16),
-        )
-
-        phone = request.session.get(OTP_SESSION_KEY)
-
-        if not phone:
-            messages.warning(request, "ابتدا شماره موبایل خود را وارد کنید.")
-            return redirect("accounts:otp_request")
 
         return render(
             request,
             self.template_name,
-            {"form": OtpVerifyForm(), "phone": phone},
+            # شمارهٔ استخراج‌شده را برای نمایش در template می‌فرستیم
+            {"phone": request.session.get(OTP_SESSION_KEY, "")},
         )
 
     def post(self, request):
         if request.user.is_authenticated:
             return redirect("shop:home")
 
-        phone = request.session.get(OTP_SESSION_KEY)
-
-        if not phone:
-            messages.warning(request, "ابتدا شماره موبایل خود را وارد کنید.")
-            return redirect("accounts:otp_request")
-
+        phone = request.session.get(OTP_SESSION_KEY, "")
         form = OtpVerifyForm(request.POST)
 
         if not form.is_valid():
             return render(
                 request,
                 self.template_name,
-                {"form": form, "phone": phone},
+                {"phone": phone, "form": form},
             )
 
         try:
-            verify_otp(
-                phone_number=phone,
-                code=form.cleaned_data["code"],
-            )
+            verify_otp(phone_number=phone, code=form.cleaned_data["code"])
         except OTPError as exc:
             form.add_error("code", str(exc))
             return render(
                 request,
                 self.template_name,
-                {"form": form, "phone": phone},
+                {"phone": phone, "form": form},
             )
 
-        user = User.objects.filter(phone_number=phone).first()
-
-        if user is None:
-            # شماره معتبر است ولی حساب ندارد — با اطلاعات حداقلی ثبت‌نام خودکار
+        # پیدا کردن یا ساختن کاربر
+        try:
+            user = User.objects.get(phone_number=phone)
+        except User.DoesNotExist:
             user = User.objects.create_user(
-                username=f"user_{phone[3:]}",  # ۸ رقم آخر به‌عنوان نام کاربری موقت
+                username=self._build_username(phone),
                 phone_number=phone,
-                password=User.objects.make_random_password(),
             )
-
-            messages.success(
-                request,
-                "حساب شما با شماره موبایل ساخته شد؛ "
-                "می‌توانید بعداً ایمیل و نام خود را کامل کنید.",
-            )
+            user.set_unusable_password()
+            user.save(update_fields=["password"])
 
         login(
             request,
@@ -211,8 +213,12 @@ class OtpVerifyView(View):
             backend="django.contrib.auth.backends.ModelBackend",
         )
 
+        # پاک‌سازی سشن
         del request.session[OTP_SESSION_KEY]
+        request.session.set_expiry(None)
 
-        messages.success(request, f"{user.display_name} عزیز، خوش آمدید!")
-
+        messages.success(
+            request,
+            f"{user.display_name} عزیز، خوش آمدید!",
+        )
         return redirect("shop:home")

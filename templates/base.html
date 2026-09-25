@@ -1,35 +1,117 @@
 {% load static %}
+
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
+
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>{% block title %}Shine | گالری کادو، عینک، ساعت و نقره‌جات لوکس{% endblock %}</title>
+    <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0"
+    >
 
-    <meta name="description"
-          content="{% block meta_description %}فروشگاه آنلاین Shine؛ خرید عینک آفتابی، ساعت‌های لوکس، نقره‌جات، بدلیجات و ماگ با کیفیت تضمینی و ارسال سریع در سراسر ایران.{% endblock %}">
+    <title>
+        {% block title %}
+            Shine | گالری کادو، عینک، ساعت و نقره‌جات لوکس
+        {% endblock %}
+    </title>
 
-    <meta name="robots" content="index, follow">
-    <link rel="canonical" href="{{ request.build_absolute_uri }}">
-    <link rel="icon" type="image/svg+xml" href="{% static 'img/favicon.svg' %}">
+    <meta
+            name="description"
+            content="{% block meta_description %}فروشگاه آنلاین Shine؛ خرید عینک آفتابی، ساعت‌های لوکس، نقره‌جات، بدلیجات و ماگ با کیفیت تضمینی و ارسال سریع در سراسر ایران.{% endblock %}"
+    >
 
-    <meta property="og:type" content="{% block og_type %}website{% endblock %}">
-    <meta property="og:site_name" content="Shine Gallery">
-    <meta property="og:locale" content="fa_IR">
-    <meta property="og:title" content="{% block og_title %}{{ block.super }}{% endblock %}">
-    <meta property="og:description" content="{% block og_description %}{{ block.super }}{% endblock %}">
-    <meta property="og:url" content="{{ request.build_absolute_uri }}">
+    <meta
+            name="robots"
+            content="index, follow"
+    >
+
+    <link
+            rel="canonical"
+            href="{{ request.build_absolute_uri }}"
+    >
+
+    <!-- =====================================================
+         FAVICON
+    ====================================================== -->
+
+    <link
+            rel="icon"
+            type="image/svg+xml"
+            href="{% static 'img/favicon.svg' %}"
+    >
+
+    <!-- =====================================================
+         OPEN GRAPH
+    ====================================================== -->
+
+    <meta
+            property="og:type"
+            content="{% block og_type %}website{% endblock %}"
+    >
+
+    <meta
+            property="og:site_name"
+            content="Shine Gallery"
+    >
+
+    <meta
+            property="og:locale"
+            content="fa_IR"
+    >
+
+    <meta
+            property="og:title"
+            content="{% block og_title %}Shine | گالری کادو، عینک، ساعت و نقره‌جات لوکس{% endblock %}"
+    >
+
+    <meta
+            property="og:description"
+            content="{% block og_description %}فروشگاه آنلاین Shine؛ خرید عینک آفتابی، ساعت‌های لوکس، نقره‌جات، بدلیجات و ماگ با کیفیت تضمینی و ارسال سریع در سراسر ایران.{% endblock %}"
+    >
+
+    <meta
+            property="og:url"
+            content="{{ request.build_absolute_uri }}"
+    >
 
     {% block og_image %}{% endblock %}
 
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="{% block twitter_title %}{{ block.super }}{% endblock %}">
-    <meta name="twitter:description" content="{% block twitter_description %}{{ block.super }}{% endblock %}">
+    <!-- =====================================================
+         TWITTER / X
+    ====================================================== -->
+
+    <meta
+            name="twitter:card"
+            content="summary_large_image"
+    >
+
+    <meta
+            name="twitter:title"
+            content="{% block twitter_title %}Shine | گالری کادو، عینک، ساعت و نقره‌جات لوکس{% endblock %}"
+    >
+
+    <meta
+            name="twitter:description"
+            content="{% block twitter_description %}فروشگاه آنلاین Shine؛ خرید عینک آفتابی، ساعت‌های لوکس، نقره‌جات، بدلیجات و ماگ با کیفیت تضمینی و ارسال سریع در سراسر ایران.{% endblock %}"
+    >
 
     {% block twitter_image %}{% endblock %}
 
-    <meta name="theme-color" content="#050505">
+    <!-- =====================================================
+         THEME
+    ====================================================== -->
+
+    <meta
+            name="theme-color"
+            content="#ffffff"
+    >
+
+    <!-- =====================================================
+         SCHEMA
+    ====================================================== -->
 
     <script type="application/ld+json">
         {
@@ -53,38 +135,106 @@
 
     {% block extra_head %}{% endblock %}
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- =====================================================
+         FONTS
+    ====================================================== -->
 
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap"
-          rel="stylesheet">
+    <link
+            rel="preconnect"
+            href="https://fonts.googleapis.com"
+    >
 
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link
+            rel="preconnect"
+            href="https://fonts.gstatic.com"
+            crossorigin
+    >
+
+    <link
+            href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700&family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap"
+            rel="stylesheet"
+    >
+
+    <!-- =====================================================
+         MAIN CSS
+    ====================================================== -->
+
+    <link
+            rel="stylesheet"
+            href="{% static 'css/style.css' %}"
+    >
 
     {% block extra_css %}{% endblock %}
+
 </head>
+
 
 <body>
 
-<a href="#main-content" class="skip-link">پرش به محتوا</a>
+<!-- =====================================================
+     ACCESSIBILITY
+====================================================== -->
+
+<a
+        href="#main-content"
+        class="skip-link"
+>
+    پرش به محتوا
+</a>
+
 
 <div class="site-wrapper">
 
+    <!-- =================================================
+         HEADER
+    ================================================== -->
+
     {% include "includes/header.html" %}
+
+
+    <!-- =================================================
+         DJANGO MESSAGES
+    ================================================== -->
 
     {% include "includes/messages.html" %}
 
-    <main class="site-main" id="main-content">
-        {% block content %}{% endblock %}
+
+    <!-- =================================================
+         MAIN
+    ================================================== -->
+
+    <main
+            class="site-main"
+            id="main-content"
+    >
+
+        {% block content %}
+        {% endblock %}
+
     </main>
+
+
+    <!-- =================================================
+         FOOTER
+    ================================================== -->
 
     {% include "includes/footer.html" %}
 
 </div>
 
-<script src="{% static 'js/main.js' %}" defer></script>
+
+<!-- =====================================================
+     MAIN JAVASCRIPT
+====================================================== -->
+
+<script
+        src="{% static 'js/main.js' %}"
+        defer
+></script>
+
 
 {% block extra_js %}{% endblock %}
 
 </body>
+
 </html>

@@ -1,12 +1,22 @@
+# accounts/models.py
+
 import re
 
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils import timezone
 
 
 def validate_iranian_mobile(value: str) -> None:
     """اعتبارسنجی شماره موبایل ایران — فرمت 09xxxxxxxxx."""
+    if not value:
+        return
+
+    value = value.strip().translate(
+        str.maketrans("۰۱۲۳۴۵۶۷۸۹", "0123456789")
+    )
+
     if not re.fullmatch(r"09\d{9}", value):
         raise ValidationError(
             "شماره موبایل باید با ۰۹ شروع شده و ۱۱ رقم باشد."
@@ -32,16 +42,13 @@ class User(AbstractUser):
         verbose_name = "کاربر"
         verbose_name_plural = "کاربران"
         ordering = ("-date_joined",)
-        indexes = [
-            models.Index(fields=("email",)),
-            models.Index(fields=("phone_number",)),
-        ]
 
     def __str__(self):
         return self.display_name
 
     @property
     def display_name(self) -> str:
+        """نام نمایشی: نام کامل، وگرنه username."""
         return self.get_full_name() or self.username
 
     def clean(self):
@@ -55,7 +62,7 @@ class User(AbstractUser):
 
 
 class PhoneOTP(models.Model):
-    """کد یکبارمصرف پیامکی برای ورود با شماره موبایل — کد به‌صورت هش ذخیره می‌شود."""
+    """کد یکبارمصرف پیامکی — کد به‌صورت هش ذخیره می‌شود."""
 
     phone_number = models.CharField(
         max_length=11,
@@ -79,6 +86,7 @@ class PhoneOTP(models.Model):
         verbose_name="تاریخ ایجاد",
     )
     expires_at = models.DateTimeField(
+        db_index=True,
         verbose_name="تاریخ انقضا",
     )
 
@@ -95,5 +103,12 @@ class PhoneOTP(models.Model):
 
     @property
     def is_expired(self) -> bool:
-        from django.utils import timezone
         return timezone.now() > self.expires_at
+
+    @classmethod
+    def purge_expired(cls) -> int:
+        """کدهای منقضی را پاک می‌کند؛ برای اجرای دوره‌ای."""
+        deleted, _ = cls.objects.filter(
+            expires_at__lt=timezone.now()
+        ).delete()
+        return deleted

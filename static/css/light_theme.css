@@ -1,5 +1,13 @@
 /* =========================================================
-   LIGHT THEME PATCH — بازنویسی رنگ‌های هاردکد تیره
+   SHINE GALLERY
+   LIGHT THEME PATCH
+   Final light-theme overrides
+   RTL / Persian
+========================================================= */
+
+
+/* =========================================================
+   GLOBAL
 ========================================================= */
 
 body {
@@ -25,108 +33,355 @@ body {
 }
 
 
-/* --- هدر --- */
+/* =========================================================
+   HEADER
+========================================================= */
 
 .site-header {
-    border-bottom: 1px solid var(--border);
+    border-bottom-color: var(--border);
+
     background: rgba(255, 255, 255, 0.92);
 }
 
 .site-header.is-scrolled {
     background: #ffffff;
+
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.07);
 }
 
-.brand-mark {
-    border-color: var(--gold-light);
-    background: linear-gradient(145deg, rgba(212, 175, 55, 0.15), transparent);
-    color: var(--gold);
-    box-shadow: none;
+
+/* Header search */
+.shine-search {
+    border-color: var(--border);
+
+    background: var(--surface-2);
+}
+
+.shine-search:focus-within {
+    border-color: rgba(185, 138, 28, 0.55);
+
+    background: #ffffff;
 }
 
 
-/* --- دراور --- */
+/* Header action buttons */
+.shine-header-action {
+    color: var(--text-soft);
+}
 
-.drawer-overlay {
+.shine-header-action:hover {
+    border-color: rgba(185, 138, 28, 0.18);
+
+    background: var(--gold-bg);
+
+    color: var(--gold);
+}
+
+
+/* Account */
+.shine-account-icon {
+    border-color: var(--border);
+
+    background: #ffffff;
+}
+
+.shine-account-link,
+.shine-login-link {
+    color: var(--text-soft);
+}
+
+.shine-account-link:hover,
+.shine-login-link:hover {
+    background: var(--surface-2);
+
+    color: var(--gold-dark);
+}
+
+
+/* Drawer toggle */
+.shine-drawer-toggle {
+    border-color: var(--border);
+
+    background: #ffffff;
+
+    color: var(--text-soft);
+}
+
+.shine-drawer-toggle:hover {
+    border-color: rgba(185, 138, 28, 0.4);
+
+    background: var(--gold-bg);
+
+    color: var(--gold-dark);
+}
+
+
+/* Category navigation */
+.shine-category-nav {
+    border-top-color: var(--border-light);
+
+    background: #ffffff;
+}
+
+.shine-category-link {
+    color: var(--text-soft);
+}
+
+.shine-category-link:hover {
+    background: var(--gold-bg);
+
+    color: var(--gold-dark);
+}
+
+.shine-category-all {
+    color: var(--text);
+}
+
+.shine-category-separator {
+    background: var(--border);
+}
+
+.shine-track-order {
+    color: var(--text-muted);
+}
+
+.shine-track-order:hover {
+    color: var(--gold-dark);
+}
+
+
+/* Category dropdown */
+.shine-category-menu {
+    border-color: var(--border);
+
+    background: #ffffff;
+
+    box-shadow: var(--shadow-lg);
+}
+
+.shine-category-menu a {
+    color: var(--text-soft);
+}
+
+.shine-category-menu a:hover {
+    background: var(--gold-bg);
+
+    color: var(--gold-dark);
+}
+
+
+/* =========================================================
+   DRAWER
+========================================================= */
+
+.shine-drawer-overlay {
     background: rgba(0, 0, 0, 0.35);
 }
 
-.side-drawer {
-    border-inline-start: 1px solid var(--border);
+.shine-side-drawer {
+    border-inline-start-color: var(--border);
+
     background: #ffffff;
+
     box-shadow: -20px 0 60px rgba(0, 0, 0, 0.18);
 }
 
-.drawer-profile {
+.shine-drawer-header {
+    border-bottom-color: var(--border);
+
+    background: #ffffff;
+}
+
+.shine-drawer-close {
+    border-color: var(--border);
+
+    background: #ffffff;
+
+    color: var(--text-soft);
+}
+
+.shine-drawer-close:hover {
+    border-color: rgba(185, 138, 28, 0.35);
+
+    background: var(--gold-bg);
+
+    color: var(--gold-dark);
+}
+
+
+/* Profile / guest box */
+.shine-drawer-profile,
+.shine-drawer-guest {
+    border-color: rgba(185, 138, 28, 0.18);
+
     background: rgba(212, 175, 55, 0.08);
 }
 
-.drawer-icon {
-    border-color: rgba(185, 138, 28, 0.2);
+.shine-drawer-profile strong,
+.shine-drawer-guest strong {
+    color: var(--text);
+}
+
+.shine-drawer-profile small,
+.shine-drawer-guest small {
+    color: var(--text-muted);
+}
+
+.shine-drawer-guest-icon {
     background: rgba(212, 175, 55, 0.07);
+
+    color: var(--gold-dark);
 }
 
-.drawer-logout {
+
+/* Drawer navigation */
+.shine-drawer-link {
+    color: var(--text-soft);
+}
+
+.shine-drawer-link:hover {
+    background: var(--gold-bg);
+
+    color: var(--gold-dark);
+}
+
+.shine-drawer-link-icon {
+    border-color: var(--border);
+
+    background: var(--surface-2);
+
+    color: var(--gold-dark);
+}
+
+.shine-drawer-section-title {
+    border-bottom-color: var(--border);
+
+    color: var(--text-faint);
+}
+
+.shine-drawer-accordion-body {
+    border-inline-start-color: rgba(185, 138, 28, 0.3);
+}
+
+.shine-drawer-sublink {
+    color: var(--text-muted);
+}
+
+.shine-drawer-sublink:hover {
+    background: var(--gold-bg);
+
+    color: var(--gold-dark);
+}
+
+
+/* Drawer footer */
+.shine-drawer-footer {
+    border-top-color: var(--border);
+
+    background: #ffffff;
+}
+
+.shine-drawer-logout {
     border-color: rgba(226, 59, 59, 0.25);
+
     background: rgba(226, 59, 59, 0.04);
+
     color: var(--danger);
 }
 
-.drawer-logout .drawer-icon {
-    border-color: rgba(226, 59, 59, 0.2);
-    background: rgba(226, 59, 59, 0.05);
-    color: var(--danger);
+.shine-drawer-logout:hover {
+    border-color: rgba(226, 59, 59, 0.35);
+
+    background: rgba(226, 59, 59, 0.08);
 }
 
-.drawer-close:hover,
-.drawer-link:hover,
-.drawer-sublink:hover {
-    background: rgba(212, 175, 55, 0.09);
-    color: var(--gold);
+.shine-drawer-register-button {
+    border-color: var(--border);
+
+    background: #ffffff;
+
+    color: var(--text-soft);
+}
+
+.shine-drawer-register-button:hover {
+    border-color: var(--gold);
+
+    color: var(--gold-dark);
+}
+
+.shine-drawer-contact a {
+    color: var(--text-faint);
+}
+
+.shine-drawer-contact a:hover {
+    color: var(--gold-dark);
 }
 
 
-/* --- دکمه‌ها --- */
+/* =========================================================
+   BUTTONS
+========================================================= */
 
 .btn-gold {
-    background: linear-gradient(135deg, var(--gold-light), var(--gold));
+    background: linear-gradient(
+            135deg,
+            var(--gold-light),
+            var(--gold)
+    );
+
     color: #1c1200;
+
     box-shadow: 0 6px 20px rgba(185, 138, 28, 0.25);
 }
 
 .btn-gold:hover {
-    background: linear-gradient(135deg, #e6c55c, var(--gold-light));
+    background: linear-gradient(
+            135deg,
+            #e6c55c,
+            var(--gold-light)
+    );
+
     color: #1c1200;
+
     box-shadow: 0 10px 26px rgba(185, 138, 28, 0.35);
 }
 
 .btn-outline {
     border-color: var(--border);
+
     background: #ffffff;
+
     color: var(--text);
 }
 
 .btn-outline:hover {
     border-color: var(--gold);
+
     background: rgba(212, 175, 55, 0.06);
+
     color: var(--gold);
 }
 
 .btn-dark {
     background: var(--surface-2);
+
     color: var(--text);
 }
 
 
-/* --- فرم‌ها --- */
+/* =========================================================
+   FORMS
+========================================================= */
 
 .form-control,
 .form-group input,
 .form-group select,
 .form-group textarea {
-    background: var(--surface-2);
-    color: var(--text);
     border-color: var(--border);
+
+    background: var(--surface-2);
+
+    color: var(--text);
 }
 
 .form-control:focus,
@@ -141,11 +396,14 @@ body {
 }
 
 
-/* --- کارت محصول --- */
+/* =========================================================
+   PRODUCT CARDS
+========================================================= */
 
 .product-card {
-    background: #ffffff;
     border-color: var(--border);
+
+    background: #ffffff;
 }
 
 .product-card:hover {
@@ -157,29 +415,47 @@ body {
 }
 
 .product-image::after {
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.12), transparent 45%);
+    background: linear-gradient(
+            to top,
+            rgba(0, 0, 0, 0.12),
+            transparent 45%
+    );
 }
 
 .product-placeholder {
     color: var(--gold-soft);
 }
 
+
+/* =========================================================
+   PAGINATION
+========================================================= */
+
 .pagination a,
 .pagination span {
+    border-color: var(--border);
+
     background: #ffffff;
+
     color: var(--text-soft);
 }
 
 
-/* --- هشدارها و حالت خالی --- */
+/* =========================================================
+   ALERTS / EMPTY STATES
+========================================================= */
 
 .alert {
     background: #ffffff;
+
     color: var(--text-soft);
+
     box-shadow: var(--shadow-sm);
 }
 
 .empty-state {
+    border-color: var(--border);
+
     background: #ffffff;
 }
 
@@ -188,22 +464,153 @@ body {
 }
 
 
-/* --- هیرو (نسخه روشن) --- */
+/* =========================================================
+   HOME — CURRENT HERO SLIDER
+========================================================= */
+
+.slider-wrap {
+    background: #1a1a1a;
+}
+
+
+/*
+   The current home page uses .slide rather than the older
+   .hero namespace. The slide itself intentionally remains
+   image-based and dark enough for white promotional text.
+*/
+
+.slide-eyebrow {
+    border-color: rgba(212, 175, 55, 0.55);
+
+    background: rgba(212, 175, 55, 0.12);
+
+    color: var(--gold-light);
+}
+
+.slide-content h1 {
+    color: #ffffff;
+}
+
+.slide-content p {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.slider-dots button.is-active {
+    background: var(--gold-light);
+}
+
+
+/* =========================================================
+   HOME — CIRCLE CATEGORIES
+========================================================= */
+
+.circle-img {
+    border-color: var(--border);
+
+    background: #ffffff;
+
+    color: var(--gold);
+}
+
+.circle-cat:hover .circle-img {
+    border-color: var(--gold);
+
+    box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.12),
+    var(--shadow-sm);
+}
+
+.circle-label {
+    color: var(--text-soft);
+}
+
+.circle-cat:hover .circle-label {
+    color: var(--gold);
+}
+
+
+/* =========================================================
+   HOME — TRUST BAR
+========================================================= */
+
+.trust-bar {
+    border-block-color: var(--border);
+
+    background: #ffffff;
+}
+
+.trust-icon {
+    background: rgba(212, 175, 55, 0.1);
+
+    color: var(--gold);
+}
+
+.trust-item strong {
+    color: var(--text);
+}
+
+.trust-item span {
+    color: var(--text-muted);
+}
+
+
+/* =========================================================
+   HOME — MID BANNERS
+========================================================= */
+
+.mid-banner {
+    background: var(--surface-2);
+}
+
+.mid-overlay {
+    background: linear-gradient(
+            to top,
+            rgba(0, 0, 0, 0.72),
+            transparent 60%
+    );
+}
+
+
+/* =========================================================
+   LEGACY / OTHER HOME COMPONENTS
+   Kept intentionally because these selectors may still be
+   used by other templates/pages in the project.
+========================================================= */
 
 .hero {
-    background: radial-gradient(ellipse 55% 45% at 78% 30%, rgba(212, 175, 55, 0.14), transparent 60%),
-    radial-gradient(ellipse 40% 35% at 12% 85%, rgba(212, 175, 55, 0.07), transparent 55%),
-    linear-gradient(180deg, #fffdf5 0%, #faf7ec 100%);
+    background: radial-gradient(
+            ellipse 55% 45% at 78% 30%,
+            rgba(212, 175, 55, 0.14),
+            transparent 60%
+    ),
+    radial-gradient(
+            ellipse 40% 35% at 12% 85%,
+            rgba(212, 175, 55, 0.07),
+            transparent 55%
+    ),
+    linear-gradient(
+            180deg,
+            #fffdf5 0%,
+            #faf7ec 100%
+    );
 }
 
 .hero::before {
-    background-image: linear-gradient(rgba(185, 138, 28, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(185, 138, 28, 0.05) 1px, transparent 1px);
+    background-image: linear-gradient(
+            rgba(185, 138, 28, 0.05) 1px,
+            transparent 1px
+    ),
+    linear-gradient(
+            90deg,
+            rgba(185, 138, 28, 0.05) 1px,
+            transparent 1px
+    );
 }
 
 .hero-eyebrow {
     border-color: rgba(185, 138, 28, 0.35);
+
     background: rgba(212, 175, 55, 0.1);
+
     color: var(--gold);
 }
 
@@ -212,22 +619,39 @@ body {
 }
 
 .hero-glow {
-    background: radial-gradient(circle, rgba(212, 175, 55, 0.2), transparent 65%);
+    background: radial-gradient(
+            circle,
+            rgba(212, 175, 55, 0.2),
+            transparent 65%
+    );
 }
 
 .hero-card {
     border-color: rgba(185, 138, 28, 0.35);
-    background: linear-gradient(150deg, rgba(212, 175, 55, 0.12), rgba(212, 175, 55, 0.02) 45%),
+
+    background: linear-gradient(
+            150deg,
+            rgba(212, 175, 55, 0.12),
+            rgba(212, 175, 55, 0.02) 45%
+    ),
     #ffffff;
+
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6),
     0 30px 80px rgba(120, 90, 20, 0.15);
 }
 
 .hero-card strong {
-    background: linear-gradient(135deg, var(--gold-light), var(--gold) 80%);
+    background: linear-gradient(
+            135deg,
+            var(--gold-light),
+            var(--gold) 80%
+    );
+
     -webkit-background-clip: text;
     background-clip: text;
+
     color: transparent;
+
     text-shadow: none;
 }
 
@@ -244,10 +668,13 @@ body {
 }
 
 
-/* --- نوار ویژگی‌ها --- */
+/* =========================================================
+   LEGACY FEATURES BAR
+========================================================= */
 
 .features-bar {
     border-color: var(--border);
+
     background: #ffffff;
 }
 
@@ -272,15 +699,27 @@ body {
 }
 
 
-/* --- دسته‌بندی‌ها و بنر --- */
+/* =========================================================
+   LEGACY HOME CATEGORIES / BANNER
+========================================================= */
 
 .home-categories {
-    background: linear-gradient(180deg, #f7f7f8, #ffffff 50%, #f7f7f8);
+    background: linear-gradient(
+            180deg,
+            #f7f7f8,
+            #ffffff 50%,
+            #f7f7f8
+    );
 }
 
 .category-card {
     border-color: var(--border);
-    background: linear-gradient(160deg, #ffffff, #faf8f0);
+
+    background: linear-gradient(
+            160deg,
+            #ffffff,
+            #faf8f0
+    );
 }
 
 .category-card:hover {
@@ -289,8 +728,18 @@ body {
 
 .luxury-banner-inner {
     border-color: rgba(185, 138, 28, 0.35);
-    background: radial-gradient(ellipse 50% 80% at 90% 50%, rgba(212, 175, 55, 0.12), transparent 55%),
-    linear-gradient(150deg, #fffdf5, #ffffff);
+
+    background: radial-gradient(
+            ellipse 50% 80% at 90% 50%,
+            rgba(212, 175, 55, 0.12),
+            transparent 55%
+    ),
+    linear-gradient(
+            150deg,
+            #fffdf5,
+            #ffffff
+    );
+
     box-shadow: var(--shadow);
 }
 
@@ -299,14 +748,20 @@ body {
 }
 
 
-/* --- سکشن تیره قدیمی → روشن --- */
+/* =========================================================
+   SHOP / DARK SECTION PATCH
+========================================================= */
 
 .section-dark {
     background: var(--black-soft);
 }
 
 .shop-header {
-    background: linear-gradient(180deg, #fffdf5, #f7f7f8);
+    background: linear-gradient(
+            180deg,
+            #fffdf5,
+            #f7f7f8
+    );
 }
 
 .shop-header p {
@@ -316,9 +771,17 @@ body {
 .filter-box,
 .filter-group input,
 .filter-group select {
+    border-color: var(--border);
+
     background: #ffffff;
+
     color: var(--text);
 }
+
+
+/* =========================================================
+   CART / CHECKOUT / ORDER / PAYMENT / REVIEW
+========================================================= */
 
 .cart-summary-card,
 .checkout-main,
@@ -331,6 +794,8 @@ body {
 .review-form,
 .surface-card,
 .track-card {
+    border-color: var(--border);
+
     background: #ffffff;
 }
 
@@ -351,38 +816,36 @@ body {
 }
 
 .timeline-dot {
+    border-color: var(--border);
+
     background: var(--surface-2);
+
     color: var(--text-faint);
 }
 
-/* --- فوتر --- */
 
-.site-footer {
-    margin-top: 70px;
-    border-top: 1px solid var(--border);
-    background: #ffffff;
-}
-
-.footer-about li {
-    border-color: var(--border);
-    color: var(--text-soft);
-}
-
-.footer-bottom {
-    border-color: var(--border);
-    color: var(--text-faint);
-}
-
-/* --- auth --- */
+/* =========================================================
+   AUTH
+========================================================= */
 
 .auth-card {
     background: #ffffff;
+
     box-shadow: var(--shadow);
 }
 
 .auth-panel {
-    background: radial-gradient(circle at 80% 15%, rgba(212, 175, 55, 0.18), transparent 42%),
-    linear-gradient(160deg, #fffdf5, #f7f1dd);
+    background: radial-gradient(
+            circle at 80% 15%,
+            rgba(212, 175, 55, 0.18),
+            transparent 42%
+    ),
+    linear-gradient(
+            160deg,
+            #fffdf5,
+            #f7f1dd
+    );
+
     color: var(--text);
 }
 
@@ -403,8 +866,144 @@ body {
     background: #ffffff;
 }
 
-/* --- اسکرول‌بار درایو و متن‌های ltr روشن --- */
 
-.drawer-nav {
-    scrollbar-color: var(--gold-soft) transparent;
+/* =========================================================
+   TRACK ORDER
+========================================================= */
+
+.track-card {
+    background: #ffffff;
+}
+
+.track-code {
+    background: var(--surface-2);
+}
+
+.track-error,
+.track-cancelled {
+    border-color: var(--border);
+}
+
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+.site-footer {
+    margin-top: 70px;
+
+    border-top-color: var(--border);
+
+    background: #ffffff;
+}
+
+.footer-about li {
+    border-color: var(--border);
+
+    color: var(--text-soft);
+}
+
+.footer-about-label {
+    color: var(--gold);
+}
+
+.footer-bottom {
+    border-top-color: var(--border);
+
+    color: var(--text-faint);
+}
+
+
+/* =========================================================
+   FOOTER — CONTACT
+========================================================= */
+
+.footer-contact .footer-about li {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 3px;
+
+    padding: 10px 0;
+
+    border-bottom: 1px solid var(--border);
+
+    font-size: 13px;
+
+    line-height: 1.9;
+}
+
+.footer-contact .footer-about li:last-child {
+    border-bottom: 0;
+}
+
+.footer-contact .footer-about a {
+    color: var(--text);
+
+    text-decoration: none;
+
+    transition: color var(--transition);
+}
+
+.footer-contact .footer-about a:hover {
+    color: var(--gold);
+}
+
+.footer-contact .footer-about a:focus-visible {
+    outline: 2px solid rgba(185, 138, 28, 0.45);
+    outline-offset: 3px;
+}
+
+.footer-bottom {
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 14px;
+
+    flex-wrap: wrap;
+
+    padding-block: 20px;
+
+    border-top: 1px solid var(--border);
+
+    color: var(--text-faint);
+
+    font-size: 11.5px;
+}
+
+
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+    .site-header,
+    .shine-brand,
+    .shine-search,
+    .shine-search button,
+    .shine-header-action,
+    .shine-account-link,
+    .shine-login-link,
+    .shine-drawer-toggle,
+    .shine-category-link,
+    .shine-category-menu,
+    .shine-category-menu a,
+    .shine-drawer-close,
+    .shine-drawer-link,
+    .shine-drawer-sublink,
+    .shine-drawer-logout,
+    .shine-drawer-auth-button,
+    .shine-drawer-register-button,
+    .shine-drawer-contact a,
+    .btn-gold,
+    .btn-outline,
+    .product-card,
+    .circle-img,
+    .circle-label {
+        transition: none;
+    }
 }

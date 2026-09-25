@@ -1,286 +1,697 @@
-/* =========================
+/* =========================================================
+   SHINE GALLERY
    SIDE DRAWER
-========================= */
+========================================================= */
+
+
+/* =========================================================
+   DRAWER STATE
+========================================================= */
 
 body.drawer-open {
     overflow: hidden;
 }
 
-.drawer-overlay {
+
+/* =========================================================
+   OVERLAY
+========================================================= */
+
+.shine-drawer-overlay {
     position: fixed;
+
     inset: 0;
-    z-index: 80;
-    background: rgba(0, 0, 0, 0.68);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
+
+    z-index: var(--z-overlay);
+
+    background: rgba(0, 0, 0, 0.48);
+
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+
     opacity: 0;
+
     visibility: hidden;
+
     transition: opacity var(--transition-slow),
     visibility var(--transition-slow);
 }
 
-body.drawer-open .drawer-overlay {
+body.drawer-open .shine-drawer-overlay {
     opacity: 1;
+
     visibility: visible;
 }
 
-.side-drawer {
+
+/* =========================================================
+   DRAWER
+========================================================= */
+
+.shine-side-drawer {
     position: fixed;
+
     top: 0;
     right: 0;
     bottom: 0;
-    z-index: 90;
+
+    z-index: var(--z-drawer);
+
     display: flex;
+
     flex-direction: column;
-    width: min(360px, 90vw);
-    border-inline-start: 1px solid rgba(212, 175, 55, 0.2);
-    background: radial-gradient(circle at 100% 0, rgba(212, 175, 55, 0.08), transparent 35%),
-    linear-gradient(160deg, #0c0c0c, #050505);
-    box-shadow: -30px 0 70px rgba(0, 0, 0, 0.6);
+
+    width: min(390px, 92vw);
+
+    overflow: hidden;
+
+    border-inline-start: 1px solid rgba(185, 138, 28, 0.18);
+
+    background: #ffffff;
+
+    box-shadow: -25px 0 70px rgba(0, 0, 0, 0.18);
+
     transform: translateX(105%);
+
     visibility: hidden;
+
     transition: transform var(--transition-slow),
     visibility var(--transition-slow);
 }
 
-body.drawer-open .side-drawer {
+body.drawer-open .shine-side-drawer {
     transform: translateX(0);
+
     visibility: visible;
 }
 
 
-/* --- سربرگ --- */
+/* =========================================================
+   DRAWER HEADER
+========================================================= */
 
-.drawer-header {
+.shine-drawer-header {
     display: flex;
+
     align-items: center;
     justify-content: space-between;
-    padding: 18px 20px;
-    border-bottom: 1px solid var(--border);
+
+    min-height: 72px;
+
+    flex: 0 0 72px;
+
+    padding: 0 18px;
+
+    border-bottom: 1px solid #eeeeee;
+
+    background: #ffffff;
 }
 
-.drawer-close {
-    display: grid;
+.shine-drawer-brand {
+    min-width: 0;
+}
+
+.shine-drawer-brand .shine-brand-mark {
     width: 38px;
     height: 38px;
-    place-items: center;
-    padding: 0;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    background: transparent;
-    color: var(--text-muted);
-    font-size: 20px;
-    line-height: 1;
-    transition: var(--transition);
+
+    flex-basis: 38px;
+
+    font-size: 22px;
 }
 
-.drawer-close:hover {
-    border-color: rgba(212, 175, 55, 0.45);
-    background: rgba(212, 175, 55, 0.06);
-    color: var(--gold-light);
+.shine-drawer-brand .shine-brand-text strong {
+    font-size: 23px;
 }
 
-
-/* --- پروفایل --- */
-
-.drawer-profile {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin: 18px 18px 6px;
-    padding: 14px;
-    border: 1px solid var(--border-strong);
-    border-radius: var(--radius-md);
-    background: rgba(212, 175, 55, 0.05);
-}
-
-.drawer-avatar {
+.shine-drawer-close {
     display: grid;
+
+    width: 38px;
+    height: 38px;
+
+    flex: 0 0 38px;
+
+    place-items: center;
+
+    padding: 0;
+
+    border: 1px solid #e4e4e4;
+
+    border-radius: 9px;
+
+    background: #ffffff;
+
+    color: #555;
+
+    font-family: inherit;
+
+    font-size: 25px;
+
+    font-weight: 300;
+
+    line-height: 1;
+
+    cursor: pointer;
+
+    transition: background var(--transition),
+    color var(--transition),
+    border-color var(--transition);
+}
+
+.shine-drawer-close:hover {
+    border-color: rgba(185, 138, 28, 0.35);
+
+    background: var(--gold-bg);
+
+    color: var(--gold-dark);
+}
+
+.shine-drawer-close:focus-visible {
+    outline: 2px solid rgba(185, 138, 28, 0.5);
+    outline-offset: 2px;
+}
+
+
+/* =========================================================
+   CONTENT
+========================================================= */
+
+.shine-drawer-content {
+    flex: 1;
+
+    min-height: 0;
+
+    overflow-y: auto;
+
+    padding: 14px;
+
+    scrollbar-width: thin;
+
+    scrollbar-color: #d5d5d5 transparent;
+}
+
+.shine-drawer-content::-webkit-scrollbar {
+    width: 5px;
+}
+
+.shine-drawer-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.shine-drawer-content::-webkit-scrollbar-thumb {
+    border-radius: var(--radius-pill);
+
+    background: #d5d5d5;
+}
+
+
+/* =========================================================
+   PROFILE
+========================================================= */
+
+.shine-drawer-profile,
+.shine-drawer-guest {
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    margin-bottom: 12px;
+
+    padding: 14px;
+
+    border: 1px solid rgba(185, 138, 28, 0.18);
+
+    border-radius: 12px;
+
+    background: linear-gradient(
+            135deg,
+            rgba(185, 138, 28, 0.08),
+            rgba(185, 138, 28, 0.025)
+    );
+}
+
+.shine-drawer-avatar {
+    display: grid;
+
     width: 44px;
     height: 44px;
+
+    flex: 0 0 44px;
+
     place-items: center;
+
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--gold-light), var(--gold));
-    color: #090909;
-    font-size: 19px;
-    font-weight: 900;
+
+    background: linear-gradient(
+            135deg,
+            #d8b64d,
+            #a9780d
+    );
+
+    color: #ffffff;
+
+    font-size: 17px;
+
+    font-weight: 800;
 }
 
-.drawer-profile strong {
+.shine-drawer-profile strong,
+.shine-drawer-guest strong {
     display: block;
+
+    color: #2d2d2d;
+
     font-size: 13px;
+
+    overflow-wrap: anywhere;
 }
 
-.drawer-profile small {
-    color: var(--text-muted);
+.shine-drawer-profile small,
+.shine-drawer-guest small {
+    display: block;
+
+    margin-top: 2px;
+
+    color: #888;
+
     font-size: 10px;
+
+    overflow-wrap: anywhere;
 }
 
-
-/* --- ناوبری --- */
-
-.drawer-nav {
-    flex: 1;
-    overflow-y: auto;
-    padding: 12px 14px;
-}
-
-.drawer-link {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    width: 100%;
-    min-height: 48px;
-    padding: 11px 14px;
-    margin-bottom: 4px;
-    border: 0;
-    border-radius: var(--radius-sm);
-    background: transparent;
-    color: var(--text-soft);
-    font: inherit;
-    font-size: 13.5px;
-    text-align: right;
-    transition: var(--transition);
-}
-
-.drawer-link:hover {
-    background: rgba(212, 175, 55, 0.08);
-    color: var(--gold-light);
-}
-
-.drawer-icon {
+.shine-drawer-guest-icon {
     display: grid;
+
+    width: 44px;
+    height: 44px;
+
+    flex: 0 0 44px;
+
+    place-items: center;
+
+    border-radius: 50%;
+
+    background: #f5f5f5;
+
+    color: var(--gold-dark);
+}
+
+.shine-drawer-guest-icon svg {
+    width: 22px;
+    height: 22px;
+
+    fill: none;
+
+    stroke: currentColor;
+
+    stroke-width: 1.5;
+
+    stroke-linecap: round;
+}
+
+
+/* =========================================================
+   NAVIGATION
+========================================================= */
+
+.shine-drawer-nav {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 3px;
+}
+
+.shine-drawer-link {
+    position: relative;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 11px;
+
+    width: 100%;
+
+    min-height: 46px;
+
+    padding: 8px 11px;
+
+    border: 0;
+
+    border-radius: 9px;
+
+    background: transparent;
+
+    color: #444;
+
+    font-family: inherit;
+
+    font-size: 13px;
+
+    text-align: right;
+
+    text-decoration: none;
+
+    cursor: pointer;
+
+    transition: background var(--transition),
+    color var(--transition);
+}
+
+.shine-drawer-link:hover {
+    background: var(--gold-bg);
+
+    color: var(--gold-dark);
+}
+
+.shine-drawer-link:focus-visible {
+    outline: 2px solid rgba(185, 138, 28, 0.45);
+    outline-offset: -2px;
+}
+
+.shine-drawer-link-icon {
+    display: grid;
+
     width: 32px;
     height: 32px;
+
     flex: 0 0 32px;
+
     place-items: center;
-    border: 1px solid rgba(212, 175, 55, 0.14);
-    border-radius: 9px;
-    background: rgba(212, 175, 55, 0.04);
-    color: var(--gold);
-    font-size: 14px;
+
+    border: 1px solid #eeeeee;
+
+    border-radius: 8px;
+
+    background: #fafafa;
+
+    color: var(--gold-dark);
+
+    font-size: 15px;
+
+    line-height: 1;
+}
+
+.shine-drawer-badge {
+    display: inline-grid;
+
+    min-width: 18px;
+    height: 18px;
+
+    margin-inline-start: auto;
+
+    padding: 0 5px;
+
+    place-items: center;
+
+    border-radius: var(--radius-pill);
+
+    background: var(--action);
+
+    color: #ffffff;
+
+    font-size: 9px;
+
+    font-weight: 800;
+
+    line-height: 1;
 }
 
 
-/* --- آکاردئون دسته‌بندی‌ها --- */
+/* =========================================================
+   SECTION TITLE
+========================================================= */
 
-.accordion-arrow {
+.shine-drawer-section-title {
+    margin: 18px 8px 6px;
+
+    padding-bottom: 7px;
+
+    border-bottom: 1px solid #eeeeee;
+
+    color: #999;
+
+    font-size: 10px;
+
+    font-weight: 700;
+}
+
+
+/* =========================================================
+   ACCORDION
+========================================================= */
+
+.shine-drawer-accordion-button {
+    cursor: pointer;
+}
+
+.shine-accordion-arrow {
     margin-inline-start: auto;
-    color: var(--gold);
-    font-size: 12px;
+
+    color: var(--gold-dark);
+
+    font-size: 18px;
+
+    line-height: 1;
+
+    transform: rotate(-90deg);
+
     transition: transform var(--transition);
 }
 
-.drawer-accordion.open > .drawer-accordion-btn .accordion-arrow {
-    transform: rotate(180deg);
+.shine-drawer-accordion.open .shine-accordion-arrow {
+    transform: rotate(90deg);
 }
 
-.accordion-body {
+.shine-drawer-accordion-body {
     display: none;
-    margin: 2px 12px 10px;
-    padding: 4px 0 4px 0;
-    border-inline-start: 1px solid var(--border-strong);
+
+    margin: 0 15px 6px;
+
+    padding: 3px 10px;
+
+    border-inline-start: 1px solid rgba(185, 138, 28, 0.3);
 }
 
-.drawer-accordion.open > .accordion-body {
+.shine-drawer-accordion.open .shine-drawer-accordion-body {
     display: block;
 }
 
-.drawer-sublink {
+.shine-drawer-sublink {
+    display: block;
+
+    padding: 8px 9px;
+
+    border-radius: 6px;
+
+    color: #777;
+
+    font-size: 11.5px;
+
+    text-decoration: none;
+
+    transition: color var(--transition),
+    background var(--transition);
+}
+
+.shine-drawer-sublink:hover {
+    background: var(--gold-bg);
+
+    color: var(--gold-dark);
+}
+
+.shine-drawer-sublink:focus-visible {
+    outline: 2px solid rgba(185, 138, 28, 0.4);
+    outline-offset: -2px;
+}
+
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+.shine-drawer-footer {
+    flex: 0 0 auto;
+
+    padding: 13px 14px 16px;
+
+    border-top: 1px solid #eeeeee;
+
+    background: #ffffff;
+}
+
+.shine-drawer-footer form {
+    margin: 0;
+}
+
+.shine-drawer-logout,
+.shine-drawer-auth-button,
+.shine-drawer-register-button {
     display: flex;
+
     align-items: center;
-    gap: 9px;
+    justify-content: center;
+
     width: 100%;
+
     min-height: 42px;
-    padding: 9px 13px;
-    border: 0;
-    border-radius: var(--radius-xs);
-    background: transparent;
-    color: var(--text-muted);
-    font: inherit;
-    font-size: 12.5px;
-    text-align: right;
-    transition: var(--transition);
+
+    border-radius: 8px;
+
+    font-family: inherit;
+
+    font-size: 12px;
+
+    font-weight: 600;
+
+    text-align: center;
+
+    text-decoration: none;
+
+    cursor: pointer;
+
+    transition: background var(--transition),
+    color var(--transition),
+    border-color var(--transition);
 }
 
-.drawer-sublink:hover {
-    background: rgba(212, 175, 55, 0.07);
-    color: var(--gold-light);
+.shine-drawer-logout:focus-visible,
+.shine-drawer-auth-button:focus-visible,
+.shine-drawer-register-button:focus-visible {
+    outline: 2px solid rgba(185, 138, 28, 0.5);
+    outline-offset: 2px;
 }
 
-.sub-icon {
-    font-size: 13px;
-    flex-shrink: 0;
+.shine-drawer-logout {
+    border: 1px solid rgba(226, 59, 59, 0.2);
+
+    background: rgba(226, 59, 59, 0.04);
+
+    color: var(--danger);
+}
+
+.shine-drawer-logout:hover {
+    border-color: rgba(226, 59, 59, 0.35);
+
+    background: rgba(226, 59, 59, 0.08);
+}
+
+.shine-drawer-auth-button {
+    border: 1px solid var(--gold);
+
+    background: var(--gold);
+
+    color: #ffffff;
+}
+
+.shine-drawer-auth-button:hover {
+    background: var(--gold-dark);
+
+    color: #ffffff;
+}
+
+.shine-drawer-register-button {
+    margin-top: 7px;
+
+    border: 1px solid #e2e2e2;
+
+    background: #ffffff;
+
+    color: #555;
+}
+
+.shine-drawer-register-button:hover {
+    border-color: var(--gold);
+
+    color: var(--gold-dark);
 }
 
 
-/* --- فوتر دراور --- */
+/* =========================================================
+   CONTACT
+========================================================= */
 
-.drawer-footer {
-    padding: 16px 18px 18px;
-    border-top: 1px solid var(--border);
-}
-
-.drawer-logout {
+.shine-drawer-contact {
     display: flex;
+
     align-items: center;
     justify-content: center;
-    gap: 9px;
-    width: 100%;
-    min-height: 44px;
-    border: 1px solid rgba(226, 109, 109, 0.25);
-    border-radius: var(--radius-sm);
-    background: rgba(226, 109, 109, 0.05);
-    color: var(--danger);
-    font: inherit;
-    font-size: 12.5px;
-    cursor: pointer;
-    transition: var(--transition);
-}
 
-.drawer-logout:hover {
-    border-color: rgba(226, 109, 109, 0.5);
-    background: rgba(226, 109, 109, 0.1);
-    color: #ff9b9b;
-}
+    flex-wrap: wrap;
 
-.drawer-logout .drawer-icon {
-    border-color: rgba(226, 109, 109, 0.2);
-    background: rgba(226, 109, 109, 0.05);
-    color: var(--danger);
-}
-
-.drawer-contact {
-    display: flex;
-    justify-content: center;
     gap: 18px;
-    margin-top: 14px;
+
+    margin-top: 12px;
 }
 
-.drawer-contact a {
-    color: var(--text-muted);
-    font-size: 11px;
-    transition: var(--transition);
+.shine-drawer-contact a {
+    color: #999;
+
+    font-size: 10px;
+
+    text-decoration: none;
+
+    transition: color var(--transition);
 }
 
-.drawer-contact a:hover {
-    color: var(--gold-light);
+.shine-drawer-contact a:hover {
+    color: var(--gold-dark);
 }
 
-.drawer-icon svg,
-.sub-icon svg {
-    display: block;
+.shine-drawer-contact a:focus-visible {
+    outline: 2px solid rgba(185, 138, 28, 0.4);
+    outline-offset: 3px;
 }
 
-.sub-icon {
-    color: var(--gold);
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 480px) {
+
+    .shine-side-drawer {
+        width: min(360px, 94vw);
+    }
+
+    .shine-drawer-header {
+        min-height: 66px;
+
+        flex-basis: 66px;
+
+        padding-inline: 14px;
+    }
+
+    .shine-drawer-content {
+        padding: 12px;
+    }
+
+    .shine-drawer-footer {
+        padding: 11px 12px 14px;
+    }
 }
 
-.drawer-icon svg,
-.sub-icon svg {
-    display: block;
-}
 
-.sub-icon {
-    color: var(--gold);
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+    .shine-drawer-overlay,
+    .shine-side-drawer,
+    .shine-drawer-close,
+    .shine-drawer-link,
+    .shine-drawer-sublink,
+    .shine-drawer-logout,
+    .shine-drawer-auth-button,
+    .shine-drawer-register-button,
+    .shine-drawer-contact a,
+    .shine-accordion-arrow {
+        transition: none;
+    }
 }

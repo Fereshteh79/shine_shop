@@ -37,22 +37,6 @@ class CartService:
 
     @staticmethod
     @transaction.atomic
-    def get_or_create_cart(*, user) -> Cart:
-        cart, _ = Cart.objects.get_or_create(user=user)
-        return cart
-
-    @staticmethod
-    def _current_quantity(cart: Cart, product: Product, variant) -> int:
-        return (
-                CartItem.objects
-                .filter(cart=cart, product=product, variant=variant)
-                .values_list("quantity", flat=True)
-                .first()
-                or 0
-        )
-
-    @staticmethod
-    @transaction.atomic
     def add_item(
             *,
             user,
@@ -63,14 +47,21 @@ class CartService:
         if quantity <= 0:
             raise ValidationError("تعداد باید بیشتر از صفر باشد.")
 
+        if quantity > 99:
+            raise ValidationError("حداکثر تعداد هر کالا در سبد ۹۹ عدد است.")
+
         cart = CartService.get_or_create_cart(user=user)
         cart = Cart.objects.select_for_update().get(pk=cart.pk)
 
-        product = get_object_or_404(
-            Product.objects.select_for_update(),
-            pk=product_id,
-            is_available=True,
-        )
+        # ⬇️ 404 نه — استثنای دامنه‌ای که ویو به پیام دوستانه تبدیل می‌کند
+        try:
+            product = (
+                Product.objects
+                .select_for_update()
+                .get(pk=product_id, is_available=True)
+            )
+        except Product.DoesNotExist:
+            raise ValidationError("محصول مورد نظر یافت نشد یا قابل فروش نیست.")
 
         active_variants_exist = ProductVariant.objects.filter(
             product_id=product.id,
@@ -83,12 +74,15 @@ class CartService:
         variant = None
 
         if variant_id is not None:
-            variant = get_object_or_404(
-                ProductVariant.objects.select_for_update(),
-                pk=variant_id,
-                product_id=product.id,
-                is_active=True,
-            )
+            try:
+                variant = (
+                    ProductVariant.objects
+                    .select_for_update()
+                    .get(pk=variant_id, product_id=product.id, is_active=True)
+                )
+            except ProductVariant.DoesNotExist:
+                raise ValidationError("تنوع انتخاب‌شده معتبر نیست.")
+
             StockChecker.validate_available(variant, variant=True)
             stock_target = variant
         else:
@@ -124,13 +118,18 @@ class CartService:
         if quantity <= 0:
             raise ValidationError("تعداد باید بیشتر از صفر باشد.")
 
-        item = get_object_or_404(
-            CartItem.objects
-            .select_for_update()
-            .select_related("cart", "product", "variant"),
-            pk=item_id,
-            cart__user=user,
-        )
+        if quantity > 99:
+            raise ValidationError("حداکثر تعداد هر کالا در سبد ۹۹ عدد است.")
+
+        try:
+            item = (
+                CartItem.objects
+                .select_for_update()
+                .select_related("cart", "product", "variant")
+                .get(pk=item_id, cart__user=user)
+            )
+        except CartItem.DoesNotExist:
+            raise ValidationError("آیتم مورد نظر در سبد خرید یافت نشد.")
 
         if item.variant_id:
             target = ProductVariant.objects.select_for_update().get(
@@ -148,22 +147,3 @@ class CartService:
         item.quantity = quantity
         item.save(update_fields=["quantity", "updated_at"])
         return item
-
-    @staticmethod
-    @transaction.atomic
-    def remove_item(*, user, item_id: int) -> None:
-        item = get_object_or_404(
-            CartItem.objects.select_for_update(),
-            pk=item_id,
-            cart__user=user,
-        )
-        item.delete()
-
-    @staticmethod
-    @transaction.atomic
-    def clear_cart(*, user) -> None:
-        cart = Cart.objects.filter(user=user).first()
-
-        if cart:
-            cart.items.all().delete()
-            cart.save(update_fields=["updated_at"])

@@ -1,122 +1,116 @@
+{% comment %}
+    فوتر سایت — شامل بخش «درباره ما».
+    متن درباره ما مستقیماً در تمپلیت نوشته شده تا بدون وابستگی به دیتابیس نمایش داده شود.
+    کلاس‌ها مطابق footer.css و layout.css.
+{% endcomment %}
+
 <footer class="site-footer">
 
     <div class="container footer-grid">
 
+        {# ---------- برند و درباره ما ---------- #}
         <div class="footer-brand">
-            <a href="{% url 'shop:home' %}" class="brand">
-                <span class="brand-mark">S</span>
-                <span class="brand-name">SHINE</span>
+            <a href="{% url 'shop:home' %}" class="shine-brand" aria-label="Shine Gallery">
+                <span class="shine-brand-mark">S</span>
+                <span class="shine-brand-text"><strong>SHINE</strong><small>GALLERY</small></span>
             </a>
 
+            <h3 class="footer-about-title">درباره ما</h3>
             <p>
-                گالری آنلاین Shine؛ انتخابی دقیق از عینک آفتابی، ساعت‌های لوکس و برند،
-                نقره‌جات و بدلیجات، عطر و ادکلن و بهترین‌ها برای هدیه.
+                گالری شاین با هدف ارائه‌ی اورجینال‌ترین ساعت‌های مچی برندهای معتبر
+                جهان، زیورآلات نقره، عطرهای اصیل و هدایای خاص فعالیت خود را آغاز کرد.
+                تمامی محصولات دارای ضمانت اصالت کالا هستند و با ارسال سریع به سراسر
+                ایران به دست شما می‌رسند. انتخاب هدیه‌ای ماندگار و استایلی درخشان،
+                از گالری شاین.
+            </p>
+
+            <p class="footer-trust">
+                ضمانت اصالت کالا · ارسال به سراسر ایران · پرداخت امن
             </p>
 
             <div class="footer-social">
-                <a
-                        href="https://instagram.com/shinegallery0"
-                        target="_blank"
-                        rel="noopener nofollow"
-                        aria-label="اینستاگرام Shine"
-                >
-
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-                         stroke-linecap="round">
-                        <rect x="2" y="2" width="20" height="20" rx="5"/>
-                        <circle cx="12" cy="12" r="4"/>
-                        <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/>
-                    </svg>
-                </a>
-                <a
-                        href="https://t.me/Shineshopy"
-                        target="_blank"
-                        rel="noopener nofollow"
-                        aria-label="تلگرام Shine"
-                >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-                         stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M22 2L11 13"/>
-                        <path d="M22 2l-7 20-4-9-9-4 20-7z"/>
-                    </svg>
-                </a>
-
-                <a
-                        href="https://wa.me/989387586384"
-                        target="_blank"
-                        rel="noopener nofollow"
-                        aria-label="واتساپ Shine"
-                >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-                         stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 11.5a8.5 8.5 0 0 1-12.4 7.5L3 21l2-5.6A8.5 8.5 0 1 1 21 11.5z"/>
-                    </svg>
-                </a>
-
-                <a
-                        href="tel:+989387586384"
-                        aria-label="تماس تلفنی"
-                >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-                         stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/>
-                    </svg>
-                </a>
+                <a href="https://instagram.com/shinegallery0" target="_blank" rel="noopener nofollow"
+                   aria-label="اینستاگرام Shine">📷</a>
+                <a href="https://t.me/Shineshopy" target="_blank" rel="noopener nofollow"
+                   aria-label="تلگرام Shine">✈️</a>
+                <a href="https://wa.me/989387586384" target="_blank" rel="noopener nofollow" aria-label="واتساپ Shine">💬</a>
+                <a href="tel:+989387586384" aria-label="تماس تلفنی">📞</a>
             </div>
         </div>
 
-        <div class="footer-column">
+        {# ---------- دسترسی سریع ---------- #}
+        <nav class="footer-column" aria-label="دسترسی سریع">
             <h3>دسترسی سریع</h3>
-            <a href="{% url 'shop:home' %}">خانه</a>
+            <a href="{% url 'shop:home' %}">صفحه اصلی</a>
             <a href="{% url 'shop:products' %}">فروشگاه</a>
-            <a href="{% url 'shop:search' %}">جستجو</a>
-        </div>
+            <a href="{% url 'shop:category' 'watch-casio' %}">ساعت‌های لوکس</a>
+            <a href="{% url 'shop:category' 'silver-jewelry' %}">نقره‌جات</a>
+            <a href="{% url 'shop:category' 'perfume' %}">عطر و ادکلن</a>
+            <a href="{% url 'orders:track' %}">پیگیری سفارش</a>
+        </nav>
 
-        <div class="footer-column">
+        {# ---------- خدمات مشتریان ---------- #}
+        <nav class="footer-column" aria-label="خدمات مشتریان">
             <h3>خدمات مشتریان</h3>
 
             {% if user.is_authenticated %}
                 <a href="{% url 'orders:list' %}">سفارش‌های من</a>
-                <a href="{% url 'wishlist:list' %}">علاقه‌مندی‌ها</a>
+                <a href="{% url 'wishlist:list' %}">علاقه‌مندی‌های من</a>
                 <a href="{% url 'payments:list' %}">پرداخت‌های من</a>
+                <a href="{% url 'cart:detail' %}">سبد خرید</a>
+            {% else %}
+                <a href="{% url 'accounts:login' %}">ورود به حساب</a>
+                <a href="{% url 'accounts:register' %}">ثبت‌نام</a>
             {% endif %}
 
-            <a href="https://wa.me/989387586384" target="_blank" rel="noopener nofollow">پشتیبانی (واتساپ)</a>
-        </div>
+            <a href="https://wa.me/989387586384" target="_blank" rel="noopener nofollow">پشتیبانی واتساپ</a>
+            <a href="tel:+989387586384">تماس با ما</a>
+        </nav>
 
-        <div class="footer-column">
-            <h3>درباره ما</h3>
+        {# ---------- ارتباط با ما ---------- #}
+        <div class="footer-column footer-contact" aria-label="ارتباط با ما">
+            <h3>ارتباط با ما</h3>
 
             <ul class="footer-about">
                 <li>
-                    <span class="footer-about-label">آدرس شعبه حضوری</span>
+                    <span class="footer-about-label">📍 آدرس فروشگاه</span>
                     <span>خوزستان، گتوند، خیابان استقلال، جنب بستنی‌فروشی فتاحی</span>
                 </li>
                 <li>
-                    <span class="footer-about-label">شماره تماس</span>
+                    <span class="footer-about-label">📞 شماره تماس</span>
                     <a href="tel:+989387586384" class="ltr">09387586384</a>
                 </li>
                 <li>
-                    <span class="footer-about-label">اینستاگرام</span>
-                    <a href="https://instagram.com/shinegallery0" target="_blank" rel="noopener nofollow" class="ltr">shinegallery0</a>
-                </li>
-                <li>
-                    <span class="footer-about-label">واتساپ</span>
+                    <span class="footer-about-label">💬 واتساپ</span>
                     <a href="https://wa.me/989387586384" target="_blank" rel="noopener nofollow"
                        class="ltr">09387586384</a>
                 </li>
                 <li>
-                    <span class="footer-about-label">مدیریت</span>
+                    <span class="footer-about-label">📷 اینستاگرام</span>
+                    <a href="https://instagram.com/shinegallery0" target="_blank" rel="noopener nofollow" class="ltr">@shinegallery0</a>
+                </li>
+                <li>
+                    <span class="footer-about-label">✈️ تلگرام</span>
+                    <a href="https://t.me/Shineshopy" target="_blank" rel="noopener nofollow"
+                       class="ltr">@Shineshopy</a>
+                </li>
+                <li>
+                    <span class="footer-about-label">👤 مدیریت</span>
                     <span>شهاب طیبی</span>
+                </li>
+                <li>
+                    <span class="footer-about-label">🕘 ساعت کاری</span>
+                    <span>همه روزه — ۹ صبح تا ۹ شب</span>
                 </li>
             </ul>
         </div>
 
     </div>
 
+    {# ---------- پایین فوتر ---------- #}
     <div class="container footer-bottom">
-        <span>© {% now "Y" %} Shine Gallery. تمامی حقوق محفوظ است.</span>
-        <span>Designed with elegance.</span>
+        <span>© {% now "Y" %} Shine Gallery — تمامی حقوق محفوظ است.</span>
+        <span>ارسال به سراسر ایران · پرداخت امن · ضمانت اصالت کالا</span>
     </div>
 
 </footer>

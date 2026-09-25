@@ -81,6 +81,9 @@ class UpdateCartItemView(LoginRequiredMixin, View):
         except (InsufficientStockError, ValidationError) as exc:
             messages.error(request, str(exc))
 
+        else:
+            messages.success(request, "تعداد محصول بروزرسانی شد.")
+
         return redirect("cart:detail")
 
 

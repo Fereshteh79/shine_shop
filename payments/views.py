@@ -1,8 +1,10 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import Http404, HttpRequest, HttpResponse
+from django.http import HttpRequest
 from django.shortcuts import redirect, render
+from django.utils.decorators import method_decorator
 from django.views import View
+from django.views.decorators.csrf import csrf_exempt
 
 from core.exceptions import PaymentError, ValidationError
 from orders.selectors import get_user_order
@@ -68,26 +70,57 @@ class PaymentStartView(LoginRequiredMixin, View):
             messages.error(request, str(exc))
             return redirect("orders:detail", order_id=order.id)
 
+        # محافظت در برابر URL خالی از درگاه
+        if not payment.payment_url:
+            messages.error(
+                request,
+                "لینک پرداخت از درگاه دریافت نشد. دوباره تلاش کنید.",
+            )
+            return redirect("orders:detail", order_id=order.id)
+
         return redirect(payment.payment_url)
 
 
+@method_decorator(csrf_exempt, name="post")
 class PaymentCallbackView(View):
-    """بازگشت از درگاه پرداخت — تأیید تراکنش و نمایش نتیجه."""
+    """
+    بازگشت از درگاه پرداخت — تأیید تراکنش و نمایش نتیجه.
+
+    زرین‌پال با GET برمی‌گرداند؛ POST هم پشتیبانی می‌شود
+    (csrf_exempt چون درگاه توکن CSRF ندارد).
+    """
+
+    template_name = "payments/payment_result.html"
 
     def get(self, request: HttpRequest):
-        authority = request.GET.get("Authority", "").strip()
-        status = request.GET.get("Status", "").strip()
+        return self._handle(request)
+
+    def post(self, request: HttpRequest):
+        return self._handle(request)
+
+    def _handle(self, request: HttpRequest):
+        authority = (
+                request.GET.get("Authority")
+                or request.POST.get("Authority")
+                or ""
+        ).strip()
+
+        status_param = (
+                request.GET.get("Status")
+                or request.POST.get("Status")
+                or ""
+        ).strip()
 
         try:
             payment = PaymentService.verify_payment(
                 authority=authority,
-                payment_status=status,
+                payment_status=status_param,
             )
 
         except PaymentError as exc:
             return render(
                 request,
-                "payments/payment_result.html",
+                self.template_name,
                 {
                     "success": False,
                     "message": str(exc),
@@ -98,12 +131,11 @@ class PaymentCallbackView(View):
 
         if payment.is_successful:
             messages.success(request, "پرداخت شما با موفقیت انجام شد.")
-
             return redirect("orders:detail", order_id=payment.order_id)
 
         return render(
             request,
-            "payments/payment_result.html",
+            self.template_name,
             {
                 "success": False,
                 "message": payment.error_message or "پرداخت انجام نشد.",

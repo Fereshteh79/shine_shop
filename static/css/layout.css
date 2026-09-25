@@ -1,113 +1,209 @@
-/* =========================
-   SKIP LINK
-========================= */
+/* =========================================================
+   SHINE GALLERY — LAYOUT
+   Skip Link / Footer / Search / Track Order
+   RTL / Light Luxury Theme
+   ========================================================= */
+
+
+/* =========================================================
+   1. SKIP LINK
+========================================================= */
 
 .skip-link {
     position: absolute;
-    top: -50px;
+    top: -60px;
     right: 16px;
-    z-index: 100;
+    z-index: var(--z-skip-link);
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 40px;
     padding: 10px 18px;
+
+    border: 1px solid var(--border-strong);
     border-radius: var(--radius-sm);
+
     background: var(--gold);
-    color: var(--black);
+    color: #1c1200;
+
     font-size: 12px;
-    font-weight: 700;
-    transition: top var(--transition);
+    font-weight: 800;
+    line-height: 1;
+
+    box-shadow: var(--shadow-sm);
+
+    transition: top var(--transition),
+    background var(--transition),
+    box-shadow var(--transition);
 }
 
-.skip-link:focus {
+.skip-link:hover {
+    background: var(--gold-light);
+    box-shadow: var(--shadow-gold);
+}
+
+.skip-link:focus,
+.skip-link:focus-visible {
     top: 12px;
 }
 
 
-/* =========================
-   FOOTER
-========================= */
+/* =========================================================
+   2. SITE FOOTER
+========================================================= */
 
 .site-footer {
     margin-top: 90px;
+
     border-top: 1px solid var(--border);
-    background: linear-gradient(to bottom, var(--black-soft), var(--black-deep));
+
+    background: linear-gradient(
+            to bottom,
+            var(--black-soft),
+            var(--black-deep)
+    );
 }
 
 .footer-grid {
     display: grid;
-    grid-template-columns: 1.4fr 0.8fr 0.9fr 1.3fr;
+    grid-template-columns:
+        1.4fr
+        0.8fr
+        0.9fr
+        1.3fr;
+
     gap: 44px;
+
     padding: 65px 0 45px;
+}
+
+.footer-brand {
+    min-width: 0;
 }
 
 .footer-brand p {
     margin: 18px 0 0;
+
     color: var(--text-muted);
+
     font-size: 13px;
     line-height: 2;
 }
 
 .footer-social {
     display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+
     gap: 9px;
+
     margin-top: 20px;
 }
 
 .footer-social a {
     display: grid;
+    place-items: center;
+
     width: 38px;
     height: 38px;
-    place-items: center;
+
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
+
+    background: transparent;
     color: var(--text-muted);
-    transition: var(--transition);
+
+    transition: border-color var(--transition),
+    background var(--transition),
+    color var(--transition),
+    transform var(--transition);
 }
 
 .footer-social a:hover {
     border-color: var(--gold);
-    color: var(--gold-light);
-    background: rgba(212, 175, 55, 0.06);
+
+    background: var(--gold-bg);
+
+    color: var(--gold-dark);
+
+    transform: translateY(-1px);
+}
+
+.footer-column {
+    min-width: 0;
 }
 
 .footer-column h3 {
     position: relative;
+
     margin: 0 0 20px;
     padding-bottom: 12px;
+
+    color: var(--text);
+
     font-size: 14px;
     font-weight: 700;
+    line-height: 1.5;
 }
 
 .footer-column h3::after {
     content: "";
+
     position: absolute;
     right: 0;
     bottom: 0;
+
     width: 28px;
     height: 2px;
-    border-radius: 2px;
+
+    border-radius: var(--radius-pill);
+
     background: var(--gold);
 }
 
 .footer-column > a {
     display: block;
+
     padding: 6px 0;
+
     color: var(--text-muted);
+
     font-size: 13px;
-    transition: var(--transition);
+    line-height: 1.7;
+
+    transition: color var(--transition),
+    padding var(--transition);
 }
 
 .footer-column > a:hover {
-    color: var(--gold-light);
     padding-inline-start: 4px;
+
+    color: var(--gold-dark);
+}
+
+.footer-about {
+    margin: 0;
+    padding: 0;
+
+    list-style: none;
 }
 
 .footer-about li {
     display: flex;
     flex-direction: column;
+
     gap: 3px;
+
     padding: 9px 0;
+
     border-bottom: 1px solid var(--border);
-    font-size: 13px;
+
     color: var(--text-soft);
+
+    font-size: 13px;
+    line-height: 1.7;
 }
 
 .footer-about li:last-child {
@@ -115,77 +211,106 @@
 }
 
 .footer-about-label {
-    color: var(--gold);
+    color: var(--gold-dark);
+
     font-size: 10px;
-    font-weight: 700;
+    font-weight: 800;
+    line-height: 1.5;
+}
+
+.footer-about a {
+    color: inherit;
+
+    overflow-wrap: anywhere;
+
+    transition: color var(--transition);
 }
 
 .footer-about a:hover {
-    color: var(--gold-light);
+    color: var(--gold-dark);
 }
 
 .footer-bottom {
     display: flex;
     align-items: center;
     justify-content: space-between;
+
     gap: 14px;
+
     flex-wrap: wrap;
+
     padding-block: 20px;
+
     border-top: 1px solid var(--border);
+
     color: var(--text-faint);
+
     font-size: 11px;
+    line-height: 1.7;
 }
 
-@media (max-width: 920px) {
-    .footer-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 34px;
-        padding: 50px 0 35px;
-    }
-}
-
-@media (max-width: 560px) {
-    .footer-grid {
-        grid-template-columns: 1fr;
-        gap: 30px;
-    }
-
-    .footer-bottom {
-        justify-content: center;
-        text-align: center;
-    }
+.footer-bottom > * {
+    min-width: 0;
 }
 
 
-/* =========================
-   SEARCH PAGE
-========================= */
+/* =========================================================
+   3. SEARCH PAGE
+========================================================= */
 
 .search-page-form {
     display: flex;
+    align-items: stretch;
+
     gap: 9px;
+
+    width: 100%;
     max-width: 560px;
+
     margin-top: 22px;
 }
 
 .search-page-form input {
     flex: 1;
+    min-width: 0;
     min-height: 46px;
+
     padding: 11px 14px;
+
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
+
     outline: 0;
+
     background: var(--surface-2);
     color: var(--text);
+
+    transition: border-color var(--transition),
+    background var(--transition),
+    box-shadow var(--transition);
 }
 
-.search-page-form input:focus {
-    border-color: rgba(212, 175, 55, 0.65);
+.search-page-form input:hover {
+    border-color: var(--border-dark);
 }
 
-/* =========================
-   TRACK ORDER
-========================= */
+.search-page-form input:focus,
+.search-page-form input:focus-visible {
+    border-color: var(--gold);
+
+    background: var(--surface);
+
+    box-shadow: 0 0 0 3px rgba(185, 138, 28, 0.10);
+}
+
+.search-page-form input::placeholder {
+    color: var(--text-faint);
+}
+
+
+/* =========================================================
+   4. TRACK ORDER
+========================================================= */
 
 .track-section {
     padding: 70px 0 100px;
@@ -193,41 +318,77 @@
 
 .track-card {
     width: min(100%, 720px);
+
     margin-inline: auto;
     padding: 40px;
+
     border: 1px solid var(--border-strong);
     border-radius: var(--radius-xl);
-    background: radial-gradient(circle at 100% 0, rgba(212, 175, 55, 0.07), transparent 40%),
+
+    background: radial-gradient(
+            circle at 100% 0,
+            rgba(212, 175, 55, 0.07),
+            transparent 40%
+    ),
     var(--surface);
+
     box-shadow: var(--shadow);
 }
 
 .track-form {
     display: flex;
+    align-items: stretch;
+
     gap: 10px;
+
     margin-top: 26px;
 }
 
 .track-input {
     flex: 1;
+    min-width: 0;
     min-height: 50px;
+
     padding: 12px 16px;
+
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
+
     outline: 0;
+
     background: var(--surface-2);
     color: var(--text);
+
     font-size: 15px;
     letter-spacing: 2px;
+
+    transition: border-color var(--transition),
+    background var(--transition),
+    box-shadow var(--transition);
 }
 
-.track-input:focus {
-    border-color: rgba(212, 175, 55, 0.65);
+.track-input:hover {
+    border-color: var(--border-dark);
+}
+
+.track-input:focus,
+.track-input:focus-visible {
+    border-color: var(--gold);
+
+    background: var(--surface);
+
+    box-shadow: 0 0 0 3px rgba(185, 138, 28, 0.10);
+}
+
+.track-input::placeholder {
+    color: var(--text-faint);
+    letter-spacing: normal;
 }
 
 .track-result {
     margin-top: 36px;
     padding-top: 30px;
+
     border-top: 1px solid var(--border);
 }
 
@@ -235,48 +396,77 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+
     gap: 16px;
+
     margin-bottom: 34px;
     padding: 16px 20px;
+
     border: 1px solid var(--border-strong);
     border-radius: var(--radius-md);
-    background: rgba(212, 175, 55, 0.05);
+
+    background: var(--gold-bg);
 }
 
 .track-code span {
     color: var(--text-muted);
+
     font-size: 12px;
+    line-height: 1.7;
 }
 
 .track-code strong {
-    color: var(--gold-light);
+    color: var(--gold-dark);
+
     font-size: 20px;
+    font-weight: 800;
+    line-height: 1.4;
+
     letter-spacing: 3px;
+
+    overflow-wrap: anywhere;
 }
 
 .track-timeline {
     display: flex;
+    align-items: flex-start;
     justify-content: space-between;
+
     gap: 6px;
+
+    width: 100%;
 }
 
 .timeline-step {
+    position: relative;
+
     display: flex;
     flex: 1;
     flex-direction: column;
     align-items: center;
+
     gap: 12px;
-    position: relative;
+
+    min-width: 0;
+
     text-align: center;
 }
 
 .timeline-step:not(:last-child)::after {
     content: "";
+
     position: absolute;
+
+    /*
+     * In RTL the connector is drawn from the current step
+     * toward the previous visual step.
+     */
     top: 18px;
     right: calc(50% + 24px);
     left: calc(-50% + 24px);
+
     height: 2px;
+
     background: var(--border);
 }
 
@@ -285,44 +475,123 @@
 }
 
 .timeline-dot {
+    position: relative;
+    z-index: 1;
+
     display: grid;
+    place-items: center;
+
+    flex: 0 0 auto;
+
     width: 38px;
     height: 38px;
-    z-index: 1;
-    place-items: center;
+
     border: 2px solid var(--border);
     border-radius: 50%;
+
     background: var(--surface-2);
     color: var(--text-faint);
+
     font-size: 12px;
     font-weight: 800;
+    line-height: 1;
 }
 
 .timeline-step.is-done .timeline-dot {
     border-color: var(--gold);
-    background: linear-gradient(135deg, var(--gold-light), var(--gold));
+
+    background: linear-gradient(
+            135deg,
+            var(--gold-light),
+            var(--gold)
+    );
+
     color: #090909;
+
     box-shadow: 0 0 18px rgba(212, 175, 55, 0.35);
 }
 
 .timeline-label {
-    color: var(--text-muted);
-    font-size: 11px;
     max-width: 90px;
+
+    color: var(--text-muted);
+
+    font-size: 11px;
+    line-height: 1.7;
 }
 
 .timeline-step.is-done .timeline-label {
-    color: var(--gold-light);
+    color: var(--gold-dark);
 }
 
 .track-cancelled {
     margin: 20px 0 0;
+
     color: var(--danger);
+
+    font-size: 13px;
+    line-height: 1.8;
 }
 
 .track-error {
     margin-top: 24px;
 }
+
+
+/* =========================================================
+   5. RESPONSIVE — FOOTER
+========================================================= */
+
+@media (max-width: 1100px) {
+    .footer-grid {
+        grid-template-columns:
+            1.2fr
+            0.9fr
+            0.9fr
+            1.1fr;
+
+        gap: 34px;
+    }
+}
+
+
+@media (max-width: 920px) {
+    .footer-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
+        gap: 34px;
+
+        padding: 50px 0 35px;
+    }
+}
+
+
+/* =========================================================
+   6. RESPONSIVE — TRACK / SEARCH
+========================================================= */
+
+@media (max-width: 760px) {
+    .track-section {
+        padding: 55px 0 80px;
+    }
+
+    .track-card {
+        padding: 30px 22px;
+    }
+
+    .track-code {
+        align-items: flex-start;
+        flex-direction: column;
+
+        gap: 7px;
+    }
+
+    .track-code strong {
+        font-size: 18px;
+    }
+}
+
 
 @media (max-width: 640px) {
     .track-card {
@@ -333,7 +602,123 @@
         flex-direction: column;
     }
 
+    .track-form .btn {
+        width: 100%;
+    }
+
+    .track-timeline {
+        gap: 2px;
+    }
+
+    .timeline-step {
+        gap: 9px;
+    }
+
+    .timeline-step:not(:last-child)::after {
+        right: calc(50% + 20px);
+        left: calc(-50% + 20px);
+
+        top: 18px;
+    }
+
+    .timeline-dot {
+        width: 36px;
+        height: 36px;
+    }
+
     .timeline-label {
+        max-width: 72px;
+
         font-size: 9.5px;
+        line-height: 1.6;
+    }
+}
+
+
+/* =========================================================
+   7. RESPONSIVE — SMALL MOBILE
+========================================================= */
+
+@media (max-width: 560px) {
+    .footer-grid {
+        grid-template-columns: 1fr;
+
+        gap: 30px;
+
+        padding: 42px 0 30px;
+    }
+
+    .footer-bottom {
+        justify-content: center;
+
+        text-align: center;
+    }
+
+    .search-page-form {
+        flex-direction: column;
+    }
+
+    .search-page-form .btn {
+        width: 100%;
+    }
+}
+
+
+@media (max-width: 420px) {
+    .track-section {
+        padding-top: 45px;
+        padding-bottom: 65px;
+    }
+
+    .track-card {
+        padding: 22px 14px;
+
+        border-radius: var(--radius-lg);
+    }
+
+    .track-code {
+        padding: 14px 15px;
+    }
+
+    .track-code strong {
+        font-size: 16px;
+        letter-spacing: 2px;
+    }
+
+    .timeline-step:not(:last-child)::after {
+        right: calc(50% + 18px);
+        left: calc(-50% + 18px);
+    }
+
+    .timeline-dot {
+        width: 34px;
+        height: 34px;
+    }
+
+    .timeline-label {
+        max-width: 58px;
+
+        font-size: 9px;
+    }
+}
+
+
+/* =========================================================
+   8. REDUCED MOTION
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+    .skip-link,
+    .footer-social a,
+    .footer-column > a,
+    .footer-about a,
+    .search-page-form input,
+    .track-input {
+        transition: none;
+    }
+
+    .footer-social a:hover,
+    .footer-column > a:hover {
+        transform: none;
     }
 }

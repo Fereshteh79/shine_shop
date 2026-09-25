@@ -1,3 +1,5 @@
+# accounts/backends.py
+
 from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
 from django.db.models import Q
@@ -15,6 +17,8 @@ class EmailOrPhoneModelBackend(ModelBackend):
         if username is None or password is None:
             return None
 
+        username = username.strip()
+
         try:
             user = User.objects.get(
                 Q(username__iexact=username)
@@ -22,10 +26,11 @@ class EmailOrPhoneModelBackend(ModelBackend):
                 | Q(phone_number=username)
             )
         except User.DoesNotExist:
-            # اجرای هش رمز برای جلوگیری از حمله زمانی (timing attack)
+            # اجرای هش رمز برای جلوگیری از حملهٔ زمانی (timing attack)
             User().set_password(password)
             return None
         except User.MultipleObjectsReturned:
+            # username با email یا phone تصادم کرده — امن‌تر است که رد شود
             return None
 
         if self.user_can_authenticate(user) and user.check_password(password):

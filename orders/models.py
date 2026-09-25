@@ -1,5 +1,19 @@
-from decimal import Decimal
+"""
+مدل‌های سفارش پروژهٔ Shine Shop.
+
+شامل:
+- Order
+- OrderItem
+
+اطلاعات محصول و قیمت در OrderItem به‌صورت Snapshot ذخیره می‌شوند
+تا تغییرات بعدی محصول روی سفارش‌های قبلی اثر نگذارد.
+"""
+
+from __future__ import annotations
+
 import secrets
+from decimal import Decimal
+from typing import Any
 
 from django.conf import settings
 from django.core.validators import MinValueValidator
@@ -8,18 +22,34 @@ from django.utils import timezone
 
 from core.constants import OrderStatus
 
+# ============================================================================
+# Constants
+# ============================================================================
+
 ZERO = Decimal("0.00")
+
 TRACKING_CODE_LENGTH = 12
 TRACKING_CODE_DIGITS = "0123456789"
 
+MONEY_MAX_DIGITS = 14
+MONEY_DECIMAL_PLACES = 2
+
+
+# ============================================================================
+# Order
+# ============================================================================
 
 class Order(models.Model):
     """
     سفارش مشتری.
 
-    اطلاعات مالی و اطلاعات محصول در زمان ثبت سفارش به‌صورت Snapshot
-    ذخیره می‌شوند تا تغییرات بعدی محصولات روی سفارش‌های قبلی اثر نگذارد.
+    اطلاعات مالی و مشخصات محصول در زمان ثبت سفارش به‌صورت Snapshot
+    نگهداری می‌شوند تا تغییرات بعدی محصولات روی سفارش‌های قبلی اثر نگذارد.
     """
+
+    # ------------------------------------------------------------------
+    # Customer
+    # ------------------------------------------------------------------
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -34,7 +64,7 @@ class Order(models.Model):
 
     status = models.CharField(
         max_length=20,
-        choices=OrderStatus.CHOICES,
+        choices=OrderStatus.choices,
         default=OrderStatus.PENDING,
         db_index=True,
         verbose_name="وضعیت",
@@ -50,31 +80,31 @@ class Order(models.Model):
     # ------------------------------------------------------------------
 
     subtotal = models.DecimalField(
-        max_digits=14,
-        decimal_places=2,
+        max_digits=MONEY_MAX_DIGITS,
+        decimal_places=MONEY_DECIMAL_PLACES,
         validators=[MinValueValidator(ZERO)],
         verbose_name="جمع کالاها",
     )
 
     shipping_cost = models.DecimalField(
-        max_digits=14,
-        decimal_places=2,
+        max_digits=MONEY_MAX_DIGITS,
+        decimal_places=MONEY_DECIMAL_PLACES,
         default=ZERO,
         validators=[MinValueValidator(ZERO)],
         verbose_name="هزینه ارسال",
     )
 
     discount_amount = models.DecimalField(
-        max_digits=14,
-        decimal_places=2,
+        max_digits=MONEY_MAX_DIGITS,
+        decimal_places=MONEY_DECIMAL_PLACES,
         default=ZERO,
         validators=[MinValueValidator(ZERO)],
         verbose_name="تخفیف",
     )
 
     total_amount = models.DecimalField(
-        max_digits=14,
-        decimal_places=2,
+        max_digits=MONEY_MAX_DIGITS,
+        decimal_places=MONEY_DECIMAL_PLACES,
         validators=[MinValueValidator(ZERO)],
         verbose_name="مبلغ نهایی",
     )
@@ -134,8 +164,11 @@ class Order(models.Model):
 
     tracking_code = models.CharField(
         max_length=TRACKING_CODE_LENGTH,
+        blank=True,
+        null=True,
         unique=True,
         editable=False,
+        db_index=True,
         verbose_name="کد رهگیری",
     )
 
@@ -153,9 +186,13 @@ class Order(models.Model):
         verbose_name="آخرین بروزرسانی",
     )
 
+    # ------------------------------------------------------------------
+    # Meta
+    # ------------------------------------------------------------------
+
     class Meta:
         verbose_name = "سفارش"
-        verbose_name_plural = "سفارشات"
+        verbose_name_plural = "سفارش‌ها"
 
         ordering = ("-created_at",)
 
@@ -174,8 +211,18 @@ class Order(models.Model):
             ),
         ]
 
-    def __str__(self):
-        return f"Order #{self.pk}"
+    # ------------------------------------------------------------------
+    # String
+    # ------------------------------------------------------------------
+
+    def __str__(self) -> str:
+        if self.tracking_code:
+            return f"سفارش #{self.tracking_code}"
+
+        if self.pk:
+            return f"سفارش #{self.pk}"
+
+        return "سفارش جدید"
 
     # ==================================================================
     # Tracking code
@@ -184,31 +231,69 @@ class Order(models.Model):
     @classmethod
     def generate_tracking_code(cls) -> str:
         """
-        تولید کد رهگیری ۱۲ رقمی.
+        تولید کد رهگیری تصادفی ۱۲ رقمی.
 
-        unique=True در دیتابیس تضمین نهایی یکتا بودن را انجام می‌دهد.
+        یکتایی نهایی توسط unique=True در دیتابیس تضمین می‌شود.
         """
-
         return "".join(
             secrets.choice(TRACKING_CODE_DIGITS)
             for _ in range(TRACKING_CODE_LENGTH)
         )
 
+    def _ensure_tracking_code(self) -> None:
+        """
+        در صورت نداشتن کد رهگیری، یک کد جدید تولید می‌کند.
+
+        بررسی اولیه برای کاهش احتمال برخورد انجام می‌شود؛
+        unique constraint دیتابیس تضمین نهایی را بر عهده دارد.
+        """
+        if self.tracking_code:
+            return
+
+        for _ in range(10):
+            code = self.generate_tracking_code()
+
+            if not type(self).objects.filter(
+                    tracking_code=code,
+            ).exists():
+                self.tracking_code = code
+                return
+
+        # احتمال برخورد ۱۰ بار بسیار پایین است.
+        # در نهایت اجازه می‌دهیم unique constraint دیتابیس
+        # برخورد احتمالی را مشخص کند.
+        self.tracking_code = self.generate_tracking_code()
+
     # ==================================================================
     # Save
     # ==================================================================
 
-    def save(self, *args, **kwargs):
-        if not self.tracking_code:
-            for _ in range(5):
-                code = self.generate_tracking_code()
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        """
+        ذخیره سفارش.
 
-                if not Order.objects.filter(tracking_code=code).exists():
-                    self.tracking_code = code
-                    break
-            else:
-                # پس از ۵ تلاش، خطای یکتایی دیتابیس مسئله را آشکار می‌کند
-                self.tracking_code = self.generate_tracking_code()
+        اگر status قبل از ذخیره تغییر کرده باشد، زمان تغییر وضعیت
+        نیز به‌روزرسانی می‌شود.
+        """
+        self._ensure_tracking_code()
+
+        if self.pk:
+            previous_status = (
+                type(self)
+                .objects
+                .filter(pk=self.pk)
+                .values_list("status", flat=True)
+                .first()
+            )
+
+            if (
+                    previous_status is not None
+                    and previous_status != self.status
+            ):
+                self.status_updated_at = timezone.now()
+
+        elif not self.status_updated_at:
+            self.status_updated_at = timezone.now()
 
         super().save(*args, **kwargs)
 
@@ -218,6 +303,7 @@ class Order(models.Model):
 
     @property
     def is_paid(self) -> bool:
+        """آیا سفارش وارد یکی از وضعیت‌های بعد از پرداخت شده است؟"""
         return self.status in {
             OrderStatus.PAID,
             OrderStatus.PROCESSING,
@@ -226,7 +312,16 @@ class Order(models.Model):
         }
 
     @property
+    def is_terminal(self) -> bool:
+        """آیا سفارش به وضعیت نهایی رسیده است؟"""
+        return self.status in {
+            OrderStatus.DELIVERED,
+            OrderStatus.CANCELLED,
+        }
+
+    @property
     def is_payment_expired(self) -> bool:
+        """آیا مهلت پرداخت سفارش تمام شده است؟"""
         return (
                 self.status == OrderStatus.PENDING
                 and self.payment_expires_at is not None
@@ -239,6 +334,11 @@ class Order(models.Model):
 
     @property
     def remaining_payment_seconds(self) -> int:
+        """
+        تعداد ثانیه باقی‌مانده تا پایان مهلت پرداخت.
+
+        اگر مهلت پرداخت وجود نداشته باشد یا تمام شده باشد، صفر برمی‌گرداند.
+        """
         if not self.payment_expires_at:
             return 0
 
@@ -249,15 +349,17 @@ class Order(models.Model):
         return max(0, int(remaining))
 
     # ==================================================================
-    # Timeline
+    # Status timeline
     # ==================================================================
 
     @property
-    def status_timeline(self) -> list[dict]:
+    def status_timeline(self) -> list[dict[str, Any]]:
         """
-        مراحل نمایش وضعیت سفارش برای Frontend.
-        """
+        مراحل وضعیت سفارش برای استفاده در Frontend.
 
+        برای سفارش لغوشده، مراحل بعد از وضعیت فعلی به‌عنوان انجام‌شده
+        نمایش داده نمی‌شوند.
+        """
         status = self.status
 
         paid_statuses = {
@@ -306,14 +408,55 @@ class Order(models.Model):
             },
         ]
 
+    # ==================================================================
+    # Amount helpers
+    # ==================================================================
+
+    @property
+    def calculated_total(self) -> Decimal:
+        """
+        محاسبه مبلغ نهایی بر اساس Snapshotهای مالی سفارش.
+
+        فرمول:
+            subtotal + shipping_cost - discount_amount
+        """
+        subtotal = self.subtotal or ZERO
+        shipping = self.shipping_cost or ZERO
+        discount = self.discount_amount or ZERO
+
+        return max(
+            ZERO,
+            subtotal + shipping - discount,
+        )
+
+    @property
+    def item_count(self) -> int:
+        """تعداد کل واحدهای کالا در سفارش."""
+        if not self.pk:
+            return 0
+
+        result = self.items.aggregate(
+            total=models.Sum("quantity"),
+        )
+
+        return int(result["total"] or 0)
+
+
+# ============================================================================
+# OrderItem
+# ============================================================================
 
 class OrderItem(models.Model):
     """
     آیتم سفارش.
 
-    product_name، variant_name، sku و unit_price به‌صورت Snapshot
-    ذخیره می‌شوند تا تغییرات محصول در آینده سفارش قدیمی را تغییر ندهد.
+    فیلدهای product_name، variant_name، sku و unit_price به‌صورت Snapshot
+    ذخیره می‌شوند تا تغییرات آینده محصول روی سفارش قدیمی اثر نگذارد.
     """
+
+    # ------------------------------------------------------------------
+    # Relations
+    # ------------------------------------------------------------------
 
     order = models.ForeignKey(
         Order,
@@ -357,6 +500,7 @@ class OrderItem(models.Model):
         max_length=80,
         verbose_name="SKU",
     )
+
     # ------------------------------------------------------------------
     # Pricing
     # ------------------------------------------------------------------
@@ -367,15 +511,74 @@ class OrderItem(models.Model):
     )
 
     unit_price = models.DecimalField(
-        max_digits=14,
-        decimal_places=2,
+        max_digits=MONEY_MAX_DIGITS,
+        decimal_places=MONEY_DECIMAL_PLACES,
         validators=[MinValueValidator(ZERO)],
         verbose_name="قیمت واحد",
     )
 
     total_price = models.DecimalField(
-        max_digits=14,
-        decimal_places=2,
+        max_digits=MONEY_MAX_DIGITS,
+        decimal_places=MONEY_DECIMAL_PLACES,
         validators=[MinValueValidator(ZERO)],
         verbose_name="قیمت کل",
     )
+
+    # ------------------------------------------------------------------
+    # Meta
+    # ------------------------------------------------------------------
+
+    class Meta:
+        verbose_name = "آیتم سفارش"
+        verbose_name_plural = "آیتم‌های سفارش"
+
+        ordering = ("id",)
+
+        indexes = [
+            models.Index(
+                fields=("order",),
+                name="orderitem_order_idx",
+            ),
+            models.Index(
+                fields=("product",),
+                name="orderitem_product_idx",
+            ),
+            models.Index(
+                fields=("sku",),
+                name="orderitem_sku_idx",
+            ),
+        ]
+
+    # ------------------------------------------------------------------
+    # String
+    # ------------------------------------------------------------------
+
+    def __str__(self) -> str:
+        return f"{self.product_name} × {self.quantity}"
+
+    # ==================================================================
+    # Pricing
+    # ==================================================================
+
+    @property
+    def calculated_total(self) -> Decimal:
+        """محاسبه قیمت کل بر اساس تعداد و قیمت واحد."""
+        return (
+                (self.unit_price or ZERO)
+                * Decimal(self.quantity or 0)
+        )
+
+    # ==================================================================
+    # Save
+    # ==================================================================
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        """
+        ذخیره آیتم سفارش.
+
+        total_price به‌صورت خودکار از quantity × unit_price محاسبه می‌شود
+        تا مقدار ذخیره‌شده با قیمت واحد و تعداد هماهنگ بماند.
+        """
+        self.total_price = self.calculated_total
+
+        super().save(*args, **kwargs)

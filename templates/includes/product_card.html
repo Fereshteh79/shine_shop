@@ -1,30 +1,27 @@
 {% comment %}
-    کارت محصول مشترک — متغیر ورودی: product
+    کارت محصول — سازگار با components.css (product-card, card-quantity, ...)
+    و main.js (initCardQuantity با data-card-action)
 {% endcomment %}
 
 <article class="product-card">
 
-    <a
-            href="{% url 'products:detail' product.slug %}"
-            class="product-image"
-            aria-label="{{ product.name }}"
-    >
-        {% with image=product.images.first %}
+    <a href="{{ product.get_absolute_url }}" class="product-image" aria-label="{{ product.name }}">
+        {% with image=product.primary_image %}
             {% if image %}
                 <img
                         src="{{ image.image.url }}"
                         alt="{{ image.alt_text|default:product.name }}"
                         loading="lazy"
-                        width="600"
-                        height="600"
+                        width="400"
+                        height="400"
                 >
             {% else %}
-                <div class="product-placeholder">SHINE</div>
+                <span class="product-placeholder">SHINE</span>
             {% endif %}
         {% endwith %}
 
         {% if product.has_discount %}
-            <span class="product-badge">تخفیف</span>
+            <span class="product-badge">{{ product.discount_percentage }}٪ تخفیف</span>
         {% endif %}
     </a>
 
@@ -35,39 +32,39 @@
         {% endif %}
 
         <h3>
-            <a href="{% url 'products:detail' product.slug %}">{{ product.name }}</a>
+            <a href="{{ product.get_absolute_url }}">{{ product.name }}</a>
         </h3>
 
         <div class="product-price">
             {% if product.has_discount %}
-                <span class="old-price">{{ product.price|floatformat:0 }}</span>
+                <del class="old-price">{{ product.price|floatformat:0 }}</del>
             {% endif %}
-
             <strong>{{ product.final_price|floatformat:0 }}</strong>
             <span class="currency">تومان</span>
         </div>
 
-        {% if user.is_authenticated %}
+        {% if product.in_stock and user.is_authenticated %}
             <form method="post" action="{% url 'cart:add' product.id %}" class="product-card-form">
                 {% csrf_token %}
 
-                <div class="product-card-actions">
-                    <div class="card-quantity">
-                        <button type="button" class="quantity-btn" data-card-action="decrease">−</button>
-                        <input type="number" name="quantity" value="1" min="1" max="99" aria-label="تعداد">
-                        <button type="button" class="quantity-btn" data-card-action="increase">+</button>
-                    </div>
-
-                    <button type="submit" class="btn btn-gold btn-sm card-add-btn">
-                        افزودن به سبد
+                <div class="card-quantity">
+                    <button type="button" class="quantity-btn" data-card-action="decrease" aria-label="کاهش">−</button>
+                    <input type="number" name="quantity" value="1" min="1" max="99" aria-label="تعداد">
+                    <button type="button" class="quantity-btn" data-card-action="increase" aria-label="افزایش">+
                     </button>
                 </div>
+
+                <button type="submit" class="btn btn-gold btn-sm card-add-btn">
+                    افزودن به سبد
+                </button>
             </form>
-        {% else %}
-            <a href="{% url 'accounts:login' %}?next={{ request.get_full_path }}"
-               class="btn btn-outline btn-sm product-card-actions card-add-btn">
+        {% elif not user.is_authenticated %}
+            <a href="{% url 'accounts:login' %}?next={{ product.get_absolute_url }}"
+               class="btn btn-outline btn-sm product-card-login">
                 ورود برای خرید
             </a>
+        {% else %}
+            <button type="button" class="btn btn-dark btn-sm" disabled>ناموجود</button>
         {% endif %}
 
     </div>

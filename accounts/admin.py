@@ -16,9 +16,11 @@ class CustomUserAdmin(UserAdmin):
         "is_active",
         "date_joined",
     )
-    list_filter = ("is_staff", "is_superuser", "is_active", "date_joined")
+    date_hierarchy = "date_joined"
+    list_filter = ("is_staff", "is_superuser", "is_active")
     search_fields = ("username", "email", "phone_number", "first_name", "last_name")
     ordering = ("-date_joined",)
+    list_per_page = 30
 
     fieldsets = UserAdmin.fieldsets + (
         ("اطلاعات تماس", {"fields": ("phone_number",)}),

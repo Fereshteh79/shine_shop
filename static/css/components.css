@@ -1,85 +1,154 @@
-/* =========================
-   TYPOGRAPHY
-========================= */
+/* =========================================================
+   SHINE GALLERY — COMPONENTS
+   Buttons / Alerts / Forms / Product Cards / Pagination
+   RTL / Light Luxury Theme
+   ========================================================= */
+
+
+/* =========================================================
+   1. TYPOGRAPHY / SECTION HEADINGS
+========================================================= */
 
 .eyebrow {
     display: inline-flex;
     align-items: center;
     gap: 9px;
-    color: var(--gold);
+
+    color: var(--gold-dark);
+
     font-size: 10px;
     font-weight: 800;
     letter-spacing: 2.5px;
+    line-height: 1.4;
+
     text-transform: uppercase;
 }
 
 .eyebrow::before {
     content: "";
+
     width: 22px;
     height: 1px;
+
+    flex: 0 0 auto;
+
     background: currentColor;
 }
 
 .page-title {
     margin: 8px 0 0;
+
+    color: var(--text);
+
     font-size: clamp(30px, 4vw, 48px);
+    font-weight: 800;
+    line-height: 1.25;
     letter-spacing: -0.7px;
 }
 
 .page-description {
     max-width: 680px;
+
     margin: 12px 0 0;
+
     color: var(--text-muted);
+
+    font-size: 14px;
+    line-height: 1.9;
 }
 
 .section-heading {
     display: flex;
-    align-items: end;
+    align-items: flex-end;
     justify-content: space-between;
+
     gap: 25px;
     margin-bottom: 35px;
 }
 
+.section-heading > * {
+    min-width: 0;
+}
+
 .section-heading h2 {
     margin: 8px 0 0;
+
+    color: var(--text);
+
     font-size: clamp(24px, 3vw, 34px);
+    font-weight: 800;
+    line-height: 1.35;
     letter-spacing: -0.4px;
 }
 
 .section-heading p {
     margin: 10px 0 0;
+
     color: var(--text-muted);
+
+    font-size: 13px;
+    line-height: 1.8;
 }
 
 .text-link {
-    color: var(--gold);
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+
+    color: var(--gold-dark);
+
     font-size: 13px;
-    transition: var(--transition);
+    font-weight: 600;
+    line-height: 1.6;
+
+    transition: color var(--transition),
+    transform var(--transition);
 }
 
 .text-link:hover {
-    color: var(--gold-light);
+    color: var(--gold);
+    transform: translateX(-2px);
 }
 
 
-/* =========================
-   BUTTONS
-========================= */
+/* =========================================================
+   2. BUTTONS
+========================================================= */
 
 .btn {
     position: relative;
+
     display: inline-flex;
     align-items: center;
     justify-content: center;
+
     gap: 9px;
+
     min-height: 46px;
+    min-width: 0;
+
     padding: 0 21px;
+
     border: 1px solid transparent;
     border-radius: var(--radius-sm);
+
+    background: transparent;
+    color: inherit;
+
     font-size: 13px;
     font-weight: 700;
-    line-height: 1;
+    line-height: 1.2;
+
+    text-align: center;
+    text-decoration: none;
     white-space: nowrap;
+
+    cursor: pointer;
+
+    user-select: none;
+
+    -webkit-tap-highlight-color: transparent;
+
     transition: background var(--transition),
     border-color var(--transition),
     color var(--transition),
@@ -87,10 +156,33 @@
     box-shadow var(--transition);
 }
 
-.btn:disabled {
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+.btn:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 3px;
+}
+
+.btn:disabled,
+.btn.disabled,
+.btn[aria-disabled="true"] {
     cursor: not-allowed;
     opacity: 0.45;
+    transform: none;
+    box-shadow: none;
+    pointer-events: none;
 }
+
+
+/* ---------------------------------------------------------
+   GOLD BUTTON
+--------------------------------------------------------- */
 
 .btn-gold {
     background: linear-gradient(
@@ -98,63 +190,126 @@
             var(--gold-light),
             var(--gold)
     );
-    color: #090909;
-    box-shadow: 0 8px 25px rgba(212, 175, 55, 0.14);
+
+    color: #1c1200;
+
+    box-shadow: 0 6px 20px rgba(185, 138, 28, 0.25);
 }
 
 .btn-gold:hover {
     background: linear-gradient(
             135deg,
-            #f7dc7c,
+            #e6c55c,
             var(--gold-light)
     );
-    color: #000;
+
+    color: #1c1200;
+
     transform: translateY(-2px);
-    box-shadow: 0 12px 30px rgba(212, 175, 55, 0.20);
+
+    box-shadow: 0 10px 26px rgba(185, 138, 28, 0.35);
 }
+
+
+/* ---------------------------------------------------------
+   RED ACTION BUTTON
+--------------------------------------------------------- */
+
+.btn-action {
+    background: var(--action);
+    color: #ffffff;
+
+    box-shadow: var(--shadow-action);
+}
+
+.btn-action:hover {
+    background: var(--action-hover);
+    color: #ffffff;
+
+    transform: translateY(-2px);
+
+    box-shadow: 0 12px 30px rgba(239, 57, 78, 0.28);
+}
+
+
+/* ---------------------------------------------------------
+   OUTLINE BUTTON
+--------------------------------------------------------- */
 
 .btn-outline {
     border-color: var(--border);
-    background: rgba(255, 255, 255, 0.015);
+
+    background: var(--surface);
+
     color: var(--text);
 }
 
 .btn-outline:hover {
     border-color: var(--gold);
-    background: rgba(212, 175, 55, 0.05);
-    color: var(--gold-light);
+
+    background: var(--gold-bg);
+
+    color: var(--gold-dark);
 }
+
+
+/* ---------------------------------------------------------
+   DARK / SOFT BUTTON
+--------------------------------------------------------- */
 
 .btn-dark {
     border-color: var(--border);
+
     background: var(--surface-2);
+
     color: var(--text);
 }
 
 .btn-dark:hover {
     border-color: var(--border-strong);
+
     background: var(--surface-3);
+
+    color: var(--text);
 }
 
+
+/* ---------------------------------------------------------
+   DANGER BUTTON
+--------------------------------------------------------- */
+
 .btn-danger {
-    border-color: rgba(226, 109, 109, 0.22);
-    background: rgba(226, 109, 109, 0.08);
-    color: #ef8a8a;
+    border-color: rgba(226, 59, 59, 0.25);
+
+    background: rgba(226, 59, 59, 0.05);
+
+    color: var(--danger);
 }
 
 .btn-danger:hover {
-    border-color: rgba(226, 109, 109, 0.4);
-    background: rgba(226, 109, 109, 0.14);
+    border-color: rgba(226, 59, 59, 0.45);
+
+    background: rgba(226, 59, 59, 0.12);
+
+    color: var(--danger);
 }
+
+
+/* ---------------------------------------------------------
+   BUTTON SIZES
+--------------------------------------------------------- */
 
 .btn-sm {
     min-height: 38px;
-    padding: 0 15px;
+
+    padding-inline: 15px;
+
     font-size: 12px;
 }
 
 .btn-lg {
     min-height: 54px;
+
     padding-inline: 27px;
 }
 
@@ -162,73 +317,131 @@
     width: 100%;
 }
 
+.btn > svg,
+.btn > img,
+.btn > i {
+    flex: 0 0 auto;
+}
 
-/* =========================
-   ALERTS / MESSAGES
-========================= */
+.btn > svg {
+    width: 1.1em;
+    height: 1.1em;
+}
+
+
+/* =========================================================
+   3. ALERTS / DJANGO MESSAGES
+========================================================= */
 
 .messages {
     position: relative;
     z-index: 20;
+
+    width: 100%;
 }
 
 .alert {
     display: flex;
     align-items: center;
     justify-content: space-between;
+
     gap: 15px;
+
+    width: min(100%, var(--container));
+
     margin: 16px auto 0;
     padding: 13px 16px;
+
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
+
     background: var(--surface);
-    box-shadow: var(--shadow-sm);
     color: var(--text-soft);
+
+    box-shadow: var(--shadow-sm);
+
     font-size: 13px;
+    line-height: 1.7;
+}
+
+.alert > * {
+    min-width: 0;
 }
 
 .alert-success {
-    border-color: rgba(99, 201, 139, 0.20);
-    background: rgba(99, 201, 139, 0.06);
+    border-color: rgba(30, 158, 90, 0.25);
+
+    background: var(--success-soft);
+    color: var(--success);
 }
 
 .alert-error,
 .alert-danger {
-    border-color: rgba(226, 109, 109, 0.22);
-    background: rgba(226, 109, 109, 0.06);
+    border-color: rgba(226, 59, 59, 0.25);
+
+    background: var(--danger-soft);
+    color: var(--danger);
 }
 
 .alert-warning {
-    border-color: rgba(229, 184, 92, 0.22);
-    background: rgba(229, 184, 92, 0.06);
+    border-color: rgba(214, 146, 20, 0.25);
+
+    background: var(--warning-soft);
+    color: var(--warning);
 }
 
 .alert-info {
-    border-color: rgba(109, 168, 226, 0.22);
-    background: rgba(109, 168, 226, 0.06);
+    border-color: rgba(47, 127, 209, 0.25);
+
+    background: var(--info-soft);
+    color: var(--info);
 }
 
 .alert-close {
     flex: 0 0 auto;
+
+    display: inline-grid;
+    place-items: center;
+
     width: 30px;
     height: 30px;
+
     padding: 0;
+
     border: 0;
     border-radius: 50%;
+
     background: transparent;
     color: var(--text-muted);
+
     font-size: 20px;
+    line-height: 1;
+
+    cursor: pointer;
+
+    -webkit-tap-highlight-color: transparent;
+
+    transition: background var(--transition),
+    color var(--transition),
+    transform var(--transition);
 }
 
 .alert-close:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--surface-2);
     color: var(--text);
+
+    transform: rotate(4deg);
+}
+
+.alert-close:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
 }
 
 
-/* =========================
-   FORMS
-========================= */
+/* =========================================================
+   4. FORMS
+========================================================= */
 
 .form-group {
     margin-bottom: 18px;
@@ -236,10 +449,14 @@
 
 .form-group label {
     display: block;
+
     margin-bottom: 8px;
+
     color: var(--text-soft);
+
     font-size: 12px;
     font-weight: 600;
+    line-height: 1.6;
 }
 
 .form-control,
@@ -248,19 +465,29 @@
 .form-group textarea {
     width: 100%;
     min-height: 46px;
+
     padding: 11px 14px;
+
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
+
     outline: none;
+
     background: var(--surface-2);
     color: var(--text);
+
     transition: border-color var(--transition),
     background var(--transition),
     box-shadow var(--transition);
 }
 
+.form-group select {
+    cursor: pointer;
+}
+
 .form-group textarea {
     min-height: 120px;
+
     resize: vertical;
 }
 
@@ -270,67 +497,121 @@
     color: var(--text-faint);
 }
 
+.form-control:hover,
+.form-group input:hover,
+.form-group select:hover,
+.form-group textarea:hover {
+    border-color: var(--border-dark);
+}
+
 .form-control:focus,
+.form-control:focus-visible,
 .form-group input:focus,
+.form-group input:focus-visible,
 .form-group select:focus,
-.form-group textarea:focus {
-    border-color: rgba(212, 175, 55, 0.65);
+.form-group select:focus-visible,
+.form-group textarea:focus,
+.form-group textarea:focus-visible {
+    border-color: var(--gold);
+
+    background: var(--surface);
+
+    box-shadow: 0 0 0 3px rgba(185, 138, 28, 0.10);
+}
+
+.form-control:disabled,
+.form-group input:disabled,
+.form-group select:disabled,
+.form-group textarea:disabled {
     background: var(--surface-3);
-    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.06);
+    color: var(--text-faint);
+
+    cursor: not-allowed;
+}
+
+.form-control[readonly],
+.form-group input[readonly],
+.form-group textarea[readonly] {
+    background: var(--surface);
+
+    cursor: default;
 }
 
 .form-help {
     margin-top: 6px;
+
     color: var(--text-faint);
+
     font-size: 11px;
+    line-height: 1.7;
 }
 
 .form-error,
 .errorlist {
     margin: 6px 0 0;
-    color: #ee8a8a;
+
+    color: var(--danger);
+
     font-size: 11px;
+    line-height: 1.7;
 }
 
 .errorlist {
+    padding: 0;
+
     list-style: none;
 }
 
 .form-errors {
     margin-bottom: 20px;
     padding: 12px 14px;
-    border: 1px solid rgba(226, 109, 109, 0.2);
+
+    border: 1px solid rgba(226, 59, 59, 0.25);
     border-radius: var(--radius-sm);
-    background: rgba(226, 109, 109, 0.06);
-    color: #ee8a8a;
+
+    background: var(--danger-soft);
+    color: var(--danger);
+
     font-size: 12px;
+    line-height: 1.8;
 }
 
 
-/* =========================
-   EMPTY STATES
-========================= */
+/* =========================================================
+   5. EMPTY STATES
+========================================================= */
 
 .empty-state {
     padding: 70px 25px;
+
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
-    background: radial-gradient(circle at 50% 0, rgba(212, 175, 55, 0.06), transparent 40%),
-    var(--surface);
+
+    background: var(--surface);
+
     text-align: center;
+
+    box-shadow: var(--shadow-xs);
 }
 
 .empty-state-icon {
     display: grid;
+    place-items: center;
+
     width: 64px;
     height: 64px;
+
     margin: 0 auto 20px;
-    place-items: center;
+
     border: 1px solid var(--border-strong);
     border-radius: 50%;
-    background: rgba(212, 175, 55, 0.06);
-    color: var(--gold);
+
+    background: var(--gold-bg);
+    color: var(--gold-dark);
+
     font-size: 24px;
+    font-weight: 800;
+    line-height: 1;
 }
 
 .empty-state h2,
@@ -340,27 +621,52 @@
 
 .empty-state p {
     max-width: 500px;
+
     margin: 0 auto 24px;
+
     color: var(--text-muted);
+
+    line-height: 1.9;
+}
+
+.empty-state p:last-child {
+    margin-bottom: 0;
 }
 
 
-/* =========================
-   PRODUCT CARDS
-========================= */
+/* =========================================================
+   6. PRODUCT GRID
+========================================================= */
 
 .product-grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+
+    grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+
     gap: 20px;
 }
 
+
+/* =========================================================
+   7. PRODUCT CARD
+========================================================= */
+
 .product-card {
     position: relative;
+
     overflow: hidden;
+
+    display: flex;
+    flex-direction: column;
+
+    min-width: 0;
+
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
+
     background: var(--surface);
+
     transition: transform var(--transition-slow),
     border-color var(--transition),
     box-shadow var(--transition);
@@ -368,34 +674,52 @@
 
 .product-card:hover {
     border-color: var(--border-strong);
+
     transform: translateY(-5px);
-    box-shadow: var(--shadow-gold);
+
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.09);
 }
+
+
+/* =========================================================
+   8. PRODUCT IMAGE
+========================================================= */
 
 .product-image {
     position: relative;
+
     display: block;
+
     aspect-ratio: 1 / 1;
+
     overflow: hidden;
+
     background: var(--surface-2);
 }
 
 .product-image::after {
     position: absolute;
     inset: 0;
+
+    content: "";
+
+    pointer-events: none;
+
     background: linear-gradient(
             to top,
-            rgba(0, 0, 0, 0.22),
+            rgba(0, 0, 0, 0.12),
             transparent 45%
     );
-    content: "";
-    pointer-events: none;
 }
 
 .product-image img {
+    display: block;
+
     width: 100%;
     height: 100%;
+
     object-fit: cover;
+
     transition: transform 500ms ease;
 }
 
@@ -405,134 +729,358 @@
 
 .product-placeholder {
     display: grid;
+    place-items: center;
+
     width: 100%;
     height: 100%;
-    place-items: center;
-    color: var(--gold);
+
+    color: var(--gold-soft);
+
     font-size: 28px;
     font-weight: 800;
     letter-spacing: 4px;
 }
 
+.product-image img[src=""],
+.product-image img:not([src]) {
+    visibility: hidden;
+}
+
+
+/* =========================================================
+   9. PRODUCT BADGE
+========================================================= */
+
 .product-badge {
     position: absolute;
     z-index: 2;
+
     top: 13px;
-    right: 13px;
+    inset-inline-start: 13px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 26px;
+
     padding: 5px 10px;
-    border-radius: 999px;
-    background: var(--gold);
-    color: var(--black);
+
+    border-radius: var(--radius-pill);
+
+    background: var(--action);
+    color: #ffffff;
+
     font-size: 9px;
     font-weight: 900;
+    line-height: 1;
+
+    white-space: nowrap;
 }
 
+
+/* =========================================================
+   10. PRODUCT INFO
+========================================================= */
+
 .product-info {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+
+    min-width: 0;
+
     padding: 17px;
 }
 
 .product-brand {
     display: block;
+
     margin-bottom: 6px;
-    color: var(--gold);
+
+    color: var(--gold-dark);
+
     font-size: 9px;
     font-weight: 800;
     letter-spacing: 1.8px;
+    line-height: 1.4;
+
     text-transform: uppercase;
 }
 
 .product-info h3 {
     min-height: 44px;
+
     margin: 0;
+
+    color: var(--text);
+
     font-size: 15px;
+    font-weight: 700;
     line-height: 1.55;
+
+    overflow-wrap: anywhere;
+}
+
+.product-info h3 a {
+    transition: color var(--transition);
 }
 
 .product-info h3 a:hover {
-    color: var(--gold-light);
+    color: var(--gold-dark);
 }
+
+
+/* =========================================================
+   11. PRODUCT PRICE
+========================================================= */
 
 .product-price {
     display: flex;
     align-items: baseline;
     flex-wrap: wrap;
+
     gap: 7px;
+
     margin-top: 12px;
 }
 
 .product-price strong {
-    color: var(--gold-light);
+    color: var(--text);
+
     font-size: 16px;
+    font-weight: 800;
+    line-height: 1.5;
 }
 
 .currency {
     color: var(--text-muted);
+
     font-size: 10px;
+    line-height: 1.5;
 }
 
 .old-price {
     color: var(--text-faint);
+
     font-size: 11px;
+    line-height: 1.5;
+
     text-decoration: line-through;
 }
 
+
+/* =========================================================
+   12. PRODUCT CARD ACTIONS
+========================================================= */
+
 .product-card-actions {
     display: flex;
+
     gap: 8px;
-    margin-top: 15px;
+
+    margin-top: auto;
+    padding-top: 15px;
 }
 
 .product-card-actions .btn {
     flex: 1;
+    min-width: 0;
+}
+
+.product-card-form {
+    margin-top: 14px;
+}
+
+.product-card-form > * {
+    min-width: 0;
 }
 
 
-/* =========================
-   PAGINATION
-========================= */
+/* =========================================================
+   13. PRODUCT QUANTITY
+========================================================= */
+
+.card-quantity {
+    display: flex;
+    align-items: center;
+
+    overflow: hidden;
+
+    min-height: 40px;
+
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+
+    background: var(--surface-2);
+}
+
+.card-quantity:focus-within {
+    border-color: var(--gold);
+
+    box-shadow: 0 0 0 3px rgba(185, 138, 28, 0.08);
+}
+
+.card-quantity input {
+    width: 38px;
+    height: 38px;
+
+    padding: 0;
+
+    border: 0;
+    outline: 0;
+
+    background: transparent;
+    color: var(--text);
+
+    text-align: center;
+
+    font-size: 12px;
+}
+
+.card-quantity input:focus,
+.card-quantity input:focus-visible {
+    border: 0;
+    box-shadow: none;
+}
+
+.card-quantity .quantity-btn {
+    display: grid;
+    place-items: center;
+
+    flex: 0 0 auto;
+
+    width: 30px;
+    height: 38px;
+
+    padding: 0;
+
+    border: 0;
+
+    background: transparent;
+    color: var(--gold-dark);
+
+    font-size: 15px;
+    line-height: 1;
+
+    cursor: pointer;
+
+    -webkit-tap-highlight-color: transparent;
+
+    transition: background var(--transition),
+    color var(--transition);
+}
+
+.card-quantity .quantity-btn:hover {
+    background: var(--gold-bg);
+    color: var(--gold);
+}
+
+.card-quantity .quantity-btn:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: -2px;
+}
+
+.card-add-btn {
+    flex: 1;
+
+    min-width: 0;
+
+    white-space: normal;
+}
+
+
+/* =========================================================
+   14. PAGINATION
+========================================================= */
 
 .pagination {
     display: flex;
+    align-items: center;
     justify-content: center;
+
+    flex-wrap: wrap;
+
     gap: 7px;
+
     margin-top: 40px;
 }
 
 .pagination a,
 .pagination span {
     display: grid;
+    place-items: center;
+
     min-width: 38px;
     height: 38px;
+
     padding-inline: 8px;
-    place-items: center;
+
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
+
     background: var(--surface);
     color: var(--text-soft);
+
     font-size: 12px;
+    line-height: 1;
+
+    transition: background var(--transition),
+    border-color var(--transition),
+    color var(--transition),
+    transform var(--transition);
 }
 
-.pagination a:hover,
+.pagination a:hover {
+    border-color: var(--gold);
+
+    background: var(--gold-bg);
+    color: var(--gold-dark);
+
+    transform: translateY(-1px);
+}
+
+.pagination a:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+}
+
 .pagination .active {
     border-color: var(--gold);
-    color: var(--gold-light);
-    background: rgba(212, 175, 55, 0.06);
+
+    background: var(--gold-bg);
+    color: var(--gold-dark);
+
+    font-weight: 800;
+}
+
+.pagination .disabled,
+.pagination [aria-disabled="true"] {
+    opacity: 0.45;
+
+    cursor: not-allowed;
 }
 
 
-/* =========================
-   DIVIDERS / CARDS
-========================= */
+/* =========================================================
+   15. SURFACE / INFO CARDS
+========================================================= */
 
 .surface-card {
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
+
     background: var(--surface);
+
+    box-shadow: var(--shadow-xs);
 }
 
 .divider {
+    width: 100%;
     height: 1px;
+
     margin: 24px 0;
+
     background: var(--border);
 }
 
@@ -540,8 +1088,11 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+
     gap: 20px;
+
     padding: 13px 0;
+
     border-bottom: 1px solid var(--border);
 }
 
@@ -551,40 +1102,72 @@
 
 .info-row span {
     color: var(--text-muted);
+
     font-size: 12px;
+    line-height: 1.7;
 }
 
 .info-row strong {
     color: var(--text-soft);
+
     font-size: 13px;
+    font-weight: 700;
+    line-height: 1.7;
+
+    overflow-wrap: anywhere;
 }
 
 
-/* =========================
-   RESPONSIVE
-========================= */
+/* =========================================================
+   16. RESPONSIVE — TABLET
+========================================================= */
 
 @media (max-width: 1100px) {
+
     .product-grid {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns:
+            repeat(3, minmax(0, 1fr));
     }
+
 }
 
+
+/* =========================================================
+   17. RESPONSIVE — MOBILE
+========================================================= */
+
 @media (max-width: 800px) {
+
     .section-heading {
         align-items: flex-start;
         flex-direction: column;
+
+        gap: 12px;
+
         margin-bottom: 25px;
     }
 
-    .product-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+    .section-heading .text-link {
+        align-self: flex-start;
     }
+
+    .product-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
 }
 
+
+/* =========================================================
+   18. RESPONSIVE — SMALL MOBILE
+========================================================= */
+
 @media (max-width: 500px) {
+
     .btn {
         min-height: 44px;
+
         padding-inline: 17px;
     }
 
@@ -598,55 +1181,73 @@
 
     .product-info h3 {
         min-height: auto;
+
         font-size: 13px;
+        line-height: 1.6;
+    }
+
+    .product-brand {
+        font-size: 8px;
+    }
+
+    .product-price {
+        gap: 5px;
+    }
+
+    .product-price strong {
+        font-size: 14px;
     }
 
     .product-card-actions {
         flex-direction: column;
     }
 
+    .product-card-actions .btn {
+        width: 100%;
+    }
+
     .empty-state {
         padding: 50px 18px;
     }
+
+    .pagination {
+        gap: 5px;
+    }
+
+    .pagination a,
+    .pagination span {
+        min-width: 36px;
+        height: 36px;
+    }
+
 }
 
-/* سبد خرید سریع از کارت محصول */
-.product-card-form {
-    margin-top: 14px;
-}
 
-.card-quantity {
-    display: flex;
-    align-items: center;
-    overflow: hidden;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    background: var(--surface-2);
-}
+/* =========================================================
+   19. REDUCED MOTION
+========================================================= */
 
-.card-quantity input {
-    width: 38px;
-    height: 38px;
-    padding: 0;
-    border: 0;
-    outline: 0;
-    background: transparent;
-    color: var(--text);
-    text-align: center;
-    font-size: 12px;
-}
+@media (prefers-reduced-motion: reduce) {
 
-.card-quantity .quantity-btn {
-    width: 30px;
-    height: 38px;
-    padding: 0;
-    border: 0;
-    background: transparent;
-    color: var(--gold);
-    font-size: 15px;
-}
+    .btn,
+    .text-link,
+    .product-card,
+    .product-image img,
+    .pagination a,
+    .alert-close,
+    .form-control,
+    .form-group input,
+    .form-group select,
+    .form-group textarea,
+    .card-quantity {
+        transition: none;
+    }
 
-.card-add-btn {
-    flex: 1;
-    white-space: normal;
+    .btn:hover,
+    .product-card:hover,
+    .pagination a:hover,
+    .product-card:hover .product-image img,
+    .alert-close:hover {
+        transform: none;
+    }
 }

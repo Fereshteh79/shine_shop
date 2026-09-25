@@ -2,6 +2,9 @@ from django import forms
 
 from .models import Product
 
+# re-export: ویوهای products از همین مسیر import می‌کنند
+from cart.forms import AddToCartForm  # noqa: F401
+
 
 class ProductSearchForm(forms.Form):
     q = forms.CharField(
@@ -39,36 +42,3 @@ class ProductAdminForm(forms.ModelForm):
             )
 
         return cleaned_data
-
-
-class AddToCartForm(forms.Form):
-    quantity = forms.IntegerField(
-        min_value=1,
-        max_value=99,
-        initial=1,
-        label="تعداد",
-        widget=forms.NumberInput(
-            attrs={
-                "min": 1,
-                "max": 99,
-                "inputmode": "numeric",
-            },
-        ),
-    )
-
-    variant = forms.IntegerField(
-        required=False,
-        min_value=1,
-        label="تنوع",
-        widget=forms.HiddenInput(),
-    )
-
-    def clean_quantity(self):
-        quantity = self.cleaned_data["quantity"]
-
-        if quantity < 1:
-            raise forms.ValidationError(
-                "تعداد باید بیشتر از صفر باشد."
-            )
-
-        return quantity

@@ -28,7 +28,7 @@ class Payment(models.Model):
 
     status = models.CharField(
         max_length=20,
-        choices=PaymentStatus.CHOICES,
+        choices=PaymentStatus.choices,
         default=PaymentStatus.PENDING,
         db_index=True,
         verbose_name="وضعیت",

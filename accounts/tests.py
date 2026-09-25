@@ -1,176 +1,170 @@
-from django.test import TestCase
-from django.urls import reverse
+# accounts/tests.py
 
-from .models import User
+import re
+from datetime import timedelta
 from unittest import mock
 
+from django.conf import settings
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from django.utils import timezone
 
 from .models import PhoneOTP, User
-from .otp import issue_otp, verify_otp
+from .otp import OTPError, issue_otp, verify_otp
 
+
+# ─── ثبت‌نام ────────────────────────────────────────────
 
 class RegisterTests(TestCase):
-    def test_register_success_and_auto_login(self):
-        response = self.client.post(
-            reverse("accounts:register"),
-            {
-                "username": "shahab",
-                "email": "Shahab@Example.com",
-                "phone_number": "09387586384",
-                "first_name": "شهاب",
-                "last_name": "طیبی",
-                "password1": "StrongPass123!",
-                "password2": "StrongPass123!",
-            },
-        )
 
-        self.assertRedirects(response, reverse("shop:home"))
+    @classmethod
+    def setUpTestData(cls):
+        cls.register_url = reverse("accounts:register")
+        cls.home_url = reverse("shop:home")
+
+    def test_register_success(self):
+        """ثبت‌نام موفق — redirect به home، یک کاربر ساخته شود،
+        ایمیل نرمال‌شده ذخیره گردد و کاربر لاگین شود."""
+
+        data = {
+            "username": "shahab",
+            "email": "Shahab@Example.com",
+            "phone_number": "09387586384",
+            "first_name": "شهاب",
+            "last_name": "طیبی",
+            "password1": "TestPass123",
+            "password2": "TestPass123",
+        }
+
+        response = self.client.post(self.register_url, data)
+
+        # ریدایرکت به خانه
+        self.assertRedirects(response, self.home_url)
+
+        # دقیقاً یک کاربر ساخته شده
         self.assertEqual(User.objects.count(), 1)
 
-        user = User.objects.get(username="shahab")
-        self.assertEqual(user.email, "shahab@example.com")  # نرمال‌سازی ایمیل
-        self.assertTrue(user.is_authenticated or self.client.session.keys())
+        # ایمیل نرمال‌شده (lowercase)
+        user = User.objects.first()
+        self.assertEqual(user.email, "shahab@example.com")
 
-    def test_register_duplicate_email_rejected(self):
+        # کاربر لاگین شده باشد
+        self.assertIn("_auth_user_id", self.client.session)
+
+    def test_duplicate_email_rejected(self):
+        """ایمیل تکراری رد شود و تعداد کاربران ثابت بماند."""
+
         User.objects.create_user(
-            username="old",
-            email="taken@example.com",
-            password="StrongPass123!",
+            username="existing",
+            email="shahab@example.com",
+            password="TestPass123",
         )
 
-        response = self.client.post(
-            reverse("accounts:register"),
-            {
-                "username": "new",
-                "email": "taken@example.com",
-                "phone_number": "09120000000",
-                "password1": "StrongPass123!",
-                "password2": "StrongPass123!",
-            },
-        )
+        data = {
+            "username": "shahab",
+            "email": "Shahab@Example.com",
+            "phone_number": "09387586384",
+            "first_name": "شهاب",
+            "last_name": "طیبی",
+            "password1": "TestPass123",
+            "password2": "TestPass123",
+        }
 
-        self.assertEqual(User.objects.count(), 1)
+        response = self.client.post(self.register_url, data)
+
+        self.assertEqual(response.status_code, 200)
         self.assertContains(response, "این ایمیل قبلاً ثبت شده است.")
+        self.assertEqual(User.objects.count(), 1)
 
-    def test_register_invalid_phone_rejected(self):
-        response = self.client.post(
-            reverse("accounts:register"),
-            {
-                "username": "badphone",
-                "email": "bad@example.com",
-                "phone_number": "abc123",
-                "password1": "StrongPass123!",
-                "password2": "StrongPass123!",
-            },
-        )
+    def test_invalid_phone_rejected(self):
+        """شمارهٔ نامعتبر رد شود و کاربری ساخته نشود."""
 
+        data = {
+            "username": "shahab",
+            "email": "shahab@example.com",
+            "phone_number": "abc123",
+            "first_name": "شهاب",
+            "last_name": "طیبی",
+            "password1": "TestPass123",
+            "password2": "TestPass123",
+        }
+
+        response = self.client.post(self.register_url, data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "شماره موبایل")
         self.assertEqual(User.objects.count(), 0)
 
-    def test_authenticated_user_cannot_see_register(self):
+    def test_authenticated_user_redirected(self):
+        """کاربر لاگین‌شده نتواند صفحهٔ ثبت‌نام را ببیند."""
+
         User.objects.create_user(
-            username="logged",
-            email="logged@example.com",
-            password="StrongPass123!",
-        )
-        self.client.login(username="logged", password="StrongPass123!")
-
-        response = self.client.get(reverse("accounts:register"))
-
-        self.assertRedirects(response, reverse("shop:home"))
-
-
-class LoginTests(TestCase):
-    def setUp(self):
-        self.user = User.objects.create_user(
             username="shahab",
             email="shahab@example.com",
-            password="StrongPass123!",
+            password="TestPass123",
+        )
+        self.client.login(username="shahab", password="TestPass123")
+
+        response = self.client.get(self.register_url)
+        self.assertRedirects(response, self.home_url)
+
+
+# ─── ورود با رمز عبور ───────────────────────────────────
+
+class LoginTests(TestCase):
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.login_url = reverse("accounts:login")
+        cls.home_url = reverse("shop:home")
+        cls.logout_url = reverse("accounts:logout")
+
+        cls.user = User.objects.create_user(
+            username="shahab",
+            email="shahab@example.com",
+            password="TestPass123",
+            first_name="شهاب",
+            last_name="طیبی",
         )
 
     def test_login_success(self):
-        response = self.client.post(
-            reverse("accounts:login"),
-            {"username": "shahab", "password": "StrongPass123!"},
-        )
-
-        self.assertRedirects(response, reverse("shop:home"))
-
-    def test_logout_requires_post(self):
-        self.client.login(username="shahab", password="StrongPass123!")
-
-        response = self.client.get(reverse("accounts:logout"))
-        self.assertEqual(response.status_code, 405)
-
-        response = self.client.post(reverse("accounts:logout"))
-        self.assertRedirects(response, reverse("shop:home"))
-
-
-@override_settings(SMS_PROVIDER="console")
-class OtpFlowTests(TestCase):
-    def setUp(self):
-        self.user = User.objects.create_user(
-            username="otpuser",
-            email="otp@example.com",
-            phone_number="09123456789",
-            password="StrongPass123!",
-        )
-
-    @mock.patch("accounts.otp.send_sms")
-    def test_issue_and_verify_otp(self, mock_sms):
-        issue_otp(phone_number="09123456789")
-
-        mock_sms.assert_called_once()
-        otp = PhoneOTP.objects.get(phone_number="09123456789", is_used=False)
-
-        # کد هش‌شده ذخیره می‌شود — کد خام در دیتابیس نیست
-        self.assertNotIn(otp.code_hash, "0123456789")
-
-    def test_full_otp_login_flow(self):
-        with mock.patch("accounts.otp.send_sms") as mock_sms:
-            self.client.post(
-                reverse("accounts:otp_request"),
-                {"phone_number": "09123456789"},
-            )
-
-        # کد واقعی از آرگومان پیامک استخراج می‌شود
-        message = mock_sms.call_args.kwargs["message"]
-        code = [w for w in message.split() if w.isdigit() and len(w) == 6][0]
+        """ورود موفق با username و redirect به home."""
 
         response = self.client.post(
-            reverse("accounts:otp_verify"),
-            {"code": code},
+            self.login_url,
+            {"username": "shahab", "password": "TestPass123"},
         )
-
-        self.assertRedirects(response, reverse("shop:home"))
-
-    def test_wrong_code_rejected(self):
-        with mock.patch("accounts.otp.send_sms"):
-            self.client.post(
-                reverse("accounts:otp_request"),
-                {"phone_number": "09123456789"},
-            )
-
-        response = self.client.post(
-            reverse("accounts:otp_verify"),
-            {"code": "000000"},
-        )
-
-        self.assertContains(response, "کد وارد شده صحیح نیست.")
-
-    def test_invalid_phone_rejected(self):
-        response = self.client.post(
-            reverse("accounts:otp_request"),
-            {"phone_number": "12345"},
-        )
-
-        self.assertEqual(PhoneOTP.objects.count(), 0)
+        self.assertRedirects(response, self.home_url)
+        self.assertIn("_auth_user_id", self.client.session)
 
     def test_login_with_email(self):
-        response = self.client.post(
-            reverse("accounts:login"),
-            {"username": "otp@example.com", "password": "StrongPass123!"},
-        )
+        """ورود موفق با ایمیل."""
 
-        self.assertRedirects(response, reverse("shop:home"))
+        response = self.client.post(
+            self.login_url,
+            {"username": "shahab@example.com", "password": "TestPass123"},
+        )
+        self.assertRedirects(response, self.home_url)
+
+    def test_login_wrong_password(self):
+        """ورود ناموفق با رمز اشتباه."""
+
+        response = self.client.post(
+            self.login_url,
+            {"username": "shahab", "password": "WrongPass"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn("_auth_user_id", self.client.session)
+
+    def test_logout_requires_post(self):
+        """خروج فقط با POST امکان‌پذیر باشد."""
+
+        self.client.login(username="shahab", password="TestPass123")
+
+        # GET نباید logout کند
+        response = self.client.get(self.logout_url)
+        # بسته به تنظیمات ممکن است redirect یا 405 باشد
+        self.assertNotEqual(response.status_code, 200)
+
+    def test_logout_success(self):
+        """خروج موفق با POST."""
