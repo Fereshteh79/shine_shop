@@ -561,12 +561,12 @@ class OrderItem(models.Model):
     # ==================================================================
 
     @property
-    def calculated_total(self) -> Decimal:
-        """محاسبه قیمت کل بر اساس تعداد و قیمت واحد."""
-        return (
-                (self.unit_price or ZERO)
-                * Decimal(self.quantity or 0)
-        )
+    def calculated_total(self):
+        try:
+            unit = Decimal(str(self.unit_price)) if self.unit_price else ZERO
+        except Exception:
+            unit = ZERO
+        return unit * self.quantity
 
     # ==================================================================
     # Save
