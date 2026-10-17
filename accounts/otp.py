@@ -1,174 +1,101 @@
-# accounts/otp.py
-"""
-مدیریت کد یکبارمصرف پیامکی (OTP).
+"""ابزارها و policyهای OTP بدون دسترسی مستقیم به دیتابیس.
 
-- تولید کد ۶ رقمی
-- ذخیرهٔ هش‌شدهٔ کد
-- محدودیت زمانی
-- محدودیت تعداد تلاش
-- فاصلهٔ حداقلی بین ارسال‌ها
-- پشتیبانی از اعداد فارسی و انگلیسی
+منبع واحد تنظیمات: shine_shop/settings.py
+    OTP_CODE_LENGTH | OTP_CODE_TTL | OTP_RESEND_INTERVAL | OTP_MAX_VERIFY_ATTEMPTS
 """
 
-import hashlib
-import logging
+from __future__ import annotations
+
 import secrets
+import string
+from datetime import timedelta
 
 from django.conf import settings
-from django.utils import timezone
+from django.contrib.auth.hashers import check_password, make_password
 
-from .models import PhoneOTP
-from .sms import SMSDeliveryError, send_sms
-
-logger = logging.getLogger(__name__)
-
-CODE_LENGTH = 6
-PERSIAN_DIGITS = str.maketrans("۰۱۲۳۴۵۶۷۸۹", "0123456789")
+DEFAULT_OTP_SMS_TEMPLATE = (
+    "کد ورود شما به شاین: {code}\n"
+    "این کد را در اختیار دیگران نگذارید."
+)
 
 
-class OTPError(Exception):
-    """خطای عمومی OTP با پیام قابل نمایش به کاربر."""
+def otp_length() -> int:
+    """طول کد OTP (بین ۴ تا ۱۰ رقم)."""
+    value = int(getattr(settings, "OTP_CODE_LENGTH", 6))
+
+    if not 4 <= value <= 10:
+        raise ValueError("OTP_CODE_LENGTH باید بین ۴ و ۱۰ باشد.")
+
+    return value
 
 
-def _hash_code(code: str) -> str:
-    """هش کردن کد با استفاده از SECRET_KEY پروژه."""
+def otp_ttl() -> timedelta:
+    """مدت اعتبار OTP."""
+    seconds = int(getattr(settings, "OTP_CODE_TTL", 120))
 
-    salted = f"{code}:{settings.SECRET_KEY}"
-    return hashlib.sha256(salted.encode("utf-8")).hexdigest()
+    if seconds <= 0:
+        raise ValueError("OTP_CODE_TTL باید بزرگ‌تر از صفر باشد.")
 
-
-def _generate_code() -> str:
-    """تولید کد ۶ رقمی تصادفی."""
-
-    return "".join(
-        secrets.choice("0123456789") for _ in range(CODE_LENGTH)
-    )
+    return timedelta(seconds=seconds)
 
 
-def _normalize_code(code: str) -> str:
-    """تبدیل اعداد فارسی به انگلیسی و حذف فاصله‌های اضافی."""
+def otp_max_attempts() -> int:
+    """حداکثر تعداد تلاش ناموفق برای هر کد."""
+    value = int(getattr(settings, "OTP_MAX_VERIFY_ATTEMPTS", 5))
 
-    return (code or "").strip().translate(PERSIAN_DIGITS)
+    if value <= 0:
+        raise ValueError("OTP_MAX_VERIFY_ATTEMPTS باید بزرگ‌تر از صفر باشد.")
 
-
-def issue_otp(*, phone_number: str) -> int:
-    """
-    تولید و ارسال کد یکبارمصرف.
-
-    Returns:
-        تعداد ثانیه‌های اعتبار کد.
-
-    Raises:
-        OTPError
-    """
-
-    if not phone_number:
-        raise OTPError("شماره موبایل نامعتبر است.")
-
-    now = timezone.now()
-
-    # بررسی فاصلهٔ حداقلی بین دو ارسال
-    recent_otp_exists = PhoneOTP.objects.filter(
-        phone_number=phone_number,
-        created_at__gte=now - timezone.timedelta(
-            seconds=settings.OTP_COOLDOWN_SECONDS
-        ),
-    ).exists()
-
-    if recent_otp_exists:
-        raise OTPError(
-            "کد قبلی هنوز معتبر است؛ لطفاً کمی صبر کنید و دوباره تلاش کنید."
-        )
-
-    # باطل کردن کدهای قبلی استفاده‌نشده
-    PhoneOTP.objects.filter(
-        phone_number=phone_number,
-        is_used=False,
-    ).update(is_used=True)
-
-    # تولید کد جدید
-    code = _generate_code()
-
-    # ذخیرهٔ هش‌شده
-    otp = PhoneOTP.objects.create(
-        phone_number=phone_number,
-        code_hash=_hash_code(code),
-        expires_at=now + timezone.timedelta(seconds=settings.OTP_TTL_SECONDS),
-    )
-
-    message = (
-        f"کد ورود شما به Shine: {code}\n"
-        "این کد را با کسی به اشتراک نگذارید."
-    )
-
-    try:
-        send_sms(phone_number=phone_number, message=message)
-    except SMSDeliveryError as exc:
-        # ارسال ناموفق → حذف کد تا کاربر بتواند دوباره درخواست دهد
-        otp.delete()
-        logger.error("ارسال OTP ناموفق برای %s: %s", phone_number, exc)
-        raise OTPError(
-            "ارسال پیامک ناموفق بود؛ لطفاً کمی بعد دوباره تلاش کنید."
-        ) from exc
-
-    return settings.OTP_TTL_SECONDS
+    return value
 
 
-def verify_otp(*, phone_number: str, code: str):
-    """
-    بررسی کد یکبارمصرف.
+def otp_resend_cooldown() -> int:
+    """فاصلهٔ مجاز (ثانیه) بین دو درخواست OTP."""
+    value = int(getattr(settings, "OTP_RESEND_INTERVAL", 90))
 
-    Returns:
-        شماره موبایل در صورت موفقیت.
+    if value < 0:
+        raise ValueError("OTP_RESEND_INTERVAL نمی‌تواند منفی باشد.")
 
-    Raises:
-        OTPError
-    """
+    return value
 
-    if not phone_number:
-        raise OTPError("شماره موبایل نامعتبر است.")
 
-    normalized = _normalize_code(code)
+def otp_max_sends_per_phone_per_hour() -> int:
+    """حداکثر درخواست OTP برای هر شماره در یک ساعت."""
+    value = int(getattr(settings, "OTP_MAX_SENDS_PER_PHONE_PER_HOUR", 5))
 
-    # بررسی اولیهٔ فرمت
-    if not normalized.isdigit() or len(normalized) != CODE_LENGTH:
-        raise OTPError("کد وارد شده صحیح نیست.")
+    if value <= 0:
+        raise ValueError("OTP_MAX_SENDS_PER_PHONE_PER_HOUR باید بزرگ‌تر از صفر باشد.")
 
-    # آخرین کد فعال
-    otp = (
-        PhoneOTP.objects.filter(
-            phone_number=phone_number,
-            is_used=False,
-        )
-        .order_by("-created_at")
-        .first()
-    )
+    return value
 
-    if otp is None:
-        raise OTPError("کد فعالی یافت نشد؛ لطفاً کد جدید درخواست کنید.")
 
-    # بررسی انقضا
-    if otp.is_expired:
-        raise OTPError("کد منقضی شده است؛ لطفاً کد جدید درخواست کنید.")
+def otp_max_sends_per_ip_per_hour() -> int:
+    """حداکثر درخواست OTP از هر IP در یک ساعت."""
+    value = int(getattr(settings, "OTP_MAX_SENDS_PER_IP_PER_HOUR", 20))
 
-    # بررسی تعداد تلاش‌ها
-    if otp.attempts >= settings.OTP_MAX_ATTEMPTS:
-        otp.is_used = True
-        otp.save(update_fields=["is_used"])
-        raise OTPError(
-            "تعداد تلاش‌های ناموفق بیش از حد مجاز است؛ کد جدید بگیرید."
-        )
+    if value <= 0:
+        raise ValueError("OTP_MAX_SENDS_PER_IP_PER_HOUR باید بزرگ‌تر از صفر باشد.")
 
-    # افزایش شمارندهٔ تلاش
-    otp.attempts += 1
-    otp.save(update_fields=["attempts"])
+    return value
 
-    # بررسی تطابق کد
-    if not secrets.compare_digest(otp.code_hash, _hash_code(normalized)):
-        raise OTPError("کد وارد شده صحیح نیست.")
 
-    # موفقیت — مصرف‌شده علامت بزن
-    otp.is_used = True
-    otp.save(update_fields=["is_used"])
+def generate_otp() -> str:
+    """تولید کد تصادفی امن."""
+    return "".join(secrets.choice(string.digits) for _ in range(otp_length()))
 
-    return phone_number
+
+def hash_otp(code: str) -> str:
+    """ذخیره امن OTP به‌صورت hash (کد هرگز خام ذخیره نمی‌شود)."""
+    return make_password(code)
+
+
+def check_otp(code: str, code_hash: str) -> bool:
+    """بررسی OTP در برابر hash."""
+    return check_password(code, code_hash)
+
+
+def build_otp_message(code: str) -> str:
+    """ساخت متن پیامک OTP."""
+    template = getattr(settings, "OTP_SMS_TEMPLATE", DEFAULT_OTP_SMS_TEMPLATE)
+
+    return template.format(code=code)

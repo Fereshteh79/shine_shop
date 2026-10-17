@@ -1,8 +1,9 @@
 # shop/selectors.py
+# بالای فایل، importها را به این شکل تغییر بده:
 from django.db.models import Q, QuerySet, Count
 
+from core.constants import OrderStatus
 from products.models import Brand, Category, Product
-from orders.models import OrderItem
 
 SORT_OPTIONS = {
     "newest": "-created_at",
@@ -81,16 +82,18 @@ def get_category(slug: str) -> Category | None:
 
 
 def get_best_sellers(*, limit: int = 8) -> QuerySet[Product]:
-    """پرفروش‌ترین محصولات — بر اساس تعداد فروش در سفارش‌های موفق."""
+    """پرفروش‌ترین محصولات — بر اساس تعداد فروش در سفارش‌های موفق.
+
+    Count با filter (به‌جای filter روی queryset) از JOIN و تکرار
+    محصولات در نتیجه جلوگیری می‌کند.
+    """
+    sales_filter = Q(order_items__order__status__in=OrderStatus.purchased())
+
     return (
         Product.objects
-        .filter(
-            is_available=True,
-            order_items__order__status__in={
-                "paid", "processing", "shipped", "delivered",
-            },
-        )
-        .annotate(sales_count=Count("order_items"))
+        .filter(is_available=True)
+        .annotate(sales_count=Count("order_items", filter=sales_filter))
+        .filter(sales_count__gt=0)
         .select_related("category", "brand")
         .prefetch_related("images")
         .order_by("-sales_count", "-created_at")[:limit]

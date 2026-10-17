@@ -1,3 +1,8 @@
+"""مدل‌های اپ products: دسته‌بندی، برند، محصول، تصویر، تنوع و ویژگی."""
+
+from __future__ import annotations
+
+import uuid
 from decimal import Decimal
 
 from django.core.validators import MinValueValidator
@@ -6,21 +11,9 @@ from django.db.models import Q
 from django.urls import reverse
 from django.utils.text import slugify
 
+from core.models import TimeStampedModel
+
 ZERO = Decimal("0.00")
-
-
-class TimeStampedModel(models.Model):
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name="تاریخ ایجاد",
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name="آخرین بروزرسانی",
-    )
-
-    class Meta:
-        abstract = True
 
 
 def generate_unique_slug(
@@ -34,10 +27,7 @@ def generate_unique_slug(
     تولید slug یکتا با پشتیبانی از زبان فارسی.
 
     اگر slug پایه قبلاً وجود داشته باشد:
-        product
-        product-2
-        product-3
-        ...
+        product / product-2 / product-3 / ...
     """
 
     base = slugify(text, allow_unicode=True) or "item"
@@ -55,6 +45,11 @@ def generate_unique_slug(
         counter += 1
 
     return slug
+
+
+def _generate_sku(prefix: str = "SHN") -> str:
+    """تولید کد یکتای محصول/تنوع در صورت خالی بودن."""
+    return f"{prefix}-{uuid.uuid4().hex[:10].upper()}"
 
 
 class Category(models.Model):
@@ -201,6 +196,7 @@ class Product(TimeStampedModel):
         max_length=80,
         unique=True,
         verbose_name="کد محصول",
+        help_text="در صورت خالی بودن، به‌صورت خودکار تولید می‌شود.",
     )
 
     short_description = models.CharField(
@@ -216,9 +212,7 @@ class Product(TimeStampedModel):
     price = models.DecimalField(
         max_digits=14,
         decimal_places=2,
-        validators=[
-            MinValueValidator(ZERO),
-        ],
+        validators=[MinValueValidator(ZERO)],
         verbose_name="قیمت",
     )
     discount_price = models.DecimalField(
@@ -226,9 +220,7 @@ class Product(TimeStampedModel):
         decimal_places=2,
         null=True,
         blank=True,
-        validators=[
-            MinValueValidator(ZERO),
-        ],
+        validators=[MinValueValidator(ZERO)],
         verbose_name="قیمت تخفیف",
     )
 
@@ -285,6 +277,8 @@ class Product(TimeStampedModel):
     def __str__(self) -> str:
         return self.name
 
+    # ------------------------------------------------------------ قیمت
+
     @property
     def final_price(self) -> Decimal:
         if (
@@ -317,18 +311,17 @@ class Product(TimeStampedModel):
 
     @property
     def in_stock(self) -> bool:
-        return (
-                self.is_available
-                and self.stock > 0
-        )
+        return self.is_available and self.stock > 0
+
+    # ------------------------------------------------------------ تصاویر
 
     @property
     def primary_image(self):
         """
         تصویر اصلی محصول.
 
-        در حالت عادی constraint دیتابیس تضمین می‌کند
-        فقط یک تصویر primary باشد.
+        اگر images در view قبلاً prefetch شده باشد، بدون query اضافه
+        از همان لیست استفاده می‌کنیم.
         """
         images = getattr(self, "_prefetched_objects_cache", {}).get("images")
 
@@ -348,6 +341,8 @@ class Product(TimeStampedModel):
                 .first()
                 or self.images.first()
         )
+
+    # ------------------------------------------------------------ SEO
 
     @property
     def seo_title(self) -> str:
@@ -369,6 +364,10 @@ class Product(TimeStampedModel):
                 pk=self.pk,
             )
 
+        if not self.sku:
+            self.sku = _generate_sku()
+
+        # قیمت تخفیف بزرگ‌تر یا مساوی قیمت اصلی بی‌معناست.
         if (
                 self.discount_price is not None
                 and self.discount_price >= self.price
@@ -437,6 +436,7 @@ class ProductImage(models.Model):
             self.alt_text = self.product.name
 
         if self.is_primary:
+            # فقط یک تصویر اصلی برای هر محصول.
             ProductImage.objects.filter(
                 product=self.product,
                 is_primary=True,
@@ -464,15 +464,14 @@ class ProductVariant(models.Model):
         max_length=80,
         unique=True,
         verbose_name="کد تنوع",
+        help_text="در صورت خالی بودن، به‌صورت خودکار تولید می‌شود.",
     )
     price = models.DecimalField(
         max_digits=14,
         decimal_places=2,
         null=True,
         blank=True,
-        validators=[
-            MinValueValidator(ZERO),
-        ],
+        validators=[MinValueValidator(ZERO)],
         verbose_name="قیمت",
     )
     stock = models.PositiveIntegerField(
@@ -514,6 +513,12 @@ class ProductVariant(models.Model):
                 and self.product.is_available
                 and self.stock > 0
         )
+
+    def save(self, *args, **kwargs):
+        if not self.sku:
+            self.sku = _generate_sku(f"SHN-{self.product_id or 'V'}")
+
+        super().save(*args, **kwargs)
 
 
 class ProductAttribute(models.Model):

@@ -1,110 +1,103 @@
-# core/constants.py
-"""
-ثابت‌های مشترک پروژه Shine Shop.
-
-این فایل شامل:
-- وضعیت‌های سفارش
-- وضعیت‌های پرداخت
-- کد درگاه‌های پرداخت
-- واحدهای پول
-- گروه‌بندی وضعیت‌های سفارش
-
-است.
-
-برای مقادیر قابل ذخیره در دیتابیس از Django TextChoices استفاده شده
-تا هم مقدار داخلی و هم عنوان نمایشی مشخص باشد.
-"""
-
+"""منبع واحد حقیقت برای وضعیتها، درگاهها و مقادیر ثابت پروژه."""
 from __future__ import annotations
+
+from decimal import Decimal
 
 from django.db import models
 
+# ---------------------------------------------------------------- پول
+DECIMAL_PLACES = 2
+ZERO = Decimal("0.00")
+DEFAULT_CURRENCY = "IRR"
 
-# ============================================================================
-# Order Status
-# ============================================================================
 
-
+# ---------------------------------------------------------------- وضعیت سفارش
 class OrderStatus(models.TextChoices):
-    """وضعیت‌های چرخه عمر سفارش."""
-
     PENDING = "pending", "در انتظار پرداخت"
-    PAID = "paid", "پرداخت شده"
+    PAID = "paid", "پرداختشده"
     PROCESSING = "processing", "در حال پردازش"
-    SHIPPED = "shipped", "ارسال شده"
-    DELIVERED = "delivered", "تحویل داده شده"
-    CANCELLED = "cancelled", "لغو شده"
+    SHIPPED = "shipped", "ارسالشده"
+    DELIVERED = "delivered", "تحویلشده"
+    CANCELLED = "cancelled", "لغوشده"
+    REFUNDED = "refunded", "بازگشتوجهشده"
+
+    @classmethod
+    def purchased(cls) -> frozenset[str]:
+        """وضعیتهایی که «خرید موفق» محسوب میشوند (برای ثبت دیدگاه و ...)."""
+        return frozenset({cls.PAID, cls.PROCESSING, cls.SHIPPED, cls.DELIVERED})
+
+    @classmethod
+    def final(cls) -> frozenset[str]:
+        """وضعیتهای پایانی: دیگر تغییر نمیکنند."""
+        return frozenset({cls.DELIVERED, cls.CANCELLED, cls.REFUNDED})
+
+    @classmethod
+    def cancellable(cls) -> frozenset[str]:
+        """فقط سفارشهایی که کاربر مجاز است لغو کند."""
+        return frozenset({cls.PENDING, cls.PAID, cls.PROCESSING})
+
+    @classmethod
+    def holding_stock(cls) -> frozenset[str]:
+        """وضعیتهایی که موجودی برای آنها رزرو/کسر شده است."""
+        return frozenset({cls.PENDING, cls.PAID, cls.PROCESSING, cls.SHIPPED, cls.DELIVERED})
 
 
-# ============================================================================
-# Payment Status
-# ============================================================================
-
-
+# ---------------------------------------------------------------- وضعیت پرداخت
 class PaymentStatus(models.TextChoices):
-    """وضعیت‌های تراکنش پرداخت."""
-
-    PENDING = "pending", "در انتظار"
+    INITIATED = "initiated", "آغازشده"
+    PENDING = "pending", "در انتظار نتیجه"
     SUCCESS = "success", "موفق"
     FAILED = "failed", "ناموفق"
-    CANCELLED = "cancelled", "لغو شده"
+    CANCELLED = "cancelled", "لغوشده"
+    REFUNDED = "refunded", "بازگشتوجهشده"
+
+    @classmethod
+    def final(cls) -> frozenset[str]:
+        return frozenset({cls.SUCCESS, cls.FAILED, cls.CANCELLED, cls.REFUNDED})
+
+    @classmethod
+    def open_statuses(cls) -> frozenset[str]:
+        """پرداختهای باز: نه موفق، نه بسته. برای بستن هنگام لغو سفارش."""
+        return frozenset({cls.INITIATED, cls.PENDING})
 
 
-# ============================================================================
-# Payment Gateway
-# ============================================================================
+# ---------------------------------------------------------------- درگاه پرداخت
+class GatewayName(models.TextChoices):
+    ZARINPAL = "zarinpal", "زرینپال"
+    # درگاههای بعدی اینجا اضافه میشوند؛ هیچجای دیگری هاردکد نکن.
 
 
-class GatewayCode(models.TextChoices):
-    """کد درگاه‌های پرداخت پشتیبانی‌شده."""
-
-    ZARINPAL = "zarinpal", "زرین‌پال"
-
-
-# ============================================================================
-# Currency
-# ============================================================================
+# ---------------------------------------------------------------- هدف OTP
+class OTPPurpose(models.TextChoices):
+    REGISTER = "register", "ثبتنام"
+    LOGIN = "login", "ورود"
+    RESET_PASSWORD = "reset_password", "بازیابی رمز عبور"
+    CHANGE_PHONE = "change_phone", "تغییر شماره تلفن"
 
 
-class Currency(models.TextChoices):
-    """واحدهای پول پشتیبانی‌شده."""
+# نام سازگار با کدهای فعلی (تا وقتی همهجا مهاجرت شود)
+Purpose = OTPPurpose
 
-    TOMAN = "toman", "تومان"
-    RIAL = "rial", "ریال"
+# ---------------------------------------------------------------- محدودیتها
+MAX_CART_ITEMS = 50  # حداکثر تعداد ردیف متمایز در سبد خرید
+MAX_CART_ITEM_QUANTITY = 99  # حداکثر تعداد هر ردیف
+MAX_PRODUCT_IMAGES = 8
+REVIEW_MIN_RATING = 1
+REVIEW_MAX_RATING = 5
 
+DEFAULT_ORDER_PAYMENT_TIMEOUT_MINUTES = 30
+DEFAULT_OTP_LENGTH = 6
+DEFAULT_OTP_TTL_SECONDS = 120
 
-# ============================================================================
-# Order Status Groups
-# ============================================================================
+OTP_SESSION_KEY = "otp_verification"
 
-# سفارش‌هایی که چرخه عمرشان به پایان رسیده و دیگر نباید
-# از طریق عملیات عادی تغییر وضعیت داده شوند.
-ORDER_TERMINAL_STATUSES = frozenset(
-    {
-        OrderStatus.DELIVERED,
-        OrderStatus.CANCELLED,
-    }
-)
+# ---------------------------------------------------------------- آواتار
+# واحد: بایت. (۲ مگابایت)
+AVATAR_MAX_SIZE = 2 * 1024 * 1024
 
-# سفارش‌هایی که هنوز در چرخه پردازش هستند.
-ORDER_ACTIVE_STATUSES = frozenset(
-    {
-        OrderStatus.PENDING,
-        OrderStatus.PAID,
-        OrderStatus.PROCESSING,
-        OrderStatus.SHIPPED,
-    }
-)
-
-# ============================================================================
-# Backward Compatibility
-# ============================================================================
-
-# نام‌های سازگار با نسخه‌های قبلی پروژه.
-#
-# این مقادیر را می‌توان در Modelها، Formها، Filterها و بخش‌های قدیمی
-# پروژه بدون نیاز به تغییر فوری استفاده کرد.
-
-ORDER_STATUS_CHOICES = OrderStatus.choices
-
-PAYMENT_STATUS_CHOICES = PaymentStatus.choices
+# پسوندهای مجاز در core/validators.py با این مجموعه سنجیده میشوند
+AVATAR_ALLOWED_CONTENT_TYPES = frozenset({
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+})

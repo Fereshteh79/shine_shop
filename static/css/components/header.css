@@ -1151,3 +1151,10 @@
         transition: none;
     }
 }
+
+/* نمایش آیکون منوی کشویی در دسکتاپ */
+@media (min-width: 761px) {
+    .shine-drawer-toggle {
+        display: flex;
+    }
+}

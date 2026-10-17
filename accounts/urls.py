@@ -8,6 +8,7 @@ from .views import (
     RegisterView,
     UserLoginView,
     UserLogoutView,
+    profile_view,
 )
 
 app_name = "accounts"
@@ -18,4 +19,5 @@ urlpatterns = [
     path("logout/", UserLogoutView.as_view(), name="logout"),
     path("login/otp/", OtpRequestView.as_view(), name="otp_request"),
     path("login/otp/verify/", OtpVerifyView.as_view(), name="otp_verify"),
+    path("profile/", profile_view, name="profile"),
 ]

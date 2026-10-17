@@ -543,3 +543,70 @@ validate_image = ImageFileValidator()
 # ============================================================================
 # توابع کمکی عمومی برای استفاده در کد پروژه
 # ==========
+"""اعتبارسنج‌های مشترک پروژه."""
+
+import re
+
+from django.core.exceptions import ValidationError
+
+from .constants import (
+    AVATAR_ALLOWED_CONTENT_TYPES,
+    AVATAR_MAX_SIZE,
+)
+from .utils import normalize_digits, to_local_ir_mobile
+
+_MOBILE_ERROR = "شماره موبایل باید با ۰۹ شروع شده و ۱۱ رقم باشد."
+_AVATAR_EXT_ERROR = "فرمت تصویر باید JPG، PNG یا WEBP باشد."
+_AVATAR_SIZE_ERROR = "حجم تصویر نباید بیشتر از ۲ مگابایت باشد."
+
+
+# ─────────────────────────── تلفن همراه ───────────────────────────
+
+def validate_iranian_mobile(value) -> None:
+    """اعتبارسنج فیلد مدل — با این نام در migrationها سریالایز شده است؛ تغییرش نده."""
+    if not value:
+        return
+    try:
+        to_local_ir_mobile(value)
+    except ValidationError:
+        raise ValidationError(_MOBILE_ERROR) from None
+
+
+# ─────────────────────────── کد ملی (با رقم کنترل) ───────────────────────────
+
+def validate_iranian_national_id(value) -> None:
+    value = normalize_digits(value)
+    if not value:
+        return
+
+    if not re.fullmatch(r"\d{10}", value):
+        raise ValidationError("کد ملی باید ۱۰ رقم باشد.")
+
+    if value == value[0] * 10:  # 0000000000 و 1111111111 نامعتبرند
+        raise ValidationError("کد ملی واردشده معتبر نیست.")
+
+    check = int(value[9])
+    total = sum(int(value[i]) * (10 - i) for i in range(9))
+    remainder = total % 11
+
+    is_valid = (
+        (remainder < 2 and check == remainder)
+        or (remainder >= 2 and check == 11 - remainder)
+    )
+    if not is_valid:
+        raise ValidationError("کد ملی واردشده معتبر نیست.")
+
+
+# ─────────────────────────── آواتار ───────────────────────────
+
+def validate_avatar_file(f) -> None:
+    """حجم و نوع فایل آواتار را چک می‌کند (علاوه‌بر اعتبارسنجی خود ImageField)."""
+    if not f:
+        return
+
+    if getattr(f, "size", 0) > AVATAR_MAX_SIZE:
+        raise ValidationError(_AVATAR_SIZE_ERROR)
+
+    content_type = getattr(f, "content_type", None)
+    if content_type and content_type not in AVATAR_ALLOWED_CONTENT_TYPES:
+        raise ValidationError(_AVATAR_EXT_ERROR)

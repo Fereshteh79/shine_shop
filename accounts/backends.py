@@ -1,39 +1,55 @@
-# accounts/backends.py
+"""بک‌اند احراز هویت با شماره موبایل یا ایمیل."""
+
+from __future__ import annotations
+
+from typing import Any
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
-from django.db.models import Q
 
-User = get_user_model()
+from accounts.selectors import find_user_by_identifier
+
+UserModel = get_user_model()
 
 
-class EmailOrPhoneModelBackend(ModelBackend):
-    """احراز هویت با نام کاربری، ایمیل یا شماره موبایل + رمز عبور."""
+class PhoneOrEmailBackend(ModelBackend):
+    """
+    احراز هویت با شماره موبایل یا ایمیل + رمز عبور.
 
-    def authenticate(self, request, username=None, password=None, **kwargs):
-        if username is None:
-            username = kwargs.get(User.USERNAME_FIELD)
+    شناسه ورودی می‌تواند:
+        - شماره موبایل
+        - ایمیل
+    باشد.
+    """
 
-        if username is None or password is None:
+    def authenticate(
+            self,
+            request: Any,
+            username: str | None = None,
+            password: str | None = None,
+            **kwargs: Any,
+    ):
+        identifier = (
+                username
+                or kwargs.get(UserModel.USERNAME_FIELD)
+                or kwargs.get("email")
+        )
+
+        if not identifier or password is None:
             return None
 
-        username = username.strip()
+        user = find_user_by_identifier(identifier)
 
-        try:
-            user = User.objects.get(
-                Q(username__iexact=username)
-                | Q(email__iexact=username)
-                | Q(phone_number=username)
-            )
-        except User.DoesNotExist:
-            # اجرای هش رمز برای جلوگیری از حملهٔ زمانی (timing attack)
-            User().set_password(password)
-            return None
-        except User.MultipleObjectsReturned:
-            # username با email یا phone تصادم کرده — امن‌تر است که رد شود
+        if user is None:
+            # برای نزدیک کردن زمان پاسخ به حالت وجود داشتن کاربر،
+            # یک password hash واقعی محاسبه می‌کنیم.
+            UserModel().set_password(password)
             return None
 
-        if self.user_can_authenticate(user) and user.check_password(password):
-            return user
+        if not user.check_password(password):
+            return None
 
-        return None
+        if not self.user_can_authenticate(user):
+            return None
+
+        return user

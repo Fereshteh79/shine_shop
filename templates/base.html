@@ -190,6 +190,152 @@
     ================================================== -->
 
     {% include "includes/header.html" %}
+    <aside class="shine-side-drawer" id="side-drawer" aria-hidden="true">
+
+        <div class="shine-drawer-header">
+
+            <a href="{% url 'shop:home' %}" class="shine-brand shine-drawer-brand">
+                <span class="shine-brand-mark">S</span>
+                <span class="shine-brand-text"><strong>SHINE</strong><small>GALLERY</small></span>
+            </a>
+
+            <button type="button" class="shine-drawer-close" data-drawer-close aria-label="بستن منو">×</button>
+
+        </div>
+
+        <div class="shine-drawer-content">
+
+            {% if user.is_authenticated %}
+
+                <div class="shine-drawer-profile">
+                    <span class="shine-drawer-avatar">{{ user.display_name|first }}</span>
+                    <div>
+                        <strong>{{ user.display_name }}</strong>
+                        <small>خوش آمدی 👋</small>
+                    </div>
+                </div>
+
+                <nav class="shine-drawer-nav">
+                    <a href="{% url 'wishlist:list' %}" class="shine-drawer-link">
+                        <span class="shine-drawer-link-icon">♥</span>
+                        علاقه‌مندی‌های من
+                        {% if wishlist_count %}<span class="shine-drawer-badge">{{ wishlist_count }}</span>{% endif %}
+                    </a>
+                    <a href="{% url 'orders:list' %}" class="shine-drawer-link">
+                        <span class="shine-drawer-link-icon">📦</span>
+                        سفارش‌های من
+                    </a>
+                    <a href="{% url 'payments:list' %}" class="shine-drawer-link">
+                        <span class="shine-drawer-link-icon">💳</span>
+                        پرداخت‌های من
+                    </a>
+                    <a href="{% url 'cart:detail' %}" class="shine-drawer-link">
+                        <span class="shine-drawer-link-icon">🛒</span>
+                        سبد خرید
+                        {% if cart_count %}<span class="shine-drawer-badge">{{ cart_count }}</span>{% endif %}
+                    </a>
+                </nav>
+
+            {% else %}
+
+                <div class="shine-drawer-guest">
+                <span class="shine-drawer-guest-icon">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a7 7 0 0 1 14 0v1"/></svg>
+                </span>
+                    <div>
+                        <strong>به Shine خوش آمدید</strong>
+                        <small>برای خرید و پیگیری سفارش وارد شوید</small>
+                    </div>
+                </div>
+
+                <nav class="shine-drawer-nav">
+                    <a href="{% url 'accounts:login' %}" class="shine-drawer-link">
+                        <span class="shine-drawer-link-icon">👤</span>
+                        ورود به حساب کاربری
+                    </a>
+                    <a href="{% url 'accounts:register' %}" class="shine-drawer-link">
+                        <span class="shine-drawer-link-icon">✨</span>
+                        ثبت‌نام
+                    </a>
+                </nav>
+
+            {% endif %}
+
+            <h4 class="shine-drawer-section-title">دسته‌بندی‌ها</h4>
+
+            <nav class="shine-drawer-nav">
+
+                <div class="shine-drawer-accordion">
+                    <button type="button" class="shine-drawer-link shine-drawer-accordion-button" data-accordion
+                            aria-expanded="false">
+                        <span class="shine-drawer-link-icon">⌚</span>
+                        ساعت‌های لوکس و برند
+                        <span class="shine-accordion-arrow">‹</span>
+                    </button>
+                    <div class="shine-drawer-accordion-body">
+                        <a href="{% url 'shop:category' 'watch-casio' %}" class="shine-drawer-sublink">کاسیو (Casio)</a>
+                        <a href="{% url 'shop:category' 'watch-citizen' %}" class="shine-drawer-sublink">سیتیزن
+                            (Citizen)</a>
+                        <a href="{% url 'shop:category' 'watch-seiko' %}" class="shine-drawer-sublink">سیکو (Seiko)</a>
+                        <a href="{% url 'shop:category' 'watch-tissot' %}" class="shine-drawer-sublink">تیسوت
+                            (Tissot)</a>
+                        <a href="{% url 'shop:category' 'watch-fossil' %}" class="shine-drawer-sublink">فسیل
+                            (Fossil)</a>
+                        <a href="{% url 'shop:category' 'watch-daniel-wellington' %}" class="shine-drawer-sublink">دانیل
+                            ولینگتون (DW)</a>
+                    </div>
+                </div>
+
+                <a href="{% url 'shop:category' 'perfume' %}" class="shine-drawer-link">
+                    <span class="shine-drawer-link-icon">🌸</span>
+                    عطر و ادکلن
+                </a>
+                <a href="{% url 'shop:category' 'sunglasses' %}" class="shine-drawer-link">
+                    <span class="shine-drawer-link-icon">🕶️</span>
+                    عینک آفتابی
+                </a>
+                <a href="{% url 'shop:category' 'silver-jewelry' %}" class="shine-drawer-link">
+                    <span class="shine-drawer-link-icon">💎</span>
+                    نقره‌جات
+                </a>
+                <a href="{% url 'shop:category' 'costume-jewelry' %}" class="shine-drawer-link">
+                    <span class="shine-drawer-link-icon">💍</span>
+                    بدلیجات
+                </a>
+                <a href="{% url 'shop:category' 'mugs' %}" class="shine-drawer-link">
+                    <span class="shine-drawer-link-icon">☕</span>
+                    ماگ و هدیه
+                </a>
+                <a href="{% url 'shop:products' %}" class="shine-drawer-link">
+                    <span class="shine-drawer-link-icon">🛍️</span>
+                    همه محصولات
+                </a>
+
+            </nav>
+
+        </div>
+
+        <div class="shine-drawer-footer">
+
+            {% if user.is_authenticated %}
+                <form method="post" action="{% url 'accounts:logout' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="shine-drawer-logout">خروج از حساب کاربری</button>
+                </form>
+            {% else %}
+                <a href="{% url 'accounts:login' %}" class="shine-drawer-auth-button">ورود به حساب</a>
+                <a href="{% url 'accounts:register' %}" class="shine-drawer-register-button">ثبت‌نام در Shine</a>
+            {% endif %}
+
+            <div class="shine-drawer-contact">
+                <a href="https://instagram.com/shinegallery0" target="_blank" rel="noopener nofollow">اینستاگرام</a>
+                <a href="https://wa.me/989387586384" target="_blank" rel="noopener nofollow">واتساپ</a>
+                <a href="https://t.me/Shineshopy" target="_blank" rel="noopener nofollow">تلگرام</a>
+            </div>
+
+        </div>
+
+    </aside>
 
 
     <!-- =================================================

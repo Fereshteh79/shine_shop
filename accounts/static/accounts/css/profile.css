@@ -1,0 +1,273 @@
+/* accounts/static/accounts/profile.css
+   استایل صفحهٔ پروفایل — Shine Gallery */
+
+.profile-page {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 2rem 0;
+}
+
+/* ── پیام‌ها (اسکوپ‌شده تا با .alert سراسری تداخل نکند) ── */
+.profile-page .alert {
+    margin-bottom: 1rem;
+    padding: 0.8rem 1rem;
+    border-radius: 8px;
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+/* ── هدر پروفایل ── */
+.profile-header {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+
+    padding: 1.75rem;
+
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg, 14px);
+}
+
+.profile-header__avatar {
+    flex-shrink: 0;
+}
+
+.profile-header__avatar img,
+.profile-header__avatar-placeholder {
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+}
+
+.profile-header__avatar img {
+    display: block;
+    object-fit: cover;
+}
+
+.profile-header__avatar-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: var(--gold);
+    color: #fff;
+
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.profile-header__info {
+    flex: 1;
+    min-width: 220px;
+}
+
+.profile-header__name {
+    margin: 0;
+    font-size: 1.5rem;
+    line-height: 1.5;
+}
+
+.profile-header__username {
+    margin: 0.25rem 0 0;
+    color: var(--text-muted);
+    direction: ltr;
+    text-align: right;
+}
+
+.profile-header__bio {
+    margin: 0.75rem 0 0;
+    color: var(--text-soft);
+    font-size: 0.9rem;
+    line-height: 1.8;
+}
+
+.profile-header__meta {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+
+    margin-top: 0.9rem;
+
+    color: var(--text-soft);
+    font-size: 0.9rem;
+}
+
+.profile-header__meta a {
+    color: var(--gold);
+    text-decoration: none;
+}
+
+.profile-header__meta a:hover {
+    text-decoration: underline;
+}
+
+/* ── شبکه‌های اجتماعی ── */
+.profile-socials {
+    margin-top: 1.25rem;
+    padding: 1.25rem 1.75rem;
+
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg, 14px);
+}
+
+.profile-socials__title {
+    margin: 0 0 0.75rem;
+    font-size: 1rem;
+}
+
+.profile-socials__list {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.profile-social {
+    display: inline-block;
+
+    padding: 0.45rem 0.85rem;
+
+    background: #f7f5f0;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+
+    color: var(--text);
+    font-size: 0.9rem;
+    text-decoration: none;
+
+    transition: var(--transition, 0.2s ease);
+}
+
+.profile-social:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+}
+
+/* ── کارت فرم‌ها ── */
+.profile-form-card {
+    margin-top: 1.25rem;
+    padding: 1.5rem 1.75rem;
+
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg, 14px);
+}
+
+.profile-form-card h2,
+.profile-form-card h3 {
+    margin: 0 0 1rem;
+}
+
+.profile-form-card form p {
+    margin: 0.8rem 0;
+}
+
+.profile-form-card label {
+    display: block;
+
+    margin-bottom: 0.35rem;
+
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.profile-form-card input,
+.profile-form-card select,
+.profile-form-card textarea {
+    width: 100%;
+    max-width: 420px;
+
+    padding: 0.65rem 0.75rem;
+
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+
+    font-family: inherit;
+    font-size: 0.95rem;
+
+    box-sizing: border-box;
+}
+
+.profile-form-card textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.profile-form-card input:focus,
+.profile-form-card select:focus,
+.profile-form-card textarea:focus {
+    outline: none;
+    border-color: var(--gold);
+}
+
+/* ── خطاها و راهنما ── */
+.profile-form-card .errorlist {
+    margin: 0.35rem 0 0.5rem;
+    padding: 0;
+
+    list-style: none;
+
+    color: #c62828;
+    font-size: 0.85rem;
+}
+
+.profile-form-card .helptext {
+    display: block;
+
+    margin-top: 0.3rem;
+
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    line-height: 1.6;
+}
+
+/* ── ریسپانسیو ── */
+@media (max-width: 640px) {
+
+    .profile-page {
+        padding: 1rem 0;
+    }
+
+    .profile-header {
+        padding: 1.25rem;
+    }
+
+    .profile-header__avatar img,
+    .profile-header__avatar-placeholder {
+        width: 72px;
+        height: 72px;
+    }
+
+    .profile-header__avatar-placeholder {
+        font-size: 1.6rem;
+    }
+
+    .profile-header__name {
+        font-size: 1.25rem;
+    }
+
+    .profile-header__meta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .profile-socials,
+    .profile-form-card {
+        padding: 1.25rem;
+    }
+
+    .profile-form-card input,
+    .profile-form-card select,
+    .profile-form-card textarea {
+        max-width: 100%;
+    }
+
+    .profile-form-card .btn-gold {
+        width: 100%;
+    }
+}

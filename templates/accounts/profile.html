@@ -1,0 +1,436 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+    پروفایل | Shine Gallery
+{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'accounts/css/profile.css' %}">
+    <style>
+        /* Profile Page */
+        .profile-page {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 2rem 0;
+        }
+
+        /* Alerts / Messages */
+        .alert {
+            margin-bottom: 1rem;
+            padding: 0.8rem 1rem;
+            border-radius: 8px;
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        /* Profile Header */
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            padding: 1.75rem;
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+        }
+
+        .profile-header__avatar {
+            flex-shrink: 0;
+        }
+
+        .profile-header__avatar img,
+        .profile-header__avatar-placeholder {
+            width: 88px;
+            height: 88px;
+            border-radius: 50%;
+        }
+
+        .profile-header__avatar img {
+            display: block;
+            object-fit: cover;
+        }
+
+        .profile-header__avatar-placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--gold);
+            color: #fff;
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .profile-header__info {
+            flex: 1;
+            min-width: 220px;
+        }
+
+        .profile-header__name {
+            margin: 0;
+            font-size: 1.5rem;
+            line-height: 1.5;
+        }
+
+        .profile-header__username {
+            margin: 0.25rem 0 0;
+            color: #888;
+            direction: ltr;
+            text-align: right;
+        }
+
+        .profile-header__bio {
+            margin: 0.75rem 0 0;
+            color: #666;
+            font-size: 0.9rem;
+            line-height: 1.8;
+        }
+
+        .profile-header__meta {
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+            flex-wrap: wrap;
+            margin-top: 0.9rem;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .profile-header__meta a {
+            color: var(--gold);
+            text-decoration: none;
+        }
+
+        .profile-header__meta a:hover {
+            text-decoration: underline;
+        }
+
+        /* Social Links */
+        .profile-socials {
+            margin-top: 1.25rem;
+            padding: 1.25rem 1.75rem;
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+        }
+
+        .profile-socials__title {
+            margin: 0 0 0.75rem;
+            font-size: 1rem;
+        }
+
+        .profile-socials__list {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .profile-social {
+            display: inline-block;
+            padding: 0.45rem 0.85rem;
+            background: #f7f5f0;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: #333;
+            font-size: 0.9rem;
+            text-decoration: none;
+            transition: 0.2s ease;
+        }
+
+        .profile-social:hover {
+            border-color: var(--gold);
+            color: var(--gold);
+        }
+
+        /* Form Cards */
+        .profile-form-card {
+            margin-top: 1.25rem;
+            padding: 1.5rem 1.75rem;
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+        }
+
+        .profile-form-card h2,
+        .profile-form-card h3 {
+            margin: 0 0 1rem;
+        }
+
+        .profile-form-card form p {
+            margin: 0.8rem 0;
+        }
+
+        .profile-form-card label {
+            display: block;
+            margin-bottom: 0.35rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .profile-form-card input,
+        .profile-form-card select,
+        .profile-form-card textarea {
+            width: 100%;
+            max-width: 420px;
+            padding: 0.65rem 0.75rem;
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            box-sizing: border-box;
+        }
+
+        .profile-form-card textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .profile-form-card input:focus,
+        .profile-form-card select:focus,
+        .profile-form-card textarea:focus {
+            outline: none;
+            border-color: var(--gold);
+        }
+
+        /* Form Errors */
+        .profile-form-card .errorlist {
+            margin: 0.35rem 0 0.5rem;
+            padding: 0;
+            list-style: none;
+            color: #c62828;
+            font-size: 0.85rem;
+        }
+
+        .profile-form-card .helptext {
+            display: block;
+            margin-top: 0.3rem;
+            color: #888;
+            font-size: 0.8rem;
+            line-height: 1.6;
+        }
+
+        /* Buttons */
+        .btn-gold {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.65rem 1.4rem;
+            background: var(--gold);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: 0.2s ease;
+        }
+
+        .btn-gold:hover {
+            opacity: 0.9;
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .profile-page {
+                padding: 1rem 0;
+            }
+
+            .profile-header {
+                padding: 1.25rem;
+            }
+
+            .profile-header__avatar img,
+            .profile-header__avatar-placeholder {
+                width: 72px;
+                height: 72px;
+            }
+
+            .profile-header__avatar-placeholder {
+                font-size: 1.6rem;
+            }
+
+            .profile-header__name {
+                font-size: 1.25rem;
+            }
+
+            .profile-header__meta {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            .profile-socials,
+            .profile-form-card {
+                padding: 1.25rem;
+            }
+
+            .profile-form-card input,
+            .profile-form-card select,
+            .profile-form-card textarea {
+                max-width: 100%;
+            }
+
+            .btn-gold {
+                width: 100%;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="profile-page">
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <section class="profile-header">
+                <div class="profile-header__avatar">
+                    {% if profile.avatar %}
+                        <img
+                                src="{{ profile.avatar.url }}"
+                                alt="{{ request.user.username }}"
+                                loading="lazy"
+                        >
+                    {% else %}
+                        <span class="profile-header__avatar-placeholder">
+                        {{ request.user.username|first|upper }}
+                    </span>
+                    {% endif %}
+                </div>
+
+                <div class="profile-header__info">
+                    <h1 class="profile-header__name">
+                        {{ request.user.get_full_name|default:request.user.username }}
+                    </h1>
+
+                    <p class="profile-header__username">
+                        @{{ request.user.username }}
+                    </p>
+
+                    {% if profile.bio %}
+                        <p class="profile-header__bio">
+                            {{ profile.bio }}
+                        </p>
+                    {% endif %}
+
+                    <div class="profile-header__meta">
+                        {% if profile.city or profile.country %}
+                            <span>
+                            {{ profile.city }}
+                                {% if profile.city and profile.country %}
+                                    ،
+                                {% endif %}
+                                {{ profile.country }}
+                        </span>
+                        {% endif %}
+
+                        {% if profile.website %}
+                            <a
+                                    href="{{ profile.website }}"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                            >
+                                وب‌سایت
+                            </a>
+                        {% endif %}
+
+                        <span>
+                        عضو از {{ request.user.date_joined|date:"F Y" }}
+                    </span>
+                    </div>
+                </div>
+            </section>
+
+            {% if profile.telegram or profile.linkedin or profile.github %}
+                <section class="profile-socials">
+                    <h2 class="profile-socials__title">
+                        شبکه‌های اجتماعی
+                    </h2>
+
+                    <div class="profile-socials__list">
+                        {% if profile.telegram %}
+                            <a
+                                    href="{{ profile.telegram }}"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="profile-social"
+                            >
+                                تلگرام
+                            </a>
+                        {% endif %}
+
+                        {% if profile.linkedin %}
+                            <a
+                                    href="{{ profile.linkedin }}"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="profile-social"
+                            >
+                                لینکدین
+                            </a>
+                        {% endif %}
+
+                        {% if profile.github %}
+                            <a
+                                    href="{{ profile.github }}"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="profile-social"
+                            >
+                                گیت‌هاب
+                            </a>
+                        {% endif %}
+                    </div>
+                </section>
+            {% endif %}
+
+            <section class="profile-form-card">
+                <h2>
+                    ویرایش اطلاعات
+                </h2>
+
+                <form method="post">
+                    {% csrf_token %}
+                    {{ profile_form.as_p }}
+
+                    <button
+                            type="submit"
+                            name="update_profile"
+                            class="btn-gold"
+                    >
+                        ذخیره اطلاعات
+                    </button>
+                </form>
+            </section>
+
+            <section class="profile-form-card">
+                <h2>
+                    تغییر رمز عبور
+                </h2>
+
+                <form method="post">
+                    {% csrf_token %}
+                    {{ password_form.as_p }}
+
+                    <button
+                            type="submit"
+                            name="change_password"
+                            class="btn-gold"
+                    >
+                        تغییر رمز عبور
+                    </button>
+                </form>
+            </section>
+
+        </div>
+    </div>
+{% endblock %}

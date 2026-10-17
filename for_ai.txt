@@ -1,0 +1,3800 @@
+﻿
+# ========== core\constants.py ==========
+"""منبع واحد حقیقت برای وضعیتها، درگاهها و مقادیر ثابت پروژه."""
+from __future__ import annotations
+
+from decimal import Decimal
+
+from django.db import models
+
+# ---------------------------------------------------------------- پول
+DECIMAL_PLACES = 2
+ZERO = Decimal("0.00")
+DEFAULT_CURRENCY = "IRR"
+
+
+# ---------------------------------------------------------------- وضعیت سفارش
+class OrderStatus(models.TextChoices):
+    PENDING = "pending", "در انتظار پرداخت"
+    PAID = "paid", "پرداختشده"
+    PROCESSING = "processing", "در حال پردازش"
+    SHIPPED = "shipped", "ارسالشده"
+    DELIVERED = "delivered", "تحویلشده"
+    CANCELLED = "cancelled", "لغوشده"
+    REFUNDED = "refunded", "بازگشتوجهشده"
+
+    @classmethod
+    def purchased(cls) -> frozenset[str]:
+        """وضعیتهایی که «خرید موفق» محسوب میشوند (برای ثبت دیدگاه و ...)."""
+        return frozenset({cls.PAID, cls.PROCESSING, cls.SHIPPED, cls.DELIVERED})
+
+    @classmethod
+    def final(cls) -> frozenset[str]:
+        """وضعیتهای پایانی: دیگر تغییر نمیکنند."""
+        return frozenset({cls.DELIVERED, cls.CANCELLED, cls.REFUNDED})
+
+    @classmethod
+    def cancellable(cls) -> frozenset[str]:
+        """فقط سفارشهایی که کاربر مجاز است لغو کند."""
+        return frozenset({cls.PENDING, cls.PAID, cls.PROCESSING})
+
+    @classmethod
+    def holding_stock(cls) -> frozenset[str]:
+        """وضعیتهایی که موجودی برای آنها رزرو/کسر شده است."""
+        return frozenset({cls.PENDING, cls.PAID, cls.PROCESSING, cls.SHIPPED, cls.DELIVERED})
+
+
+# ---------------------------------------------------------------- وضعیت پرداخت
+class PaymentStatus(models.TextChoices):
+    INITIATED = "initiated", "آغازشده"
+    PENDING = "pending", "در انتظار نتیجه"
+    SUCCESS = "success", "موفق"
+    FAILED = "failed", "ناموفق"
+    CANCELLED = "cancelled", "لغوشده"
+    REFUNDED = "refunded", "بازگشتوجهشده"
+
+    @classmethod
+    def final(cls) -> frozenset[str]:
+        return frozenset({cls.SUCCESS, cls.FAILED, cls.CANCELLED, cls.REFUNDED})
+
+    @classmethod
+    def open_statuses(cls) -> frozenset[str]:
+        """پرداختهای باز: نه موفق، نه بسته. برای بستن هنگام لغو سفارش."""
+        return frozenset({cls.INITIATED, cls.PENDING})
+
+
+# ---------------------------------------------------------------- درگاه پرداخت
+class GatewayName(models.TextChoices):
+    ZARINPAL = "zarinpal", "زرینپال"
+    # درگاههای بعدی اینجا اضافه میشوند؛ هیچجای دیگری هاردکد نکن.
+
+
+# ---------------------------------------------------------------- هدف OTP
+class OTPPurpose(models.TextChoices):
+    REGISTER = "register", "ثبتنام"
+    LOGIN = "login", "ورود"
+    RESET_PASSWORD = "reset_password", "بازیابی رمز عبور"
+    CHANGE_PHONE = "change_phone", "تغییر شماره تلفن"
+
+
+# نام سازگار با کدهای فعلی (تا وقتی همهجا مهاجرت شود)
+Purpose = OTPPurpose
+
+# ---------------------------------------------------------------- محدودیتها
+MAX_CART_ITEMS = 50  # حداکثر تعداد ردیف متمایز در سبد خرید
+MAX_CART_ITEM_QUANTITY = 99  # حداکثر تعداد هر ردیف
+MAX_PRODUCT_IMAGES = 8
+REVIEW_MIN_RATING = 1
+REVIEW_MAX_RATING = 5
+
+DEFAULT_ORDER_PAYMENT_TIMEOUT_MINUTES = 30
+DEFAULT_OTP_LENGTH = 6
+DEFAULT_OTP_TTL_SECONDS = 120
+
+OTP_SESSION_KEY = "otp_verification"
+
+
+# ========== core\validators.py ==========
+"""
+اعتبارسنج‌های سفارشی پروژهٔ Shine Shop.
+
+شامل:
+- نرمال‌سازی ارقام فارسی و عربی
+- شماره موبایل ایران
+- کد ملی ایران
+- کد پستی ایران
+- شماره شبا (IBAN)
+- شماره کارت بانکی
+- اعتبارسنجی فایل‌های تصویری
+"""
+
+from __future__ import annotations
+
+import re
+from pathlib import Path
+from typing import Any
+
+from django.core.exceptions import ValidationError
+from django.utils.deconstruct import deconstructible
+
+# ============================================================================
+# ابزارهای عمومی
+# ============================================================================
+
+_DIGIT_TRANS = str.maketrans(
+    "۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩",
+    "01234567890123456789",
+)
+
+_DIGIT_RE = re.compile(r"\D+")
+
+
+def normalize_digits(value: Any) -> str:
+    """
+    تبدیل ارقام فارسی و عربی به لاتین و حذف فاصلهٔ ابتدا/انتها.
+
+    مثال:
+        "۰۹۱۲۳۴۵۶۷۸۹" -> "09123456789"
+    """
+    if value is None:
+        return ""
+
+    return str(value).strip().translate(_DIGIT_TRANS)
+
+
+def _digits_only(value: Any) -> str:
+    """تمام کاراکترهای غیرعددی را حذف می‌کند."""
+    return _DIGIT_RE.sub("", normalize_digits(value))
+
+
+# ============================================================================
+# موبایل ایران
+# ============================================================================
+
+MOBILE_RE = re.compile(r"^09\d{9}$")
+
+_MOBILE_SEPARATORS_TRANS = str.maketrans(
+    {
+        " ": "",
+        "\u00a0": "",
+        "\u200c": "",
+        "-": "",
+        "(": "",
+        ")": "",
+        ".": "",
+    }
+)
+
+
+def normalize_iranian_mobile(value: Any) -> str:
+    """
+    یکدست‌سازی شماره موبایل ایران به فرمت:
+
+        09xxxxxxxxx
+
+    نمونه‌های قابل پشتیبانی:
+        09123456789
+        +989123456789
+        00989123456789
+        989123456789
+        0912 345 6789
+        0912-345-6789
+    """
+    if value is None:
+        return ""
+
+    digits = normalize_digits(value)
+    digits = digits.translate(_MOBILE_SEPARATORS_TRANS)
+
+    if digits.startswith("+98"):
+        digits = "0" + digits[3:]
+
+    elif digits.startswith("0098"):
+        digits = "0" + digits[4:]
+
+    elif digits.startswith("98") and len(digits) == 12:
+        digits = "0" + digits[2:]
+
+    return digits
+
+
+def is_iranian_mobile(value: Any) -> bool:
+    """بررسی معتبر بودن شماره موبایل ایران."""
+    return bool(MOBILE_RE.fullmatch(normalize_iranian_mobile(value)))
+
+
+def validate_iranian_mobile(value: Any) -> str:
+    """
+    اعتبارسنجی شماره موبایل ایران.
+
+    در صورت معتبر بودن، شمارهٔ نرمال‌شده را برمی‌گرداند.
+    """
+    normalized = normalize_iranian_mobile(value)
+
+    if not normalized:
+        raise ValidationError("شماره موبایل الزامی است.")
+
+    if not MOBILE_RE.fullmatch(normalized):
+        raise ValidationError(
+            "شماره موبایل معتبر نیست. نمونه صحیح: 09123456789"
+        )
+
+    return normalized
+
+
+@deconstructible
+class IranianMobileValidator:
+    """Validator قابل استفاده در مدل‌های Django."""
+
+    message = "شماره موبایل ایران معتبر نیست."
+    code = "invalid_mobile"
+
+    def __call__(self, value: Any) -> None:
+        normalized = normalize_iranian_mobile(value)
+
+        if not MOBILE_RE.fullmatch(normalized):
+            raise ValidationError(
+                self.message,
+                code=self.code,
+            )
+
+
+# ============================================================================
+# کد ملی ایران
+# ============================================================================
+
+_NATIONAL_ID_RE = re.compile(r"^\d{10}$")
+
+
+def normalize_national_id(value: Any) -> str:
+    """نرمال‌سازی کد ملی و حذف فاصله/خط تیره."""
+    return _digits_only(value)
+
+
+def is_valid_national_id(value: Any) -> bool:
+    """
+    بررسی الگوریتمی کد ملی ایران.
+
+    کد ملی باید:
+    - دقیقاً ۱۰ رقم داشته باشد.
+    - تمام ارقام آن یکسان نباشند.
+    - رقم کنترل آن با الگوریتم استاندارد مطابقت داشته باشد.
+    """
+    code = normalize_national_id(value)
+
+    if not _NATIONAL_ID_RE.fullmatch(code):
+        return False
+
+    if len(set(code)) == 1:
+        return False
+
+    digits = [int(char) for char in code]
+
+    weighted_sum = sum(
+        digits[index] * (10 - index)
+        for index in range(9)
+    )
+
+    remainder = weighted_sum % 11
+    check_digit = digits[9]
+
+    if remainder < 2:
+        return check_digit == remainder
+
+    return check_digit == 11 - remainder
+
+
+def validate_national_id(value: Any) -> str:
+    """اعتبارسنجی کد ملی و بازگرداندن مقدار نرمال‌شده."""
+    normalized = normalize_national_id(value)
+
+    if not normalized:
+        raise ValidationError("کد ملی الزامی است.")
+
+    if not is_valid_national_id(normalized):
+        raise ValidationError(
+            "کد ملی واردشده معتبر نیست.",
+            code="invalid_national_id",
+        )
+
+    return normalized
+
+
+@deconstructible
+class IranianNationalIdValidator:
+    """Validator قابل استفاده در ModelField و FormField."""
+
+    message = "کد ملی واردشده معتبر نیست."
+    code = "invalid_national_id"
+
+    def __call__(self, value: Any) -> None:
+        if not is_valid_national_id(value):
+            raise ValidationError(
+                self.message,
+                code=self.code,
+            )
+
+
+# ============================================================================
+# کد پستی ایران
+# ============================================================================
+
+_POSTAL_CODE_RE = re.compile(r"^\d{10}$")
+
+
+def normalize_postal_code(value: Any) -> str:
+    """نرمال‌سازی کد پستی."""
+    return _digits_only(value)
+
+
+def is_valid_postal_code(value: Any) -> bool:
+    """
+    بررسی ساختار کد پستی ایران.
+
+    کد پستی ایران باید دقیقاً ۱۰ رقم باشد.
+    """
+    code = normalize_postal_code(value)
+
+    if not _POSTAL_CODE_RE.fullmatch(code):
+        return False
+
+    # کد پستی نمی‌تواند با 0 یا 2 شروع شود.
+    # این شرط با ساختار رایج کدهای پستی ایران سازگار است.
+    if code[0] in {"0", "2"}:
+        return False
+
+    return True
+
+
+def validate_postal_code(value: Any) -> str:
+    """اعتبارسنجی کد پستی."""
+    normalized = normalize_postal_code(value)
+
+    if not normalized:
+        raise ValidationError("کد پستی الزامی است.")
+
+    if not is_valid_postal_code(normalized):
+        raise ValidationError(
+            "کد پستی باید یک کد ۱۰ رقمی معتبر باشد.",
+            code="invalid_postal_code",
+        )
+
+    return normalized
+
+
+@deconstructible
+class IranianPostalCodeValidator:
+    """Validator کد پستی ایران برای Django."""
+
+    message = "کد پستی واردشده معتبر نیست."
+    code = "invalid_postal_code"
+
+    def __call__(self, value: Any) -> None:
+        if not is_valid_postal_code(value):
+            raise ValidationError(
+                self.message,
+                code=self.code,
+            )
+
+
+# ============================================================================
+# شبا / IBAN ایران
+# ============================================================================
+
+_IRAN_IBAN_RE = re.compile(r"^IR\d{24}$")
+
+
+def normalize_iban(value: Any) -> str:
+    """
+    نرمال‌سازی IBAN.
+
+    فاصله‌ها و خط تیره حذف می‌شوند و حروف به uppercase تبدیل می‌شوند.
+    """
+    if value is None:
+        return ""
+
+    text = normalize_digits(value)
+    text = re.sub(r"[\s\-]", "", text)
+
+    return text.upper()
+
+
+def is_valid_iranian_iban(value: Any) -> bool:
+    """
+    اعتبارسنجی ساختاری و الگوریتم MOD-97 برای شبا ایران.
+    """
+    iban = normalize_iban(value)
+
+    if not _IRAN_IBAN_RE.fullmatch(iban):
+        return False
+
+    # انتقال چهار کاراکتر اول به انتهای رشته.
+    rearranged = iban[4:] + iban[:4]
+
+    numeric = []
+
+    for char in rearranged:
+        if char.isdigit():
+            numeric.append(char)
+        elif "A" <= char <= "Z":
+            numeric.append(str(ord(char) - ord("A") + 10))
+        else:
+            return False
+
+    try:
+        return int("".join(numeric)) % 97 == 1
+    except ValueError:
+        return False
+
+
+def validate_iranian_iban(value: Any) -> str:
+    """اعتبارسنجی شبا و بازگرداندن مقدار استاندارد."""
+    normalized = normalize_iban(value)
+
+    if not normalized:
+        raise ValidationError("شماره شبا الزامی است.")
+
+    if not is_valid_iranian_iban(normalized):
+        raise ValidationError(
+            "شماره شبا (IBAN) واردشده معتبر نیست.",
+            code="invalid_iban",
+        )
+
+    return normalized
+
+
+@deconstructible
+class IranianIBANValidator:
+    """Validator شبا ایران برای Django."""
+
+    message = "شماره شبا واردشده معتبر نیست."
+    code = "invalid_iban"
+
+    def __call__(self, value: Any) -> None:
+        if not is_valid_iranian_iban(value):
+            raise ValidationError(
+                self.message,
+                code=self.code,
+            )
+
+
+# ============================================================================
+# شماره کارت بانکی ایران
+# ============================================================================
+
+_CARD_RE = re.compile(r"^\d{16}$")
+
+
+def normalize_card_number(value: Any) -> str:
+    """نرمال‌سازی شماره کارت بانکی."""
+    return _digits_only(value)
+
+
+def is_valid_card_number(value: Any) -> bool:
+    """
+    اعتبارسنجی شماره کارت با الگوریتم Luhn.
+
+    شماره کارت ایران معمولاً ۱۶ رقمی است.
+    """
+    card = normalize_card_number(value)
+
+    if not _CARD_RE.fullmatch(card):
+        return False
+
+    # جلوگیری از پذیرش شماره‌هایی مانند 1111111111111111
+    if len(set(card)) == 1:
+        return False
+
+    digits = [int(char) for char in card]
+
+    checksum = 0
+
+    for index, digit in enumerate(digits):
+        if index % 2 == 0:
+            value = digit * 2
+            checksum += value - 9 if value > 9 else value
+        else:
+            checksum += digit
+
+    return checksum % 10 == 0
+
+
+def validate_card_number(value: Any) -> str:
+    """اعتبارسنجی شماره کارت."""
+    normalized = normalize_card_number(value)
+
+    if not normalized:
+        raise ValidationError("شماره کارت الزامی است.")
+
+    if not is_valid_card_number(normalized):
+        raise ValidationError(
+            "شماره کارت بانکی معتبر نیست.",
+            code="invalid_card_number",
+        )
+
+    return normalized
+
+
+@deconstructible
+class IranianCardNumberValidator:
+    """Validator شماره کارت برای Django."""
+
+    message = "شماره کارت بانکی معتبر نیست."
+    code = "invalid_card_number"
+
+    def __call__(self, value: Any) -> None:
+        if not is_valid_card_number(value):
+            raise ValidationError(
+                self.message,
+                code=self.code,
+            )
+
+
+# ============================================================================
+# فایل تصویر
+# ============================================================================
+
+DEFAULT_IMAGE_EXTENSIONS = frozenset(
+    {
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".webp",
+    }
+)
+
+DEFAULT_IMAGE_CONTENT_TYPES = frozenset(
+    {
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+    }
+)
+
+
+@deconstructible
+class ImageFileValidator:
+    """
+    اعتبارسنج فایل تصویر.
+
+    توجه:
+    بررسی MIME type به‌تنهایی امنیت کامل ایجاد نمی‌کند؛
+    در محل آپلود حساس بهتر است محتوای واقعی فایل نیز بررسی شود.
+    """
+
+    def __init__(
+            self,
+            *,
+            max_size_mb: int = 5,
+            allowed_extensions: tuple[str, ...] | None = None,
+            allowed_content_types: tuple[str, ...] | None = None,
+    ) -> None:
+        if max_size_mb <= 0:
+            raise ValueError("max_size_mb باید بزرگ‌تر از صفر باشد.")
+
+        self.max_size = max_size_mb * 1024 * 1024
+
+        self.allowed_extensions = frozenset(
+            extension.lower()
+            if extension.startswith(".")
+            else f".{extension.lower()}"
+            for extension in (
+                    allowed_extensions
+                    or tuple(DEFAULT_IMAGE_EXTENSIONS)
+            )
+        )
+
+        self.allowed_content_types = frozenset(
+            allowed_content_types
+            or tuple(DEFAULT_IMAGE_CONTENT_TYPES)
+        )
+
+    def __call__(self, value: Any) -> None:
+        if not value:
+            return
+
+        # بررسی حجم فایل
+        size = getattr(value, "size", None)
+
+        if size is not None and size > self.max_size:
+            max_mb = self.max_size // (1024 * 1024)
+
+            raise ValidationError(
+                f"حجم تصویر نمی‌تواند بیشتر از {max_mb} مگابایت باشد.",
+                code="image_too_large",
+            )
+
+        # بررسی پسوند
+        name = getattr(value, "name", "") or ""
+        extension = Path(name).suffix.lower()
+
+        if extension not in self.allowed_extensions:
+            extensions = ", ".join(
+                sorted(self.allowed_extensions)
+            )
+
+            raise ValidationError(
+                f"فرمت تصویر مجاز نیست. فرمت‌های مجاز: {extensions}",
+                code="invalid_image_extension",
+            )
+
+        # بررسی MIME type در صورت در دسترس بودن
+        content_type = getattr(value, "content_type", None)
+
+        if (
+                content_type
+                and content_type.lower() not in self.allowed_content_types
+        ):
+            raise ValidationError(
+                "نوع فایل تصویر معتبر نیست.",
+                code="invalid_image_content_type",
+            )
+
+
+# ============================================================================
+# Validator عمومی تصویر
+# ============================================================================
+
+validate_image = ImageFileValidator()
+
+# ============================================================================
+# توابع کمکی عمومی برای استفاده در کد پروژه
+# ==========
+"""اعتبارسنج‌های مشترک پروژه."""
+
+import re
+
+from django.core.exceptions import ValidationError
+
+from .constants import (
+    AVATAR_ALLOWED_CONTENT_TYPES,
+    AVATAR_MAX_SIZE,
+)
+from .utils import normalize_digits, to_local_ir_mobile
+
+_MOBILE_ERROR = "شماره موبایل باید با ۰۹ شروع شده و ۱۱ رقم باشد."
+_AVATAR_EXT_ERROR = "فرمت تصویر باید JPG، PNG یا WEBP باشد."
+_AVATAR_SIZE_ERROR = "حجم تصویر نباید بیشتر از ۲ مگابایت باشد."
+
+
+# ─────────────────────────── تلفن همراه ───────────────────────────
+
+def validate_iranian_mobile(value) -> None:
+    """اعتبارسنج فیلد مدل — با این نام در migrationها سریالایز شده است؛ تغییرش نده."""
+    if not value:
+        return
+    try:
+        to_local_ir_mobile(value)
+    except ValidationError:
+        raise ValidationError(_MOBILE_ERROR) from None
+
+
+# ─────────────────────────── کد ملی (با رقم کنترل) ───────────────────────────
+
+def validate_iranian_national_id(value) -> None:
+    value = normalize_digits(value)
+    if not value:
+        return
+
+    if not re.fullmatch(r"\d{10}", value):
+        raise ValidationError("کد ملی باید ۱۰ رقم باشد.")
+
+    if value == value[0] * 10:  # 0000000000 و 1111111111 نامعتبرند
+        raise ValidationError("کد ملی واردشده معتبر نیست.")
+
+    check = int(value[9])
+    total = sum(int(value[i]) * (10 - i) for i in range(9))
+    remainder = total % 11
+
+    is_valid = (
+        (remainder < 2 and check == remainder)
+        or (remainder >= 2 and check == 11 - remainder)
+    )
+    if not is_valid:
+        raise ValidationError("کد ملی واردشده معتبر نیست.")
+
+
+# ─────────────────────────── آواتار ───────────────────────────
+
+def validate_avatar_file(f) -> None:
+    """حجم و نوع فایل آواتار را چک می‌کند (علاوه‌بر اعتبارسنجی خود ImageField)."""
+    if not f:
+        return
+
+    if getattr(f, "size", 0) > AVATAR_MAX_SIZE:
+        raise ValidationError(_AVATAR_SIZE_ERROR)
+
+    content_type = getattr(f, "content_type", None)
+    if content_type and content_type not in AVATAR_ALLOWED_CONTENT_TYPES:
+        raise ValidationError(_AVATAR_EXT_ERROR)
+
+
+# ========== core\utils.py ==========
+"""ابزارهای مشترک پروژه — نسخهٔ واحد. هیچجای دیگری نرمالسازی ننویس."""
+from __future__ import annotations
+
+import secrets
+from typing import Any, Iterable
+
+from django.conf import settings
+from django.http import HttpRequest
+from django.utils.http import url_has_allowed_host_and_scheme
+
+# ---------------------------------------------------------------- ارقام
+_LATIN_DIGITS = "0123456789"
+_PERSIAN_DIGITS = "۰۱۲۳۴۵۶۷۸۹"
+_ARABIC_DIGITS = "٠١٢٣٤٥٦٧٨٩"
+
+_TO_LATIN = str.maketrans(
+    {
+        **{ord(p): d for p, d in zip(_PERSIAN_DIGITS, _LATIN_DIGITS)},
+        **{ord(a): d for a, d in zip(_ARABIC_DIGITS, _LATIN_DIGITS)},
+    }
+)
+_TO_PERSIAN = str.maketrans({ord(l): p for l, p in zip(_LATIN_DIGITS, _PERSIAN_DIGITS)})
+
+
+def normalize_digits(value: Any) -> str:
+    """همهٔ ارقام فارسی/عربی را به لاتین تبدیل میکند. برای ورودی و ذخیرهسازی."""
+    if value is None:
+        return ""
+    return str(value).translate(_TO_LATIN)
+
+
+def to_persian_digits(value: Any) -> str:
+    """ارقام لاتین را برای *نمایش* فارسی میکند."""
+    if value is None:
+        return ""
+    return str(value).translate(_TO_PERSIAN)
+
+
+# ---------------------------------------------------------------- حروف فارسی
+_PERSIAN_CHAR_MAP = str.maketrans(
+    {
+        "ي": "ی",
+        "ى": "ی",
+        "ك": "ک",
+        "ة": "ه",
+        "\u200c": " ",  # نیمفاصله → فاصله (فقط برای مقایسه/جستوجو)
+    }
+)
+
+
+def normalize_persian_chars(value: Any) -> str:
+    """ي/ك عربی را به ی/ک فارسی تبدیل میکند. برای جستوجو و یکسانسازی."""
+    if value is None:
+        return ""
+    return str(value).translate(_PERSIAN_CHAR_MAP)
+
+
+def slugify_fa(value: str) -> str:
+    """اسلاگ ساده و امن از متن فارسی/انگلیسی."""
+    from django.utils.text import slugify
+
+    text = normalize_persian_chars(normalize_digits(value)).strip()
+    return slugify(text, allow_unicode=True)
+
+
+# ---------------------------------------------------------------- شماره تلفن
+IRAN_COUNTRY_CODE = "98"
+MOBILE_NATIONAL_LENGTH = 11  # مثال: 09123456789
+
+
+def normalize_phone_number(value: Any, *, country_code: str = IRAN_COUNTRY_CODE) -> str:
+    """شمارهٔ موبایل را به قالب ملی یکدست `09XXXXXXXXX` تبدیل میکند.
+
+    ورودیهای پذیرفتهشده: 09123456789 | 9123456789 | +989123456789
+                           00989123456789 | 989123456789 | ۰۹۱۲۳۴۵۶۷۸۹
+    اگر ورودی قابل نرمالسازی نباشد، رشتهٔ خالی برمیگرداند؛
+    اعتبارسنجی نهایی با `core.validators.validate_iranian_mobile` است.
+    """
+    digits = normalize_digits(value).strip()
+    if not digits:
+        return ""
+
+    # نویسههای مجاز تلفنی را نگه دار
+    digits = "".join(ch for ch in digits if ch.isdigit() or ch == "+")
+    digits = digits.lstrip("+")
+
+    # حذف پیششمارهٔ بینالمللی
+    for prefix in (f"00{country_code}", country_code):
+        if digits.startswith(prefix) and len(digits) > len(prefix) + 9:
+            digits = digits[len(prefix):]
+            break
+
+    if digits.startswith("0"):
+        digits = digits[1:]
+
+    # اکنون باید 10 رقم با شروع 9 باشد
+    if len(digits) != MOBILE_NATIONAL_LENGTH - 1 or not digits.startswith("9"):
+        return ""
+
+    return "0" + digits
+
+
+def is_valid_iranian_mobile(value: Any) -> bool:
+    return bool(normalize_phone_number(value))
+
+
+def phone_to_international(phone: Any, *, country_code: str = IRAN_COUNTRY_CODE) -> str:
+    """`09123456789` → `+989123456789` (برای API پیامک)."""
+    national = normalize_phone_number(phone, country_code=country_code)
+    if not national:
+        return ""
+    return f"+{country_code}{national[1:]}"
+
+
+def mask_phone(phone: Any) -> str:
+    """نمایش امن: 0912***6789"""
+    national = normalize_phone_number(phone)
+    if not national:
+        return "***"
+    return f"{national[:4]}***{national[-4:]}"
+
+
+def mask_email(email: str) -> str:
+    if not email or "@" not in email:
+        return "***"
+    local, _, domain = email.partition("@")
+    visible = local[:2]
+    return f"{visible}{'*' * max(len(local) - 2, 1)}@{domain}"
+
+
+# ---------------------------------------------------------------- IP کلاینت
+def get_client_ip(request: HttpRequest, *, trusted_proxies: int | None = None) -> str:
+    """IP واقعی کلاینت با احتساب پروکسیهای مورد اعتماد.
+
+    `TRUSTED_PROXY_COUNT` را در settings تعیین کن (پشت nginx معمولاً 1).
+    """
+    if trusted_proxies is None:
+        trusted_proxies = int(getattr(settings, "TRUSTED_PROXY_COUNT", 0))
+
+    xff = request.META.get("HTTP_X_FORWARDED_FOR", "")
+    if trusted_proxies > 0 and xff:
+        parts = [p.strip() for p in xff.split(",") if p.strip()]
+        if len(parts) >= trusted_proxies:
+            return parts[-trusted_proxies]
+
+    return request.META.get("REMOTE_ADDR", "") or ""
+
+
+# ---------------------------------------------------------------- امنیت / ریدایرکت
+def is_safe_next_url(request: HttpRequest, url: str | None) -> bool:
+    """جلوگیری از Open Redirect."""
+    if not url:
+        return False
+    return url_has_allowed_host_and_scheme(
+        url=url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    )
+
+
+def get_safe_next_url(request: HttpRequest, default: str = "/") -> str:
+    candidate = request.POST.get("next") or request.GET.get("next")
+    return candidate if is_safe_next_url(request, candidate) else default
+
+
+# ---------------------------------------------------------------- OTP
+def generate_otp_code(length: int | None = None) -> str:
+    """کد عددی امن (رمزنگاریشده)."""
+    if length is None:
+        length = int(getattr(settings, "OTP_LENGTH", 6))
+    length = max(4, min(int(length), 10))
+    return "".join(secrets.choice(_LATIN_DIGITS) for _ in range(length))
+
+
+def otp_expiry_seconds() -> int:
+    return int(getattr(settings, "OTP_TTL_SECONDS", 120))
+
+
+# ---------------------------------------------------------------- کمکی
+def errors_to_dict(exc: Exception) -> dict[str, Any]:
+    """تبدیل خطای دامنهای به دیکشنری قابل برگشت به فرانت."""
+    to_dict = getattr(exc, "to_dict", None)
+    if callable(to_dict):
+        return to_dict()
+    return {"code": "internal_error", "message": str(exc), "context": {}}
+
+
+def error_status_code(exc: Exception) -> int:
+    return int(getattr(exc, "http_status", 500))
+
+
+def chunked(iterable: Iterable, size: int):
+    """پیمایش تکهتکه (برای عملیات دستهای)."""
+    size = max(int(size), 1)
+    bucket: list[Any] = []
+    for item in iterable:
+        bucket.append(item)
+        if len(bucket) >= size:
+            yield bucket
+            bucket = []
+    if bucket:
+        yield bucket
+
+
+# ========== core\exceptions.py ==========
+"""درخت خطاهای دامنهای پروژه.
+
+قواعد:
+  * لایهٔ سرویس هرگز Http404 / django.core.exceptions.ValidationError پرت نمیکند.
+  * هر خطا یک `code` رشتهٔ پایدار دارد تا فرانت/لاگ به آن وابسته شود.
+  * `http_status` فقط یک راهنمای اختیاری است؛ در view/DRF به کد پاسخ تبدیل میشود.
+"""
+from __future__ import annotations
+
+from typing import Any, Mapping
+
+
+class ShineShopError(Exception):
+    """ریشهٔ همهٔ خطاهای پروژه."""
+
+    default_message: str = "خطای غیرمنتظره رخ داد."
+    default_code: str = "internal_error"
+    http_status: int = 500
+
+    def __init__(
+            self,
+            message: str | None = None,
+            *,
+            code: str | None = None,
+            context: Mapping[str, Any] | None = None,
+            **extra: Any,
+    ) -> None:
+        self.message = message or self.default_message
+        self.code = code or self.default_code
+        self.context: dict[str, Any] = dict(context or {})
+        if extra:
+            self.context.update(extra)
+        super().__init__(self.message)
+
+    def __str__(self) -> str:
+        return self.message
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"code": self.code, "message": self.message, "context": self.context}
+
+
+# ---------------------------------------------------------------- اعتبارسنجی
+class ValidationServiceError(ShineShopError):
+    """ورودی نامعتبر در لایهٔ سرویس (نه خطای فرم)."""
+
+    default_message = "دادههای ارسالی نامعتبر است."
+    default_code = "validation_error"
+    http_status = 400
+
+
+# ---------------------------------------------------------------- یافت نشدن
+class ObjectNotFoundError(ShineShopError):
+    default_message = "مورد درخواستی یافت نشد."
+    default_code = "not_found"
+    http_status = 404
+
+
+class OrderNotFoundError(ObjectNotFoundError):
+    default_message = "سفارش مورد نظر یافت نشد."
+    default_code = "order_not_found"
+
+
+class ProductNotFoundError(ObjectNotFoundError):
+    default_message = "محصول مورد نظر یافت نشد."
+    default_code = "product_not_found"
+
+
+class VariantNotFoundError(ObjectNotFoundError):
+    default_message = "تنوع محصول مورد نظر یافت نشد."
+    default_code = "variant_not_found"
+
+
+class CartNotFoundError(ObjectNotFoundError):
+    default_message = "سبد خرید یافت نشد."
+    default_code = "cart_not_found"
+
+
+class PaymentNotFoundError(ObjectNotFoundError):
+    default_message = "تراکنش پرداخت یافت نشد."
+    default_code = "payment_not_found"
+
+
+class OtpNotFoundError(ObjectNotFoundError):
+    default_message = "کد تأیید یافت نشد. لطفاً دوباره درخواست کنید."
+    default_code = "otp_not_found"
+
+
+# ---------------------------------------------------------------- دسترسی
+class PermissionDeniedError(ShineShopError):
+    default_message = "شما به این مورد دسترسی ندارید."
+    default_code = "permission_denied"
+    http_status = 403
+
+
+class NotOwnerError(PermissionDeniedError):
+    default_message = "این مورد به شما تعلق ندارد."
+    default_code = "not_owner"
+
+
+# ---------------------------------------------------------------- تعارض وضعیت
+class ConflictError(ShineShopError):
+    """وضعیت فعلی اجازهٔ این عملیات را نمیدهد."""
+
+    default_message = "عملیات در وضعیت فعلی امکانپذیر نیست."
+    default_code = "conflict"
+    http_status = 409
+
+
+class InvalidStateTransitionError(ConflictError):
+    default_message = "تغییر وضعیت درخواستی مجاز نیست."
+    default_code = "invalid_state_transition"
+
+
+class DuplicateObjectError(ConflictError):
+    default_message = "این مورد از قبل وجود دارد."
+    default_code = "duplicate_object"
+
+
+class InsufficientStockError(ConflictError):
+    default_message = "موجودی کافی نیست."
+    default_code = "insufficient_stock"
+
+
+# ---------------------------------------------------------------- سبد و سفارش
+class CartError(ShineShopError):
+    default_code = "cart_error"
+    http_status = 400
+
+
+class CartLimitExceededError(CartError):
+    default_message = "تعداد اقلام سبد خرید به حد مجاز رسیده است."
+    default_code = "cart_limit_exceeded"
+
+
+class OrderError(ShineShopError):
+    default_code = "order_error"
+    http_status = 400
+
+
+class PaymentExpiredError(OrderError):
+    default_message = "مهلت پرداخت این سفارش به پایان رسیده است."
+    default_code = "payment_expired"
+
+
+class OrderAlreadyPaidError(ConflictError):
+    default_message = "این سفارش قبلاً پرداخت شده است."
+    default_code = "order_already_paid"
+
+
+# ---------------------------------------------------------------- پرداخت و درگاه
+class PaymentServiceError(ShineShopError):
+    default_message = "پردازش پرداخت با خطا مواجه شد."
+    default_code = "payment_error"
+    http_status = 400
+
+
+class PaymentGatewayError(PaymentServiceError):
+    """خطای ارتباط با درگاه (شبکه/تایماوت/پاسخ نامفهوم)."""
+
+    default_message = "ارتباط با درگاه پرداخت برقرار نشد."
+    default_code = "payment_gateway_error"
+    http_status = 502
+
+
+class PaymentVerificationError(PaymentServiceError):
+    default_message = "تأیید پرداخت ناموفق بود."
+    default_code = "payment_verification_failed"
+
+
+class PaymentAlreadyFinalizedError(ConflictError):
+    default_message = "این تراکنش قبلاً نهایی شده است."
+    default_code = "payment_already_finalized"
+
+
+# ---------------------------------------------------------------- OTP و احراز هویت
+class OtpError(ShineShopError):
+    default_code = "otp_error"
+    http_status = 400
+
+
+class OtpExpiredError(OtpError):
+    default_message = "کد تأیید منقضی شده است. لطفاً دوباره درخواست کنید."
+    default_code = "otp_expired"
+
+
+class OtpInvalidError(OtpError):
+    default_message = "کد تأیید واردشده صحیح نیست."
+    default_code = "otp_invalid"
+
+
+class TooManyAttemptsError(ShineShopError):
+    default_message = "تعداد تلاشهای شما بیش از حد مجاز است. کمی بعد تلاش کنید."
+    default_code = "too_many_attempts"
+    http_status = 429
+
+
+# ========== core\models.py ==========
+"""مدلهای abstract مشترک پروژه.
+
+توجه: `abstract = True` یعنی Django هیچ جدول و هیچ migrationی برای این کلاسها
+نمیسازد؛ فقط کد مشترک به مدلهای دیگر ارث میرسد.
+"""
+from __future__ import annotations
+
+from django.db import models
+from django.utils import timezone
+
+
+class TimeStampedModel(models.Model):
+    """مدل پایه با زمان ایجاد و آخرین ویرایش.
+
+    نکتهٔ کلیدی: `save()` را طوری بازنویسی کردهایم که هر بار `update_fields`
+    داده شود، `updated_at` **بهطور خودکار** به آن اضافه شود. این کار جلوی
+    باگ رایج `save(update_fields=["stock"])` را میگیرد که در آن
+    `updated_at` هرگز آپدیت نمیشود.
+    """
+
+    created_at = models.DateTimeField("تاریخ ایجاد", auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField("آخرین ویرایش", auto_now=True)
+
+    class Meta:
+        abstract = True
+        ordering = ("-created_at",)
+
+    def save(self, *args, update_fields=None, **kwargs):
+        if update_fields is not None:
+            update_fields = set(update_fields)
+            if not update_fields:
+                # چیزی برای نوشتن نیست؛ از یک UPDATE بیفایده جلوگیری کن
+                return
+            update_fields.add("updated_at")
+            update_fields.discard("created_at")  # auto_now_add نباید در update باشد
+            update_fields = list(update_fields)
+
+        return super().save(*args, update_fields=update_fields, **kwargs)
+
+    def touch(self) -> None:
+        """بهروزرسانی فقط `updated_at` بدون تغییر بقیهٔ فیلدها."""
+        self.updated_at = timezone.now()
+        self.save(update_fields=["updated_at"])
+
+
+# ========== accounts\models.py ==========
+"""مدل‌های اپ accounts: User سفارشی، Profile و PhoneOTP."""
+
+from __future__ import annotations
+
+import uuid
+from pathlib import Path
+from typing import Any
+
+from django.conf import settings
+from django.contrib.auth.models import (
+    AbstractBaseUser,
+    BaseUserManager,
+    PermissionsMixin,
+)
+from django.db import models, transaction
+from django.utils import timezone
+
+from .utils import (
+    mask_email,
+    mask_phone,
+    normalize_email,
+    normalize_national_code,
+    normalize_phone,
+    normalize_postal_code,
+    normalize_text,
+)
+from .validators import (
+    validate_avatar_extension,
+    validate_avatar_size,
+    validate_iranian_mobile,
+    validate_iranian_national_code,
+    validate_not_future_date,
+)
+
+
+class UserManager(BaseUserManager):
+    """مدیر سفارشی کاربران با احراز هویت بر پایه شماره موبایل."""
+
+    use_in_migrations = True
+
+    def _create_user(
+            self,
+            phone_number: str,
+            password: str | None,
+            **extra_fields: Any,
+    ) -> User:
+        """
+        ساخت کاربر با داده‌های نرمال‌شده.
+
+        ساخت Profile در signals.py انجام می‌شود تا فقط یک
+        نقطه مسئول ایجاد خودکار Profile باشد.
+        """
+
+        normalized_phone = normalize_phone(phone_number)
+
+        if not normalized_phone:
+            raise ValueError("شماره موبایل الزامی است.")
+
+        extra_fields["email"] = normalize_email(
+            extra_fields.get("email")
+        )
+        extra_fields["first_name"] = normalize_text(
+            extra_fields.get("first_name")
+        )
+        extra_fields["last_name"] = normalize_text(
+            extra_fields.get("last_name")
+        )
+
+        with transaction.atomic():
+            user = self.model(
+                phone_number=normalized_phone,
+                **extra_fields,
+            )
+
+            if password:
+                user.set_password(password)
+            else:
+                user.set_unusable_password()
+
+            user.save(using=self._db)
+
+        return user
+
+    def create_user(
+            self,
+            phone_number: str,
+            password: str | None = None,
+            **extra_fields: Any,
+    ) -> User:
+        """ساخت کاربر عادی."""
+
+        extra_fields.setdefault("is_staff", False)
+        extra_fields.setdefault("is_superuser", False)
+        extra_fields.setdefault("is_active", True)
+
+        if extra_fields.get("is_staff") is not False:
+            raise ValueError(
+                "کاربر عادی نباید is_staff=True داشته باشد."
+            )
+
+        if extra_fields.get("is_superuser") is not False:
+            raise ValueError(
+                "کاربر عادی نباید is_superuser=True داشته باشد."
+            )
+
+        return self._create_user(
+            phone_number=phone_number,
+            password=password,
+            **extra_fields,
+        )
+
+    def create_superuser(
+            self,
+            phone_number: str,
+            password: str,
+            **extra_fields: Any,
+    ) -> User:
+        """ساخت کاربر دارای دسترسی کامل مدیریت."""
+
+        if not password:
+            raise ValueError(
+                "رمز عبور سوپریوزر الزامی است."
+            )
+
+        extra_fields.setdefault("is_staff", True)
+        extra_fields.setdefault("is_superuser", True)
+        extra_fields.setdefault("is_active", True)
+        extra_fields.setdefault("is_phone_verified", True)
+
+        if extra_fields.get("is_staff") is not True:
+            raise ValueError(
+                "سوپریوزر باید is_staff=True باشد."
+            )
+
+        if extra_fields.get("is_superuser") is not True:
+            raise ValueError(
+                "سوپریوزر باید is_superuser=True باشد."
+            )
+
+        if extra_fields.get("is_active") is not True:
+            raise ValueError(
+                "سوپریوزر باید is_active=True باشد."
+            )
+
+        if extra_fields.get("is_phone_verified") is not True:
+            raise ValueError(
+                "سوپریوزر باید موبایل تأییدشده داشته باشد."
+            )
+
+        return self._create_user(
+            phone_number=phone_number,
+            password=password,
+            **extra_fields,
+        )
+
+    def get_by_natural_key(self, username: str) -> User:
+        """
+        بازیابی کاربر بر اساس شماره موبایل نرمال‌شده.
+
+        Django برای USERNAME_FIELD از این متد استفاده می‌کند.
+        """
+
+        phone_number = normalize_phone(username)
+
+        return self.get(
+            phone_number=phone_number,
+        )
+
+
+class User(AbstractBaseUser, PermissionsMixin):
+    """کاربر اصلی سیستم."""
+
+    phone_number = models.CharField(
+        "شماره موبایل",
+        max_length=11,
+        unique=True,
+        validators=[
+            validate_iranian_mobile,
+        ],
+        help_text="مثال: 09121234567",
+    )
+
+    email = models.EmailField(
+        "ایمیل",
+        unique=True,
+        null=True,
+        blank=True,
+    )
+
+    first_name = models.CharField(
+        "نام",
+        max_length=60,
+        blank=True,
+    )
+
+    last_name = models.CharField(
+        "نام خانوادگی",
+        max_length=60,
+        blank=True,
+    )
+
+    is_active = models.BooleanField(
+        "فعال",
+        default=True,
+    )
+
+    is_staff = models.BooleanField(
+        "دسترسی به پنل مدیریت",
+        default=False,
+    )
+
+    is_phone_verified = models.BooleanField(
+        "موبایل تأییدشده",
+        default=False,
+    )
+
+    date_joined = models.DateTimeField(
+        "تاریخ عضویت",
+        default=timezone.now,
+    )
+
+    updated_at = models.DateTimeField(
+        "آخرین بروزرسانی",
+        auto_now=True,
+    )
+
+    objects = UserManager()
+
+    USERNAME_FIELD = "phone_number"
+    REQUIRED_FIELDS: list[str] = []
+
+    class Meta:
+        verbose_name = "کاربر"
+        verbose_name_plural = "کاربران"
+        ordering = (
+            "-date_joined",
+            "-id",
+        )
+
+    def __str__(self) -> str:
+        return self.get_full_name() or self.masked_phone
+
+    @property
+    def display_name(self) -> str:
+        """نام نمایشی کاربر."""
+
+        return self.get_full_name() or self.masked_phone
+
+    def get_full_name(self) -> str:
+        """برگرداندن نام کامل نرمال‌شده."""
+
+        return normalize_text(
+            f"{self.first_name} {self.last_name}"
+        )
+
+    def get_short_name(self) -> str:
+        """برگرداندن نام کوتاه کاربر."""
+
+        return (
+                self.first_name
+                or self.masked_phone
+        )
+
+    @property
+    def masked_phone(self) -> str:
+        """نمایش امن شماره موبایل."""
+
+        return mask_phone(
+            self.phone_number
+        )
+
+    @property
+    def masked_email(self) -> str:
+        """نمایش امن ایمیل."""
+
+        return (
+                mask_email(self.email)
+                or "—"
+        )
+
+    def save(
+            self,
+            *args: Any,
+            **kwargs: Any,
+    ) -> None:
+        """
+        نرمال‌سازی داده‌های User قبل از ذخیره.
+
+        توجه:
+        save() جایگزین full_clean() نیست.
+        اعتبارسنجی کامل فرم و مدل باید در لایه مناسب انجام شود.
+        """
+
+        self.phone_number = normalize_phone(
+            self.phone_number
+        )
+
+        self.email = normalize_email(
+            self.email
+        )
+
+        self.first_name = normalize_text(
+            self.first_name
+        )
+
+        self.last_name = normalize_text(
+            self.last_name
+        )
+
+        super().save(
+            *args,
+            **kwargs,
+        )
+
+
+def avatar_upload_to(
+        instance: Profile,
+        filename: str,
+) -> str:
+    """تولید مسیر یکتا برای ذخیره آواتار کاربر."""
+
+    suffix = Path(filename).suffix.lower()
+
+    return (
+        "accounts/avatars/"
+        f"{instance.user_id}/"
+        f"{uuid.uuid4().hex}"
+        f"{suffix}"
+    )
+
+
+class Profile(models.Model):
+    """اطلاعات تکمیلی پروفایل کاربر."""
+
+    class Gender(models.TextChoices):
+        UNKNOWN = "", "نامشخص"
+        MALE = "male", "مرد"
+        FEMALE = "female", "زن"
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="profile",
+        verbose_name="کاربر",
+    )
+
+    national_code = models.CharField(
+        "کد ملی",
+        max_length=10,
+        blank=True,
+        validators=[
+            validate_iranian_national_code,
+        ],
+    )
+
+    birth_date = models.DateField(
+        "تاریخ تولد",
+        null=True,
+        blank=True,
+        validators=[
+            validate_not_future_date,
+        ],
+    )
+
+    gender = models.CharField(
+        "جنسیت",
+        max_length=6,
+        choices=Gender.choices,
+        default=Gender.UNKNOWN,
+    )
+
+    province = models.CharField(
+        "استان",
+        max_length=50,
+        blank=True,
+    )
+
+    city = models.CharField(
+        "شهر",
+        max_length=50,
+        blank=True,
+    )
+
+    postal_code = models.CharField(
+        "کد پستی",
+        max_length=10,
+        blank=True,
+    )
+
+    address = models.TextField(
+        "نشانی",
+        max_length=500,
+        blank=True,
+    )
+
+    avatar = models.ImageField(
+        "تصویر پروفایل",
+        upload_to=avatar_upload_to,
+        null=True,
+        blank=True,
+        validators=[
+            validate_avatar_size,
+            validate_avatar_extension,
+        ],
+    )
+
+    created_at = models.DateTimeField(
+        "زمان ایجاد",
+        auto_now_add=True,
+    )
+
+    updated_at = models.DateTimeField(
+        "آخرین بروزرسانی",
+        auto_now=True,
+    )
+
+    _COMPLETION_FIELDS = (
+        "national_code",
+        "birth_date",
+        "gender",
+        "province",
+        "city",
+        "postal_code",
+        "address",
+    )
+
+    class Meta:
+        verbose_name = "پروفایل"
+        verbose_name_plural = "پروفایل‌ها"
+
+    def __str__(self) -> str:
+        return f"پروفایل {self.user}"
+
+    @property
+    def full_name(self) -> str:
+        """نام کامل صاحب پروفایل."""
+
+        return self.user.get_full_name()
+
+    @property
+    def has_avatar(self) -> bool:
+        """آیا کاربر آواتار دارد؟"""
+
+        return bool(self.avatar)
+
+    def save(
+            self,
+            *args: Any,
+            **kwargs: Any,
+    ) -> None:
+        """نرمال‌سازی داده‌های پروفایل قبل از ذخیره."""
+
+        self.national_code = normalize_national_code(
+            self.national_code
+        )
+
+        self.postal_code = normalize_postal_code(
+            self.postal_code
+        )
+
+        self.province = normalize_text(
+            self.province
+        )
+
+        self.city = normalize_text(
+            self.city
+        )
+
+        self.address = normalize_text(
+            self.address
+        )
+
+        super().save(
+            *args,
+            **kwargs,
+        )
+
+    @property
+    def completion_percent(self) -> int:
+        """محاسبه درصد تکمیل اطلاعات اصلی پروفایل."""
+
+        total = len(
+            self._COMPLETION_FIELDS
+        )
+
+        if total == 0:
+            return 100
+
+        filled = sum(
+            1
+            for field in self._COMPLETION_FIELDS
+            if getattr(self, field) not in ("", None)
+        )
+
+        return round(
+            filled * 100 / total
+        )
+
+
+class PhoneOTP(models.Model):
+    """
+    کد یکبارمصرف موبایل.
+
+    کد واقعی هرگز در دیتابیس ذخیره نمی‌شود؛
+    فقط hash آن نگهداری می‌شود.
+    """
+
+    class Purpose(models.TextChoices):
+        LOGIN = "login", "ورود"
+        REGISTER = "register", "ثبت‌نام"
+        RESET_PASSWORD = "reset", "بازیابی رمز عبور"
+
+    phone_number = models.CharField(
+        "شماره موبایل",
+        max_length=11,
+        db_index=True,
+    )
+
+    purpose = models.CharField(
+        "هدف",
+        max_length=20,
+        choices=Purpose.choices,
+        default=Purpose.LOGIN,
+    )
+
+    code_hash = models.CharField(
+        "هش کد",
+        max_length=255,
+    )
+
+    attempts = models.PositiveSmallIntegerField(
+        "تعداد تلاش ناموفق",
+        default=0,
+    )
+
+    is_used = models.BooleanField(
+        "استفاده‌شده",
+        default=False,
+    )
+
+    expires_at = models.DateTimeField(
+        "زمان انقضا",
+    )
+
+    verified_at = models.DateTimeField(
+        "زمان تأیید",
+        null=True,
+        blank=True,
+    )
+
+    ip_address = models.GenericIPAddressField(
+        "آی‌پی درخواست",
+        null=True,
+        blank=True,
+    )
+
+    created_at = models.DateTimeField(
+        "زمان ایجاد",
+        auto_now_add=True,
+    )
+
+    class Meta:
+        verbose_name = "کد یکبارمصرف"
+        verbose_name_plural = "کدهای یکبارمصرف"
+        ordering = (
+            "-created_at",
+            "-id",
+        )
+        indexes = [
+            models.Index(
+                fields=[
+                    "phone_number",
+                    "purpose",
+                    "created_at",
+                ],
+                name="otp_lookup_idx",
+            ),
+            models.Index(
+                fields=[
+                    "expires_at",
+                ],
+                name="otp_expiry_idx",
+            ),
+            models.Index(
+                fields=[
+                    "is_used",
+                    "expires_at",
+                ],
+                name="otp_active_idx",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return (
+            f"{self.get_purpose_display()} — "
+            f"{mask_phone(self.phone_number)}"
+        )
+
+    def save(
+            self,
+            *args: Any,
+            **kwargs: Any,
+    ) -> None:
+        """نرمال‌سازی شماره موبایل قبل از ذخیره OTP."""
+
+        self.phone_number = normalize_phone(
+            self.phone_number
+        )
+
+        super().save(
+            *args,
+            **kwargs,
+        )
+
+    @property
+    def max_attempts(self) -> int:
+        """حداکثر تعداد تلاش مجاز برای این OTP."""
+
+        value = getattr(
+            settings,
+            "OTP_MAX_ATTEMPTS",
+            5,
+        )
+
+        try:
+            return max(
+                int(value),
+                1,
+            )
+        except (TypeError, ValueError):
+            return 5
+
+    @property
+    def attempts_left(self) -> int:
+        """تعداد تلاش باقی‌مانده."""
+
+        return max(
+            self.max_attempts - self.attempts,
+            0,
+        )
+
+    @property
+    def is_expired(self) -> bool:
+        """آیا OTP منقضی شده است؟"""
+
+        return self.expires_at <= timezone.now()
+
+    @property
+    def is_locked(self) -> bool:
+        """آیا OTP به دلیل تلاش‌های ناموفق قفل شده است؟"""
+
+        return self.attempts >= self.max_attempts
+
+    @property
+    def is_valid(self) -> bool:
+        """آیا OTP هنوز قابل استفاده است؟"""
+
+        return not (
+                self.is_used
+                or self.is_expired
+                or self.is_locked
+        )
+
+    def mark_used(
+            self,
+            *,
+            verified: bool = False,
+            save: bool = True,
+    ) -> PhoneOTP:
+        """
+        علامت‌گذاری OTP به‌عنوان استفاده‌شده.
+
+        در صورت verified=True زمان تأیید نیز ثبت می‌شود.
+        """
+
+        self.is_used = True
+
+        update_fields = [
+            "is_used",
+        ]
+
+        if verified:
+            self.verified_at = timezone.now()
+            update_fields.append(
+                "verified_at"
+            )
+
+        if save:
+            self.save(
+                update_fields=update_fields,
+            )
+
+        return self
+
+
+# ========== accounts\validators.py ==========
+"""اعتبارسنجهای مشترک. خطای پرتشده از نوع django.core.exceptions.ValidationError است
+تا هم در فرمها و هم در `full_clean()` مدلها کار کند."""
+from __future__ import annotations
+
+from decimal import Decimal, InvalidOperation
+
+from django.core.exceptions import ValidationError
+
+from core.utils import normalize_digits, normalize_phone_number
+
+
+# ---------------------------------------------------------------- شماره موبایل
+def validate_iranian_mobile(value: str) -> None:
+    """اعتبارسنجی شمارهٔ موبایل ایران در قالب 09XXXXXXXXX."""
+    if not value:
+        raise ValidationError("شمارهٔ تلفن همراه الزامی است.")
+
+    normalized = normalize_phone_number(value)
+    if not normalized:
+        raise ValidationError("شمارهٔ تلفن همراه معتبر نیست. نمونهٔ درست: 09123456789")
+
+    if not normalized.startswith("09"):
+        raise ValidationError("شمارهٔ تلفن همراه باید با 09 شروع شود.")
+
+
+# ---------------------------------------------------------------- کد OTP
+def validate_otp_code(value: str, *, length: int = 6) -> None:
+    digits = normalize_digits(value)
+    if not digits:
+        raise ValidationError("کد تأیید الزامی است.")
+    if not digits.isdigit():
+        raise ValidationError("کد تأیید فقط باید عدد باشد.")
+    if len(digits) != length:
+        raise ValidationError(f"کد تأیید باید {length} رقم باشد.")
+
+
+# ---------------------------------------------------------------- اعداد و مبالغ
+def validate_non_negative_amount(value) -> None:
+    """مبلغ صفر یا مثبت با حداکثر دو رقم اعشار."""
+    try:
+        amount = Decimal(str(value))
+    except (InvalidOperation, TypeError, ValueError) as exc:
+        raise ValidationError("مبلغ واردشده معتبر نیست.") from exc
+
+    if amount < Decimal("0"):
+        raise ValidationError("مبلغ نمیتواند منفی باشد.")
+
+    exponent = amount.as_tuple().exponent
+    if isinstance(exponent, int) and exponent < -2:
+        raise ValidationError("مبلغ حداکثر میتواند دو رقم اعشار داشته باشد.")
+
+
+def validate_positive_int(value, *, min_value: int = 1, max_value: int | None = None) -> None:
+    try:
+        number = int(value)
+    except (TypeError, ValueError) as exc:
+        raise ValidationError("مقدار واردشده باید عدد صحیح باشد.") from exc
+
+    if number < min_value:
+        raise ValidationError(f"مقدار باید حداقل {min_value} باشد.")
+    if max_value is not None and number > max_value:
+        raise ValidationError(f"مقدار باید حداکثر {max_value} باشد.")
+
+
+# ---------------------------------------------------------------- فایل و تصویر
+ALLOWED_IMAGE_EXTENSIONS = {"jpg", "jpeg", "png", "webp"}
+
+
+def validate_image_file(file, *, max_mb: int = 5) -> None:
+    if file is None:
+        return
+
+    name = getattr(file, "name", "") or ""
+    extension = name.rsplit(".", 1)[-1].lower() if "." in name else ""
+    if extension not in ALLOWED_IMAGE_EXTENSIONS:
+        raise ValidationError(
+            "فرمت تصویر مجاز نیست. فرمتهای قابل قبول: " + "، ".join(sorted(ALLOWED_IMAGE_EXTENSIONS))
+        )
+
+    size = getattr(file, "size", 0) or 0
+    if size > max_mb * 1024 * 1024:
+        raise ValidationError(f"حجم تصویر نباید بیشتر از {max_mb} مگابایت باشد.")
+
+
+# ---------------------------------------------------------------- رنگ
+def validate_hex_color(value: str) -> None:
+    if not value:
+        raise ValidationError("کد رنگ الزامی است.")
+    cleaned = value.strip().lstrip("#")
+    if len(cleaned) not in (3, 6) or not all(c in "0123456789abcdefABCDEF" for c in cleaned):
+        raise ValidationError("کد رنگ باید در قالب ‎#RRGGBB‎ باشد.")
+
+
+# ========== accounts\utils.py ==========
+"""ابزارهای کمکی اپ accounts: نرمال‌سازی و پوشاندن داده‌های حساس."""
+
+from __future__ import annotations
+
+import re
+from core.utils import *  # noqa: F401,F403
+from core.utils import (  # noqa: F401
+    generate_otp_code,
+    get_client_ip,
+    mask_phone,
+    normalize_digits,
+    normalize_phone_number,
+    phone_to_international,
+)
+
+# تبدیل ارقام فارسی و عربی به لاتین
+_DIGIT_TABLE = str.maketrans(
+    "۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩",
+    "01234567890123456789",
+)
+
+# حذف جداکننده‌های رایج در شماره، کد ملی و کد پستی
+_SEPARATOR_TABLE = str.maketrans(
+    "",
+    "",
+    " -()_.\u200c",
+)
+
+MOBILE_RE = re.compile(
+    r"^09\d{9}$"
+)
+
+NATIONAL_CODE_RE = re.compile(
+    r"^\d{10}$"
+)
+
+
+def normalize_digits(value: Any) -> str:
+    """
+    تبدیل ارقام فارسی/عربی به ارقام لاتین.
+
+    مثال:
+        ۰۹۱۲۱۲۳۴۵۶۷ -> 09121234567
+    """
+
+    return str(value or "").translate(_DIGIT_TABLE)
+
+
+def normalize_phone(value: Any) -> str:
+    """
+    تبدیل شکل‌های مختلف شماره موبایل ایران
+    به قالب استاندارد 09xxxxxxxxx.
+
+    نمونه‌های قابل تبدیل:
+        09121234567
+        9121234567
+        +989121234567
+        00989121234567
+        989121234567
+    """
+
+    digits = normalize_digits(value).translate(
+        _SEPARATOR_TABLE
+    )
+
+    if digits.startswith("+98"):
+        digits = "0" + digits[3:]
+
+    elif digits.startswith("0098"):
+        digits = "0" + digits[4:]
+
+    elif digits.startswith("98") and len(digits) == 12:
+        digits = "0" + digits[2:]
+
+    elif digits.startswith("9") and len(digits) == 10:
+        digits = "0" + digits
+
+    return digits
+
+
+def is_valid_mobile(value: Any) -> bool:
+    """بررسی معتبر بودن شماره موبایل پس از نرمال‌سازی."""
+
+    normalized = normalize_phone(value)
+
+    return bool(
+        MOBILE_RE.fullmatch(normalized)
+    )
+
+
+def normalize_national_code(value: Any) -> str:
+    """نرمال‌سازی کد ملی."""
+
+    return (
+        normalize_digits(value)
+        .translate(_SEPARATOR_TABLE)
+    )
+
+
+def normalize_postal_code(value: Any) -> str:
+    """نرمال‌سازی کد پستی."""
+
+    return (
+        normalize_digits(value)
+        .translate(_SEPARATOR_TABLE)
+    )
+
+
+def normalize_text(value: Any) -> str:
+    """
+    حذف فاصله‌های اضافی و ابتدا/انتهای متن.
+
+    مثال:
+        "  علی   رضایی  " -> "علی رضایی"
+    """
+
+    return " ".join(
+        str(value or "").split()
+    )
+
+
+def normalize_email(value: Any) -> str | None:
+    """
+    نرمال‌سازی ایمیل.
+
+    ایمیل خالی به None تبدیل می‌شود تا
+    با EmailField(null=True, blank=True) سازگار باشد.
+    """
+
+    email = str(value or "").strip().lower()
+
+    return email or None
+
+
+def normalize_login_identifier(value: Any) -> str:
+    """
+    نرمال‌سازی شناسه ورود.
+
+    اگر ورودی شامل @ باشد، ایمیل در نظر گرفته می‌شود؛
+    در غیر این صورت شماره موبایل.
+    """
+
+    raw = str(value or "").strip()
+
+    if not raw:
+        return ""
+
+    if "@" in raw:
+        return normalize_email(raw) or ""
+
+    return normalize_phone(raw)
+
+
+def mask_phone(value: Any) -> str:
+    """
+    پوشاندن شماره موبایل برای نمایش.
+
+    مثال:
+        09121234567 -> 0912***4567
+    """
+
+    phone = normalize_phone(value)
+
+    if len(phone) != 11:
+        return ""
+
+    return f"{phone[:4]}***{phone[-4:]}"
+
+
+def mask_email(value: Any) -> str:
+    """
+    پوشاندن ایمیل برای نمایش.
+
+    مثال:
+        ali@example.com -> a***@example.com
+    """
+
+    email = normalize_email(value)
+
+    if not email:
+        return ""
+
+    local, separator, domain = email.partition("@")
+
+    if not separator or not local or not domain:
+        return ""
+
+    return f"{local[0]}***@{domain}"
+
+
+# ========== accounts\services.py ==========
+"""لایه منطق کسب‌وکار اپ accounts."""
+
+from __future__ import annotations
+
+import logging
+from datetime import timedelta
+
+from django.contrib.auth.password_validation import (
+    validate_password,
+)
+from django.db import transaction
+from django.utils import timezone
+
+from accounts import otp as otp_tools
+from accounts.models import PhoneOTP, Profile, User
+from accounts.selectors import (
+    count_recent_otps,
+    get_user_by_phone,
+    last_otp_created_at,
+)
+from accounts.sms import send_sms
+from accounts.utils import (
+    is_valid_mobile,
+    normalize_digits,
+    normalize_phone,
+)
+
+logger = logging.getLogger(__name__)
+
+# --------------------------------------------------------------------------- #
+# ثابت‌های دامنه
+# --------------------------------------------------------------------------- #
+
+OTP_PURPOSE_LOGIN = "login"
+OTP_PURPOSE_PHONE_VERIFICATION = PhoneOTP.Purpose.REGISTER
+OTP_PURPOSE_PASSWORD_RESET = "password_reset"
+
+
+# --------------------------------------------------------------------------- #
+# خطاهای دامنه
+# --------------------------------------------------------------------------- #
+
+class OTPError(Exception):
+    """خطای پایه فرایند OTP."""
+
+    default_message = (
+        "خطایی در فرایند کد یکبارمصرف رخ داد."
+    )
+
+    def __init__(
+            self,
+            message: str | None = None,
+    ):
+        self.message = (
+                message or self.default_message
+        )
+        super().__init__(self.message)
+
+
+class OTPThrottled(OTPError):
+    default_message = (
+        "درخواست‌های شما بیش از حد مجاز است. "
+        "کمی بعد دوباره تلاش کنید."
+    )
+
+
+class OTPNotFound(OTPError):
+    default_message = (
+        "کدی برای این شماره یافت نشد. "
+        "دوباره درخواست کد کنید."
+    )
+
+
+class OTPExpired(OTPError):
+    default_message = (
+        "کد منقضی شده است. "
+        "کد جدید درخواست کنید."
+    )
+
+
+class OTPLocked(OTPError):
+    default_message = (
+        "تعداد تلاش‌های ناموفق زیاد است. "
+        "کد جدید درخواست کنید."
+    )
+
+
+class OTPInvalid(OTPError):
+    default_message = "کد وارد شده صحیح نیست."
+
+    def __init__(
+            self,
+            attempts_left: int | None = None,
+    ):
+        message = self.default_message
+
+        if attempts_left is not None:
+            message = (
+                f"{message} "
+                f"({attempts_left} تلاش باقی مانده)"
+            )
+
+        super().__init__(message)
+
+        self.attempts_left = attempts_left
+
+
+class OTPAlreadyUsed(OTPError):
+    default_message = (
+        "این کد قبلاً استفاده شده است."
+    )
+
+
+class SMSSendFailed(OTPError):
+    default_message = (
+        "ارسال پیامک ناموفق بود. "
+        "لطفاً کمی بعد دوباره تلاش کنید."
+    )
+
+
+# --------------------------------------------------------------------------- #
+# User
+# --------------------------------------------------------------------------- #
+
+def create_user(
+        *,
+        phone_number: str,
+        password: str | None = None,
+        first_name: str = "",
+        last_name: str = "",
+        email: str | None = None,
+        is_phone_verified: bool = False,
+) -> User:
+    """ساخت User جدید."""
+
+    phone_number = normalize_phone(
+        phone_number
+    )
+
+    if password:
+        validate_password(
+            password
+        )
+
+    user = User.objects.create_user(
+        phone_number=phone_number,
+        password=password,
+        first_name=first_name,
+        last_name=last_name,
+        email=email,
+        is_phone_verified=is_phone_verified,
+    )
+
+    return user
+
+
+def get_or_create_phone_user(
+        phone_number: str,
+) -> User:
+    """
+    دریافت User موجود یا ایجاد User جدید
+    پس از احراز موفق شماره موبایل.
+    """
+
+    phone_number = normalize_phone(
+        phone_number
+    )
+
+    user = get_user_by_phone(
+        phone_number
+    )
+
+    if user is not None:
+        return mark_phone_verified(user)
+
+    try:
+        user = create_user(
+            phone_number=phone_number,
+            password=None,
+            is_phone_verified=True,
+        )
+    except Exception:
+        # در شرایط race condition ممکن است درخواست دیگری
+        # همزمان User را ایجاد کرده باشد.
+        user = get_user_by_phone(
+            phone_number
+        )
+
+        if user is None:
+            raise
+
+        return mark_phone_verified(user)
+
+    return user
+
+
+def mark_phone_verified(
+        user: User,
+) -> User:
+    """تأیید شماره موبایل کاربر."""
+
+    if not user.is_phone_verified:
+        user.is_phone_verified = True
+
+        user.save(
+            update_fields=[
+                "is_phone_verified",
+                "updated_at",
+            ]
+        )
+
+    return user
+
+
+def change_password(
+        user: User,
+        raw_password: str,
+) -> User:
+    """تغییر رمز عبور."""
+
+    validate_password(
+        raw_password,
+        user,
+    )
+
+    user.set_password(
+        raw_password
+    )
+
+    user.save(
+        update_fields=[
+            "password",
+            "updated_at",
+        ]
+    )
+
+    return user
+
+
+@transaction.atomic
+def update_profile(
+        user: User,
+        *,
+        user_data: dict | None = None,
+        profile_data: dict | None = None,
+        avatar=None,
+) -> Profile:
+    """به‌روزرسانی اطلاعات User و Profile."""
+
+    user_data = user_data or {}
+    profile_data = dict(
+        profile_data or {}
+    )
+
+    user_fields = [
+        field
+        for field in (
+            "first_name",
+            "last_name",
+            "email",
+        )
+        if field in user_data
+    ]
+
+    for field in user_fields:
+        setattr(
+            user,
+            field,
+            user_data[field],
+        )
+
+    if user_fields:
+        user.save(
+            update_fields=[
+                *user_fields,
+                "updated_at",
+            ]
+        )
+
+    profile, _ = Profile.objects.get_or_create(
+        user=user
+    )
+
+    old_avatar = profile.avatar
+
+    if avatar is not None:
+        profile_data["avatar"] = avatar
+
+    for field, value in profile_data.items():
+        setattr(
+            profile,
+            field,
+            value,
+        )
+
+    profile.save()
+
+    if (
+            avatar is not None
+            and old_avatar
+            and old_avatar.name != profile.avatar.name
+    ):
+        old_avatar.delete(
+            save=False
+        )
+
+    return profile
+
+
+# --------------------------------------------------------------------------- #
+# OTP
+# --------------------------------------------------------------------------- #
+
+def normalize_otp_code(
+        code: str,
+) -> str:
+    """نرمال‌سازی کد OTP."""
+
+    return normalize_digits(
+        code
+    ).strip()
+
+
+def _enforce_rate_limits(
+        phone_number: str,
+        ip_address: str | None,
+) -> None:
+    """اعمال محدودیت تعداد درخواست OTP."""
+
+    now = timezone.now()
+
+    cooldown = (
+        otp_tools.otp_resend_cooldown()
+    )
+
+    last_created = last_otp_created_at(
+        phone_number
+    )
+
+    if last_created:
+        elapsed = (
+                now - last_created
+        ).total_seconds()
+
+        if elapsed < cooldown:
+            remaining = max(
+                int(cooldown - elapsed),
+                1,
+            )
+
+            raise OTPThrottled(
+                f"برای ارسال دوباره "
+                f"{remaining} ثانیه صبر کنید."
+            )
+
+    hourly_phone = count_recent_otps(
+        since=now - timedelta(hours=1),
+        phone_number=phone_number,
+    )
+
+    if (
+            hourly_phone
+            >= otp_tools.otp_max_sends_per_phone_per_hour()
+    ):
+        raise OTPThrottled(
+            "تعداد درخواست‌های این شماره "
+            "در یک ساعت گذشته زیاد بوده است."
+        )
+
+    if ip_address:
+        hourly_ip = count_recent_otps(
+            since=now - timedelta(hours=1),
+            ip_address=ip_address,
+        )
+
+        if (
+                hourly_ip
+                >= otp_tools.otp_max_sends_per_ip_per_hour()
+        ):
+            raise OTPThrottled(
+                "از این شبکه درخواست‌های زیادی "
+                "ثبت شده است."
+            )
+
+
+def invalidate_pending_otps(
+        phone_number: str,
+        purpose: str,
+) -> int:
+    """باطل کردن OTPهای قبلی."""
+
+    phone_number = normalize_phone(
+        phone_number
+    )
+
+    return (
+        PhoneOTP.objects
+        .filter(
+            phone_number=phone_number,
+            purpose=purpose,
+            is_used=False,
+        )
+        .update(is_used=True)
+    )
+
+
+def request_otp(
+        *,
+        phone_number: str,
+        purpose: str,
+        ip_address: str | None = None,
+) -> PhoneOTP:
+    """ایجاد و ارسال OTP."""
+
+    phone_number = normalize_phone(
+        phone_number
+    )
+
+    if not is_valid_mobile(
+            phone_number
+    ):
+        raise OTPError(
+            "شماره موبایل معتبر نیست."
+        )
+
+    _enforce_rate_limits(
+        phone_number,
+        ip_address,
+    )
+
+    invalidate_pending_otps(
+        phone_number,
+        purpose,
+    )
+
+    code = otp_tools.generate_otp()
+
+    otp_record = PhoneOTP.objects.create(
+        phone_number=phone_number,
+        purpose=purpose,
+        code_hash=otp_tools.hash_otp(code),
+        expires_at=(
+                timezone.now()
+                + otp_tools.otp_ttl()
+        ),
+        ip_address=ip_address,
+    )
+
+    try:
+        sent = send_sms(
+            phone_number,
+            otp_tools.build_otp_message(code),
+        )
+    except Exception:
+        logger.exception(
+            "ارسال OTP با خطا مواجه شد."
+        )
+        otp_record.delete()
+        raise SMSSendFailed()
+
+    if not sent:
+        otp_record.delete()
+        raise SMSSendFailed()
+
+    logger.info(
+        "OTP ارسال شد. purpose=%s phone=%s",
+        purpose,
+        phone_number,
+    )
+
+    return otp_record
+
+
+@transaction.atomic
+def verify_otp(
+        *,
+        phone_number: str,
+        code: str,
+        purpose: str,
+) -> PhoneOTP:
+    """بررسی و مصرف OTP."""
+
+    phone_number = normalize_phone(
+        phone_number
+    )
+
+    code = normalize_otp_code(
+        code
+    )
+
+    otp_record = (
+        PhoneOTP.objects
+        .select_for_update()
+        .filter(
+            phone_number=phone_number,
+            purpose=purpose,
+            is_used=False,
+        )
+        .order_by("-created_at")
+        .first()
+    )
+
+    if otp_record is None:
+        raise OTPNotFound()
+
+    if otp_record.is_locked:
+        raise OTPLocked()
+
+    if otp_record.is_expired:
+        raise OTPExpired()
+
+    if not otp_tools.check_otp(
+            code,
+            otp_record.code_hash,
+    ):
+        otp_record.attempts += 1
+
+        otp_record.save(
+            update_fields=["attempts"]
+        )
+
+        if otp_record.is_locked:
+            raise OTPLocked()
+
+        raise OTPInvalid(
+            attempts_left=(
+                otp_record.attempts_left
+            )
+        )
+
+    return otp_record.mark_used(
+        verified=True
+    )
+
+
+def purge_expired_otps(
+        days: int = 1,
+) -> int:
+    """پاک‌سازی OTPهای قدیمی."""
+
+    if days < 0:
+        raise ValueError(
+            "days نمی‌تواند منفی باشد."
+        )
+
+    threshold = (
+            timezone.now()
+            - timedelta(days=days)
+    )
+
+    deleted, _ = (
+        PhoneOTP.objects
+        .filter(
+            expires_at__lt=threshold
+        )
+        .delete()
+    )
+
+    return deleted
+
+
+# ========== accounts\forms.py ==========
+"""فرم‌های اپ accounts."""
+
+from __future__ import annotations
+
+from django import forms
+from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
+
+from .models import Profile, User
+from .utils import normalize_email, normalize_phone
+from .validators import validate_iranian_mobile
+
+INPUT_CLASS = "form-input"
+MAX_IDENTIFIER_LENGTH = 254
+OTP_CODE_LENGTH = 6
+
+
+class IranianMobileField(forms.CharField):
+    """
+    فیلد شماره موبایل ایران.
+
+    ورودی قبل از validation نرمال می‌شود تا فرمت‌های مختلف
+    شماره موبایل به یک مقدار استاندارد تبدیل شوند.
+    """
+
+    def __init__(self, **kwargs):
+        kwargs.setdefault("max_length", 11)
+        kwargs.setdefault("validators", [validate_iranian_mobile])
+        super().__init__(**kwargs)
+
+    def to_python(self, value):
+        value = super().to_python(value)
+        return normalize_phone(value or "")
+
+
+class RegisterForm(forms.ModelForm):
+    """فرم ثبت‌نام کاربر."""
+
+    phone_number = IranianMobileField(
+        label="شماره موبایل",
+        widget=forms.TextInput(
+            attrs={
+                "class": INPUT_CLASS,
+                "inputmode": "numeric",
+                "autocomplete": "tel",
+                "placeholder": "09121234567",
+            }
+        ),
+    )
+
+    password1 = forms.CharField(
+        label="رمز عبور",
+        strip=False,
+        widget=forms.PasswordInput(
+            attrs={
+                "class": INPUT_CLASS,
+                "autocomplete": "new-password",
+                "placeholder": "••••••••",
+            }
+        ),
+    )
+
+    password2 = forms.CharField(
+        label="تکرار رمز عبور",
+        strip=False,
+        widget=forms.PasswordInput(
+            attrs={
+                "class": INPUT_CLASS,
+                "autocomplete": "new-password",
+                "placeholder": "تکرار رمز عبور",
+            }
+        ),
+    )
+
+    class Meta:
+        model = User
+        fields = (
+            "phone_number",
+            "first_name",
+            "last_name",
+            "email",
+        )
+        widgets = {
+            "first_name": forms.TextInput(
+                attrs={
+                    "class": INPUT_CLASS,
+                    "autocomplete": "given-name",
+                    "placeholder": "نام",
+                }
+            ),
+            "last_name": forms.TextInput(
+                attrs={
+                    "class": INPUT_CLASS,
+                    "autocomplete": "family-name",
+                    "placeholder": "نام خانوادگی",
+                }
+            ),
+            "email": forms.EmailInput(
+                attrs={
+                    "class": INPUT_CLASS,
+                    "autocomplete": "email",
+                    "dir": "ltr",
+                    "placeholder": "you@example.com",
+                }
+            ),
+        }
+
+    def clean_email(self):
+        email = normalize_email(self.cleaned_data.get("email") or "")
+
+        if email and User.objects.filter(email__iexact=email).exists():
+            raise ValidationError("این ایمیل قبلاً ثبت شده است.", code="duplicate_email")
+
+        return email
+
+    def clean_phone_number(self):
+        phone = self.cleaned_data.get("phone_number") or ""
+
+        if User.objects.filter(phone_number=phone).exists():
+            raise ValidationError("این شماره موبایل قبلاً ثبت شده است.", code="duplicate_phone")
+
+        return phone
+
+    def clean_password2(self):
+        password1 = self.cleaned_data.get("password1")
+        password2 = self.cleaned_data.get("password2")
+
+        if not password1 or not password2:
+            return password2
+
+        if password1 != password2:
+            raise ValidationError(
+                "دو رمز عبور یکسان نیستند.",
+                code="password_mismatch",
+            )
+
+        user = User(
+            phone_number=self.cleaned_data.get("phone_number", ""),
+            first_name=self.cleaned_data.get("first_name", ""),
+            last_name=self.cleaned_data.get("last_name", ""),
+            email=self.cleaned_data.get("email"),
+        )
+
+        validate_password(password1, user=user)
+
+        return password2
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.set_password(self.cleaned_data["password1"])
+
+        if commit:
+            user.save()
+
+        return user
+
+
+class LoginForm(AuthenticationForm):
+    """ورود با شماره موبایل یا ایمیل."""
+
+    username = forms.CharField(
+        label="شماره موبایل یا ایمیل",
+        max_length=MAX_IDENTIFIER_LENGTH,
+        widget=forms.TextInput(
+            attrs={
+                "class": INPUT_CLASS,
+                "autofocus": True,
+                "autocomplete": "username",
+                "placeholder": "09121234567 یا you@example.com",
+                "maxlength": str(MAX_IDENTIFIER_LENGTH),
+            }
+        ),
+    )
+
+    password = forms.CharField(
+        label="رمز عبور",
+        strip=False,
+        widget=forms.PasswordInput(
+            attrs={
+                "class": INPUT_CLASS,
+                "autocomplete": "current-password",
+                "placeholder": "••••••••",
+            }
+        ),
+    )
+
+    error_messages = {
+        **AuthenticationForm.error_messages,
+        "invalid_login": "شماره موبایل/ایمیل یا رمز عبور اشتباه است.",
+    }
+
+
+class OtpRequestForm(forms.Form):
+    """درخواست ارسال کد OTP."""
+
+    phone_number = IranianMobileField(
+        label="شماره موبایل",
+        widget=forms.TextInput(
+            attrs={
+                "class": INPUT_CLASS,
+                "inputmode": "numeric",
+                "autocomplete": "tel",
+                "placeholder": "09121234567",
+            }
+        ),
+    )
+
+
+class OtpVerifyForm(forms.Form):
+    """تأیید کد OTP."""
+
+    code = forms.CharField(
+        label="کد تأیید",
+        min_length=OTP_CODE_LENGTH,
+        max_length=OTP_CODE_LENGTH,
+        strip=True,
+        widget=forms.TextInput(
+            attrs={
+                "class": INPUT_CLASS,
+                "inputmode": "numeric",
+                "autocomplete": "one-time-code",
+                "placeholder": "- - - - - -",
+                "dir": "ltr",
+                "maxlength": str(OTP_CODE_LENGTH),
+            }
+        ),
+    )
+
+    def clean_code(self):
+        from .utils import normalize_digits
+
+        return normalize_digits(self.cleaned_data.get("code") or "").strip()
+
+
+class ProfileForm(forms.ModelForm):
+    """فرم اطلاعات پروفایل."""
+
+    class Meta:
+        model = Profile
+        fields = (
+            "national_code",
+            "birth_date",
+            "gender",
+            "province",
+            "city",
+            "postal_code",
+            "address",
+            "avatar",
+        )
+        widgets = {
+            "national_code": forms.TextInput(
+                attrs={
+                    "class": INPUT_CLASS,
+                    "inputmode": "numeric",
+                    "dir": "ltr",
+                }
+            ),
+            "birth_date": forms.DateInput(
+                format="%Y-%m-%d",
+                attrs={
+                    "class": INPUT_CLASS,
+                    "type": "date",
+                },
+            ),
+            "gender": forms.Select(attrs={"class": INPUT_CLASS}),
+            "province": forms.TextInput(attrs={"class": INPUT_CLASS}),
+            "city": forms.TextInput(attrs={"class": INPUT_CLASS}),
+            "postal_code": forms.TextInput(
+                attrs={
+                    "class": INPUT_CLASS,
+                    "inputmode": "numeric",
+                    "dir": "ltr",
+                }
+            ),
+            "address": forms.Textarea(
+                attrs={
+                    "class": INPUT_CLASS,
+                    "rows": 3,
+                }
+            ),
+            "avatar": forms.ClearableFileInput(
+                attrs={
+                    "class": INPUT_CLASS,
+                    "accept": "image/*",
+                }
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["birth_date"].input_formats = ["%Y-%m-%d"]
+
+    def clean_national_code(self):
+        from .utils import normalize_national_code
+        from .validators import validate_iranian_national_code
+
+        code = normalize_national_code(self.cleaned_data.get("national_code") or "")
+        validate_iranian_national_code(code)
+        return code
+
+    def clean_postal_code(self):
+        from core.validators import is_valid_postal_code, normalize_postal_code
+
+        code = normalize_postal_code(self.cleaned_data.get("postal_code") or "")
+
+        if code and not is_valid_postal_code(code):
+            raise ValidationError("کد پستی واردشده معتبر نیست.", code="invalid_postal_code")
+
+        return code
+
+
+class UserAdminCreationForm(forms.ModelForm):
+    """فرم ساخت User در پنل مدیریت."""
+
+    password1 = forms.CharField(
+        label="رمز عبور",
+        strip=False,
+        widget=forms.PasswordInput,
+    )
+
+    password2 = forms.CharField(
+        label="تکرار رمز عبور",
+        strip=False,
+        widget=forms.PasswordInput,
+    )
+
+    class Meta:
+        model = User
+        fields = (
+            "phone_number",
+            "email",
+            "first_name",
+            "last_name",
+        )
+
+    def clean_email(self):
+        return normalize_email(self.cleaned_data.get("email") or "")
+
+    def clean_password2(self):
+        password1 = self.cleaned_data.get("password1")
+        password2 = self.cleaned_data.get("password2")
+
+        if not password1 or not password2:
+            return password2
+
+        if password1 != password2:
+            raise ValidationError(
+                "دو رمز عبور یکسان نیستند.",
+                code="password_mismatch",
+            )
+
+        validate_password(password2)
+
+        return password2
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.set_password(self.cleaned_data["password1"])
+
+        if commit:
+            user.save()
+
+        return user
+
+
+class UserAdminChangeForm(forms.ModelForm):
+    """فرم ویرایش User در پنل مدیریت."""
+
+    password = forms.CharField(
+        label="رمز عبور",
+        help_text="رمز عبور به‌صورت هش ذخیره می‌شود و قابل مشاهده نیست.",
+        widget=forms.PasswordInput(render_value=False),
+        required=False,
+    )
+
+    class Meta:
+        model = User
+        fields = "__all__"
+
+
+# ========== accounts\views.py ==========
+"""Viewهای احراز هویت و حساب کاربری."""
+
+from __future__ import annotations
+
+from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth import (
+    forms as auth_forms,
+    get_user_model,
+    login,
+    update_session_auth_hash,
+)
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.views import (
+    LoginView,
+    LogoutView,
+)
+from django.shortcuts import redirect, render
+from django.utils.http import (
+    url_has_allowed_host_and_scheme,
+)
+from django.views import View
+
+from .forms import (
+    LoginForm,
+    OtpRequestForm,
+    OtpVerifyForm,
+    ProfileForm,
+    RegisterForm,
+)
+from .models import Profile
+from .services import (
+    OTPError,
+    OTP_PURPOSE_LOGIN,
+    create_user,
+    get_or_create_phone_user,
+    request_otp,
+    verify_otp,
+)
+
+User = get_user_model()
+
+OTP_SESSION_KEY = "accounts_otp_phone"
+OTP_SESSION_TTL = 600
+
+
+def _get_client_ip(request) -> str | None:
+    """
+    دریافت IP کاربر.
+
+    اگر پروژه پشت reverse proxy است، تنظیمات proxy باید
+    به‌صورت صحیح انجام شده باشد؛ در غیر این صورت به
+    X-Forwarded-For اعتماد نمی‌کنیم.
+    """
+
+    return request.META.get(
+        "REMOTE_ADDR"
+    )
+
+
+def _login_user(request, user) -> None:
+    """
+    ورود صریح کاربر با backend پروژه.
+    """
+
+    backend = (
+        "accounts.backends.PhoneOrEmailBackend"
+    )
+
+    login(
+        request,
+        user,
+        backend=backend,
+    )
+
+
+class RegisterView(View):
+    """ثبت‌نام و ورود خودکار."""
+
+    template_name = "accounts/register.html"
+
+    def _get_safe_next(
+            self,
+            request,
+    ) -> str:
+        next_url = (
+                request.POST.get("next")
+                or request.GET.get("next")
+                or ""
+        )
+
+        if (
+                next_url
+                and url_has_allowed_host_and_scheme(
+            next_url,
+            allowed_hosts={
+                request.get_host()
+            },
+            require_https=request.is_secure(),
+        )
+        ):
+            return next_url
+
+        return ""
+
+    def get(self, request):
+        if request.user.is_authenticated:
+            return redirect("shop:home")
+
+        return render(
+            request,
+            self.template_name,
+            {
+                "form": RegisterForm()
+            },
+        )
+
+    def post(self, request):
+        if request.user.is_authenticated:
+            return redirect("shop:home")
+
+        form = RegisterForm(
+            request.POST
+        )
+
+        if not form.is_valid():
+            return render(
+                request,
+                self.template_name,
+                {
+                    "form": form
+                },
+            )
+
+        user = create_user(
+            phone_number=form.cleaned_data[
+                "phone_number"
+            ],
+            password=form.cleaned_data[
+                "password1"
+            ],
+            first_name=form.cleaned_data.get(
+                "first_name",
+                "",
+            ),
+            last_name=form.cleaned_data.get(
+                "last_name",
+                "",
+            ),
+            email=form.cleaned_data.get(
+                "email"
+            ),
+        )
+
+        _login_user(
+            request,
+            user,
+        )
+
+        messages.success(
+            request,
+            (
+                f"{user.display_name} عزیز! "
+                "حساب شما با موفقیت ساخته شد."
+            ),
+        )
+
+        return redirect(
+            self._get_safe_next(request)
+            or "shop:home"
+        )
+
+
+class UserLoginView(LoginView):
+    """ورود با موبایل یا ایمیل."""
+
+    template_name = "accounts/login.html"
+    authentication_form = LoginForm
+    redirect_authenticated_user = True
+
+    def form_valid(self, form):
+        messages.success(
+            self.request,
+            (
+                f"{form.get_user().display_name} عزیز، "
+                "خوش برگشتی!"
+            ),
+        )
+
+        return super().form_valid(form)
+
+
+class UserLogoutView(LogoutView):
+    """خروج از حساب."""
+
+    next_page = "shop:home"
+
+    def dispatch(
+            self,
+            request,
+            *args,
+            **kwargs,
+    ):
+        if request.user.is_authenticated:
+            messages.info(
+                request,
+                "با موفقیت از حساب خود خارج شدید.",
+            )
+
+        return super().dispatch(
+            request,
+            *args,
+            **kwargs,
+        )
+
+
+class OtpRequestView(View):
+    """مرحله اول ورود OTP."""
+
+    template_name = (
+        "accounts/otp_request.html"
+    )
+
+    def get(self, request):
+        if request.user.is_authenticated:
+            return redirect("shop:home")
+
+        return render(
+            request,
+            self.template_name,
+            {
+                "form": OtpRequestForm()
+            },
+        )
+
+    def post(self, request):
+        if request.user.is_authenticated:
+            return redirect("shop:home")
+
+        form = OtpRequestForm(
+            request.POST
+        )
+
+        if not form.is_valid():
+            return render(
+                request,
+                self.template_name,
+                {
+                    "form": form
+                },
+            )
+
+        phone = form.cleaned_data[
+            "phone_number"
+        ]
+
+        try:
+            request_otp(
+                phone_number=phone,
+                purpose=OTP_PURPOSE_LOGIN,
+                ip_address=_get_client_ip(
+                    request
+                ),
+            )
+        except OTPError as exc:
+            form.add_error(
+                "phone_number",
+                str(exc),
+            )
+
+            return render(
+                request,
+                self.template_name,
+                {
+                    "form": form
+                },
+            )
+
+        request.session[
+            OTP_SESSION_KEY
+        ] = phone
+
+        request.session.set_expiry(
+            OTP_SESSION_TTL
+        )
+
+        messages.success(
+            request,
+            "کد تأیید به شمارهٔ شما پیامک شد.",
+        )
+
+        return redirect(
+            "accounts:otp_verify"
+        )
+
+
+class OtpVerifyView(View):
+    """مرحله دوم ورود OTP."""
+
+    template_name = (
+        "accounts/otp_verify.html"
+    )
+
+    def dispatch(
+            self,
+            request,
+            *args,
+            **kwargs,
+    ):
+        if request.user.is_authenticated:
+            return redirect("shop:home")
+
+        if not request.session.get(
+                OTP_SESSION_KEY
+        ):
+            messages.warning(
+                request,
+                "ابتدا شمارهٔ موبایل خود را وارد کنید.",
+            )
+
+            return redirect(
+                "accounts:otp_request"
+            )
+
+        return super().dispatch(
+            request,
+            *args,
+            **kwargs,
+        )
+
+    def get(
+            self,
+            request,
+            *args,
+            **kwargs,
+    ):
+        phone = request.session.get(
+            OTP_SESSION_KEY,
+            "",
+        )
+
+        return render(
+            request,
+            self.template_name,
+            {
+                "phone": phone,
+                "form": OtpVerifyForm(),
+            },
+        )
+
+    def post(
+            self,
+            request,
+            *args,
+            **kwargs,
+    ):
+        phone = request.session.get(
+            OTP_SESSION_KEY,
+            "",
+        )
+
+        if not phone:
+            messages.warning(
+                request,
+                "ابتدا شمارهٔ موبایل خود را وارد کنید.",
+            )
+
+            return redirect(
+                "accounts:otp_request"
+            )
+
+        form = OtpVerifyForm(
+            request.POST
+        )
+
+        if not form.is_valid():
+            return render(
+                request,
+                self.template_name,
+                {
+                    "phone": phone,
+                    "form": form,
+                },
+            )
+
+        code = form.cleaned_data[
+            "code"
+        ]
+
+        try:
+            verify_otp(
+                phone_number=phone,
+                code=code,
+                purpose=OTP_PURPOSE_LOGIN,
+            )
+        except OTPError as exc:
+            form.add_error(
+                "code",
+                str(exc),
+            )
+
+            return render(
+                request,
+                self.template_name,
+                {
+                    "phone": phone,
+                    "form": form,
+                },
+            )
+
+        user = get_or_create_phone_user(
+            phone
+        )
+
+        if not user.is_active:
+            request.session.pop(
+                OTP_SESSION_KEY,
+                None,
+            )
+
+            request.session.set_expiry(
+                None
+            )
+
+            messages.error(
+                request,
+                "حساب شما غیرفعال است.",
+            )
+
+            return redirect(
+                "accounts:otp_request"
+            )
+
+        _login_user(
+            request,
+            user,
+        )
+
+        request.session.pop(
+            OTP_SESSION_KEY,
+            None,
+        )
+
+        request.session.set_expiry(
+            None
+        )
+
+        messages.success(
+            request,
+            (
+                f"{user.display_name} عزیز، "
+                "خوش آمدید!"
+            ),
+        )
+
+        return redirect(
+            "shop:home"
+        )
+
+
+@login_required
+def profile_view(request):
+    """نمایش و ویرایش پروفایل."""
+
+    profile, _ = Profile.objects.get_or_create(
+        user=request.user
+    )
+
+    if (
+            request.method == "POST"
+            and "update_profile" in request.POST
+    ):
+        profile_form = ProfileForm(
+            request.POST,
+            request.FILES,
+            instance=profile,
+        )
+
+        password_form = (
+            auth_forms.PasswordChangeForm(
+                user=request.user
+            )
+        )
+
+        if profile_form.is_valid():
+            profile_form.save()
+
+            messages.success(
+                request,
+                "اطلاعات پروفایل ذخیره شد.",
+            )
+
+            return redirect(
+                "accounts:profile"
+            )
+
+    elif (
+            request.method == "POST"
+            and "change_password" in request.POST
+    ):
+        profile_form = ProfileForm(
+            instance=profile
+        )
+
+        password_form = (
+            auth_forms.PasswordChangeForm(
+                user=request.user,
+                data=request.POST,
+            )
+        )
+
+        if password_form.is_valid():
+            password_form.save()
+
+            update_session_auth_hash(
+                request,
+                password_form.user,
+            )
+
+            messages.success(
+                request,
+                "رمز عبور تغییر کرد.",
+            )
+
+            return redirect(
+                "accounts:profile"
+            )
+
+    else:
+        profile_form = ProfileForm(
+            instance=profile
+        )
+
+        password_form = (
+            auth_forms.PasswordChangeForm(
+                user=request.user
+            )
+        )
+
+    return render(
+        request,
+        "accounts/profile.html",
+        {
+            "profile": profile,
+            "profile_form": profile_form,
+            "password_form": password_form,
+        },
+    )
+
+
+# ========== accounts\admin.py ==========
+"""پنل مدیریت اپ accounts — سازگار با احراز هویت با شماره موبایل."""
+
+from __future__ import annotations
+
+from django.contrib import admin
+from django.utils.decorators import method_decorator
+from django.views.decorators.debug import sensitive_post_parameters
+
+from .forms import UserAdminChangeForm, UserAdminCreationForm
+from .models import PhoneOTP, Profile, User
+
+
+class ProfileInline(admin.StackedInline):
+    model = Profile
+    can_delete = False
+    verbose_name_plural = "پروفایل"
+    fields = (
+        "national_code",
+        "birth_date",
+        "gender",
+        "province",
+        "city",
+        "postal_code",
+        "address",
+        "avatar",
+    )
+
+
+@admin.register(User)
+class UserAdmin(admin.ModelAdmin):
+    """ادمین سفارشی کاربر — USERNAME_FIELD موبایل است، پس UserAdmin پیش‌فرض جنگو کار نمی‌کند."""
+
+    form = UserAdminChangeForm
+    add_form = UserAdminCreationForm
+
+    list_display = (
+        "phone_number",
+        "masked_email",
+        "full_name",
+        "is_active",
+        "is_phone_verified",
+        "is_staff",
+        "date_joined",
+    )
+
+    list_filter = (
+        "is_staff",
+        "is_superuser",
+        "is_active",
+        "is_phone_verified",
+    )
+
+    search_fields = (
+        "phone_number",
+        "email",
+        "first_name",
+        "last_name",
+    )
+
+    ordering = ("-date_joined",)
+    list_per_page = 30
+    date_hierarchy = "date_joined"
+    inlines = (ProfileInline,)
+
+    fieldsets = (
+        ("اطلاعات اصلی", {"fields": ("phone_number", "email", "first_name", "last_name")}),
+        ("وضعیت", {"fields": ("is_active", "is_phone_verified", "is_staff", "is_superuser")}),
+        ("گروه‌ها و دسترسی‌ها", {"fields": ("groups", "user_permissions"), "classes": ("collapse",)}),
+        ("تاریخ‌ها", {"fields": ("last_login", "date_joined"), "classes": ("collapse",)}),
+    )
+
+    add_fieldsets = (
+        (
+            "کاربر جدید",
+            {
+                "classes": ("wide",),
+                "fields": ("phone_number", "email", "first_name", "last_name", "password1", "password2"),
+            },
+        ),
+    )
+
+    readonly_fields = ("last_login", "date_joined")
+    filter_horizontal = ("groups", "user_permissions")
+
+    @method_decorator(sensitive_post_parameters())
+    def add_view(self, *args, **kwargs):
+        return super().add_view(*args, **kwargs)
+
+    @admin.display(description="نام کامل")
+    def full_name(self, obj: User) -> str:
+        return obj.get_full_name() or "—"
+
+
+@admin.register(Profile)
+class ProfileAdmin(admin.ModelAdmin):
+    list_display = ("user", "city", "province", "completion_percent", "updated_at")
+    search_fields = ("user__phone_number", "user__email", "city")
+    readonly_fields = ("created_at", "updated_at")
+
+
+@admin.register(PhoneOTP)
+class PhoneOTPAdmin(admin.ModelAdmin):
+    list_display = (
+        "phone_number",
+        "purpose",
+        "is_used",
+        "attempts",
+        "is_expired_display",
+        "created_at",
+    )
+    list_filter = ("purpose", "is_used")
+    readonly_fields = (
+        "phone_number",
+        "purpose",
+        "code_hash",
+        "attempts",
+        "is_used",
+        "expires_at",
+        "verified_at",
+        "ip_address",
+        "created_at",
+    )
+
+    @admin.display(description="منقضی؟", boolean=True)
+    def is_expired_display(self, obj) -> bool:
+        return obj.is_expired
+
+
+# ========== accounts\apps.py ==========
+from django.apps import AppConfig
+
+
+class AccountsConfig(AppConfig):
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "accounts"
+    verbose_name = "حساب‌های کاربری"
+
+    def ready(self):
+        # Import سیگنال‌ها — ساخت خودکار Profile
+        from . import signals  # noqa: F401
+
+
+# ========== accounts\signals.py ==========
+"""سیگنال‌های اپ accounts."""
+
+from __future__ import annotations
+
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+from .models import Profile, User
+
+
+@receiver(post_save, sender=User)
+def create_user_profile(
+        sender,
+        instance: User,
+        created: bool,
+        **kwargs,
+) -> None:
+    """ساخت خودکار Profile پس از ایجاد کاربر."""
+
+    if created:
+        Profile.objects.get_or_create(user=instance)
