@@ -1,5 +1,4 @@
 # shop/selectors.py
-# بالای فایل، importها را به این شکل تغییر بده:
 from django.db.models import Q, QuerySet, Count
 
 from core.constants import OrderStatus
